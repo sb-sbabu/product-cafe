@@ -7,8 +7,9 @@ import { CommunityPage } from './features/community/CommunityPage';
 import { SearchResultsPage } from './features/search/SearchResultsPage';
 import { MyCafePage } from './features/my-cafe/MyCafePage';
 import { ErrorBoundary, ToastProvider, SkipLink, useToast, CommandPalette } from './components/ui';
-import { useUIStore } from './stores';
+import { CafeDock, DockTrigger } from './components/dock';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DockProvider, useDock } from './contexts/DockContext';
 import { useAnalytics } from './hooks/useAnalytics';
 
 type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe';
@@ -32,15 +33,16 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { openChat } = useUIStore();
   const { showToast } = useToast();
   const { user } = useAuth();
   const { trackPageView, trackSearch } = useAnalytics();
+  const { toggleDock, setPageContext } = useDock();
 
-  // Track page views
+  // Track page views and update dock context
   useEffect(() => {
     trackPageView(activePage);
-  }, [activePage, trackPageView]);
+    setPageContext({ type: activePage });
+  }, [activePage, trackPageView, setPageContext]);
 
   const handleNavigate = useCallback((pageId: string) => {
     setActivePage(pageId as ActivePage);
@@ -71,10 +73,15 @@ function AppContent() {
         setIsCommandPaletteOpen(true);
       }
 
-      // "?" to open help/chat
+      // "?" to open Café Dock
       if (e.key === '?' && e.shiftKey) {
         e.preventDefault();
-        openChat();
+        toggleDock();
+      }
+
+      // "d" to toggle dock
+      if (e.key === 'd' && !e.metaKey && !e.ctrlKey) {
+        toggleDock();
       }
 
       // "g" then "h" for go home (vim-style)
@@ -103,7 +110,7 @@ function AppContent() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activePage, handleNavigate, openChat, showToast]);
+  }, [activePage, handleNavigate, toggleDock, showToast]);
 
   const renderPage = () => {
     switch (activePage) {
@@ -148,11 +155,15 @@ function AppContent() {
         </main>
       </Layout>
 
+      {/* Café Dock - Contextual Intelligence Layer */}
+      <CafeDock />
+      <DockTrigger />
+
       {/* Keyboard shortcuts hint - only on desktop */}
       {!isMobile && (
         <div className="fixed bottom-4 left-4 hidden lg:flex items-center gap-3 text-xs text-gray-400">
           <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">/</kbd> Search</span>
-          <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">?</kbd> Chat</span>
+          <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">d</kbd> Dock</span>
           <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">gm</kbd> My Café</span>
         </div>
       )}
@@ -171,9 +182,11 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
+        <DockProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </DockProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
