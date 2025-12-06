@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, MessageCircle, ThumbsUp, Reply as ReplyIcon } f
 import { cn } from '../../lib/utils';
 import { formatDistanceToNow } from '../../lib/utils';
 import type { Reply } from '../../data/discussions';
+import { MarkdownRenderer } from '../ui/MarkdownRenderer';
 
 /**
  * ThreadedReplies - Reddit-style nested comment threading
@@ -148,8 +149,8 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
                 {/* Body */}
                 {!isCollapsed && (
                     <>
-                        <div className="mt-1 text-sm text-gray-700 leading-relaxed">
-                            {reply.body}
+                        <div className="mt-1 text-sm text-gray-700">
+                            <MarkdownRenderer content={reply.body} />
                         </div>
 
                         {/* Actions */}

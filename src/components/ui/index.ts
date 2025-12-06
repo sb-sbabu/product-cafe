@@ -10,6 +10,7 @@ export { Skeleton, ResourceCardSkeleton, PersonCardSkeleton, FAQCardSkeleton, Pa
 export { EmptyState } from './EmptyState';
 export { ToastProvider, useToast } from './Toast';
 export { CommandPalette } from './CommandPalette';
+export { MarkdownRenderer } from './MarkdownRenderer';
 
 // Accessibility Components
 export { VisuallyHidden, SkipLink, LiveRegion, Focusable, ariaHelpers } from './Accessibility';
