@@ -11,7 +11,7 @@ import { ActivityTab } from './ActivityTab';
  * 
  * States:
  * - closed: Not visible (FAB shows)
- * - collapsed: 56px strip with icons only
+ * - collapsed: 48px strip with icons only
  * - expanded: 360px full panel
  * 
  * Features:
@@ -187,7 +187,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                     'h-full bg-white/95 backdrop-blur-xl flex flex-col',
                     'border-l border-gray-200/80',
                     'shadow-2xl transition-all duration-300 ease-out',
-                    showExpanded ? 'w-[360px]' : 'w-[56px]'
+                    showExpanded ? 'w-[360px]' : 'w-[48px]'
                 )}
             >
                 {/* Header */}

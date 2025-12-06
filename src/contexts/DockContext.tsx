@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
  * 
  * States:
  * - closed: Dock fully hidden, FAB visible
- * - collapsed: Narrow 56px strip with tab icons (desktop only)
+ * - collapsed: Narrow 48px strip with tab icons (desktop only)
  * - expanded: Full 360px panel
  */
 

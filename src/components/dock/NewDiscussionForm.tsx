@@ -4,6 +4,8 @@ import { cn } from '../../lib/utils';
 import { useDock } from '../../contexts/DockContext';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
 import { useDiscussionStore } from '../../stores/discussionStore';
+import { MentionsInput } from './MentionsInput';
+import type { Person } from '../../data/mockData';
 
 /**
  * NewDiscussionForm - Modal form for creating new discussions
@@ -28,6 +30,13 @@ export const NewDiscussionForm: React.FC<NewDiscussionFormProps> = ({ isOpen, on
     const [body, setBody] = useState('');
     const [showPreview, setShowPreview] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [mentionedExperts, setMentionedExperts] = useState<Person[]>([]);
+
+    const handleMention = useCallback((person: Person) => {
+        setMentionedExperts(prev =>
+            prev.some(p => p.id === person.id) ? prev : [...prev, person]
+        );
+    }, []);
 
     const handleSubmit = useCallback(async () => {
         if (!title.trim() || !body.trim()) return;
@@ -152,12 +161,12 @@ export const NewDiscussionForm: React.FC<NewDiscussionFormProps> = ({ isOpen, on
                                 )}
                             </div>
                         ) : (
-                            <textarea
+                            <MentionsInput
                                 value={body}
-                                onChange={(e) => setBody(e.target.value)}
-                                placeholder="Add context, code snippets, or links. Markdown is supported!"
+                                onChange={setBody}
+                                onMention={handleMention}
+                                placeholder="Add context, mention @experts with autocomplete. Markdown supported!"
                                 rows={5}
-                                className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
                             />
                         )}
                     </div>
@@ -172,15 +181,32 @@ export const NewDiscussionForm: React.FC<NewDiscussionFormProps> = ({ isOpen, on
                         </span>
                     </div>
 
-                    {/* Expert notification preview */}
+                    {/* Mentioned experts preview */}
                     <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
                         <div className="flex items-center gap-2 text-xs text-blue-700 mb-1 font-medium">
                             <AtSign className="w-3.5 h-3.5" />
-                            Experts will be notified
+                            {mentionedExperts.length > 0 ? (
+                                <span>{mentionedExperts.length} expert{mentionedExperts.length !== 1 ? 's' : ''} will be notified</span>
+                            ) : (
+                                <span>Type @name to notify experts</span>
+                            )}
                         </div>
-                        <p className="text-xs text-blue-600/80">
-                            Relevant topic experts will receive a notification about your question.
-                        </p>
+                        {mentionedExperts.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                {mentionedExperts.map(expert => (
+                                    <span
+                                        key={expert.id}
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                                    >
+                                        @{expert.displayName.split(' ')[0]}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-blue-600/80">
+                                Mention experts by typing @ followed by their name.
+                            </p>
+                        )}
                     </div>
                 </div>
 
