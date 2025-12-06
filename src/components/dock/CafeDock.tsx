@@ -1,10 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, Bell, X, Minus, Coffee } from 'lucide-react';
+import { MessageCircle, Bell, X, ChevronRight, ChevronLeft, Coffee, Sparkles } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock, type DockTab } from '../../contexts/DockContext';
 import { AskTab } from './AskTab';
 import { DiscussTab } from './DiscussTab';
 import { ActivityTab } from './ActivityTab';
+
+/**
+ * CafeDock - Premium collapsible side panel
+ * 
+ * States:
+ * - closed: Not visible (FAB shows)
+ * - collapsed: 56px strip with icons only
+ * - expanded: 360px full panel
+ * 
+ * Features:
+ * - Smooth width transitions
+ * - Hover preview when collapsed
+ * - Tab icons always visible
+ * - Notification badge on Activity
+ */
 
 interface CafeDockProps {
     className?: string;
@@ -12,15 +27,18 @@ interface CafeDockProps {
 
 export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     const {
-        isOpen,
         activeTab,
         unreadCount,
         closeDock,
         setActiveTab,
-        collapseDock,
+        toggleCollapse,
+        isExpanded,
+        isCollapsed,
+        isOpen,
     } = useDock();
 
     const [isMobile, setIsMobile] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
 
     // Responsive detection
     useEffect(() => {
@@ -42,9 +60,9 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     }, [isOpen, closeDock]);
 
     const tabs: { id: DockTab; label: string; icon: React.ReactNode; badge?: number }[] = [
-        { id: 'ask', label: 'Ask', icon: <Coffee className="w-4 h-4" /> },
-        { id: 'discuss', label: 'Discuss', icon: <MessageCircle className="w-4 h-4" /> },
-        { id: 'activity', label: 'Activity', icon: <Bell className="w-4 h-4" />, badge: unreadCount },
+        { id: 'ask', label: 'Ask', icon: <Coffee className="w-5 h-5" /> },
+        { id: 'discuss', label: 'Discuss', icon: <MessageCircle className="w-5 h-5" /> },
+        { id: 'activity', label: 'Activity', icon: <Bell className="w-5 h-5" />, badge: unreadCount },
     ];
 
     const handleTabClick = useCallback((tab: DockTab) => {
@@ -53,98 +71,232 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <>
-            {/* Backdrop - mobile only */}
-            {isMobile && (
+    // Mobile: always show as bottom sheet, full expanded
+    if (isMobile) {
+        return (
+            <>
+                {/* Backdrop */}
                 <div
-                    className="fixed inset-0 bg-black/20 z-40 animate-fade-in"
+                    className="fixed inset-0 bg-black/30 z-40 animate-fade-in backdrop-blur-sm"
                     onClick={closeDock}
                 />
+
+                {/* Bottom Sheet */}
+                <div
+                    className={cn(
+                        'fixed z-50 bg-white flex flex-col',
+                        'inset-x-0 bottom-0 top-auto',
+                        'h-[75vh] rounded-t-3xl',
+                        'shadow-2xl animate-slide-up',
+                        className
+                    )}
+                >
+                    {/* Drag handle */}
+                    <div className="flex justify-center pt-3 pb-1">
+                        <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                    </div>
+
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+                                <Coffee className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="font-semibold text-gray-900">Café Dock</span>
+                        </div>
+                        <button
+                            onClick={closeDock}
+                            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                            aria-label="Close"
+                        >
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                    </div>
+
+                    {/* Tab Bar */}
+                    <div className="flex border-b border-gray-100 shrink-0 px-2">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => handleTabClick(tab.id)}
+                                className={cn(
+                                    'flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-all relative',
+                                    activeTab === tab.id
+                                        ? 'text-amber-600'
+                                        : 'text-gray-500 hover:text-gray-900'
+                                )}
+                            >
+                                {tab.icon}
+                                <span>{tab.label}</span>
+                                {tab.badge && tab.badge > 0 && (
+                                    <span className="absolute top-1.5 right-[calc(50%-24px)] min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1">
+                                        {tab.badge}
+                                    </span>
+                                )}
+                                {activeTab === tab.id && (
+                                    <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-hidden min-h-0">
+                        {activeTab === 'ask' && <AskTab />}
+                        {activeTab === 'discuss' && <DiscussTab />}
+                        {activeTab === 'activity' && <ActivityTab />}
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    // Desktop: Collapsible side panel
+    const showExpanded = isExpanded || isHovering;
+
+    return (
+        <div
+            className={cn(
+                'fixed z-50 right-0 top-0 bottom-0 flex',
+                'transition-all duration-300 ease-out',
+                className
+            )}
+            onMouseEnter={() => isCollapsed && setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+        >
+            {/* Toggle Button (when collapsed) */}
+            {isCollapsed && !isHovering && (
+                <button
+                    onClick={toggleCollapse}
+                    className={cn(
+                        'absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full',
+                        'p-2 bg-white border border-r-0 border-gray-200 rounded-l-xl',
+                        'shadow-lg hover:bg-gray-50 transition-all',
+                        'flex items-center justify-center',
+                        'group'
+                    )}
+                    aria-label="Expand dock"
+                >
+                    <ChevronLeft className="w-4 h-4 text-gray-400 group-hover:text-amber-500 transition-colors" />
+                </button>
             )}
 
             {/* Dock Panel */}
             <div
                 className={cn(
-                    'fixed z-50 bg-white flex flex-col',
-                    // Mobile: bottom sheet
-                    isMobile && [
-                        'inset-x-0 bottom-0 top-auto',
-                        'h-[70vh] rounded-t-2xl',
-                        'animate-slide-up shadow-2xl',
-                    ],
-                    // Desktop: side panel
-                    !isMobile && [
-                        'right-0 top-0 bottom-0',
-                        'w-[360px] border-l border-gray-200',
-                        'animate-slide-in-right shadow-xl',
-                    ],
-                    className
+                    'h-full bg-white/95 backdrop-blur-xl flex flex-col',
+                    'border-l border-gray-200/80',
+                    'shadow-2xl transition-all duration-300 ease-out',
+                    showExpanded ? 'w-[360px]' : 'w-[56px]'
                 )}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
-                            <Coffee className="w-4 h-4 text-white" />
+                <div className={cn(
+                    'flex items-center justify-between px-3 py-3 border-b border-gray-100/80 shrink-0',
+                    'bg-gradient-to-r from-amber-50/50 to-orange-50/50'
+                )}>
+                    {showExpanded ? (
+                        <>
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg shadow-sm">
+                                    <Coffee className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="font-semibold text-gray-900">Café Dock</span>
+                                    <Sparkles className="w-3 h-3 text-amber-400" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={toggleCollapse}
+                                    className="p-2 hover:bg-white/80 rounded-lg transition-all"
+                                    aria-label="Collapse"
+                                >
+                                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                                </button>
+                                <button
+                                    onClick={closeDock}
+                                    className="p-2 hover:bg-white/80 rounded-lg transition-all"
+                                    aria-label="Close"
+                                >
+                                    <X className="w-4 h-4 text-gray-400" />
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="w-full flex justify-center">
+                            <div className="p-1.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+                                <Coffee className="w-4 h-4 text-white" />
+                            </div>
                         </div>
-                        <span className="font-semibold text-gray-900">Café Dock</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        {!isMobile && (
-                            <button
-                                onClick={collapseDock}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                aria-label="Minimize"
-                            >
-                                <Minus className="w-4 h-4 text-gray-500" />
-                            </button>
-                        )}
-                        <button
-                            onClick={closeDock}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            aria-label="Close"
-                        >
-                            <X className="w-4 h-4 text-gray-500" />
-                        </button>
-                    </div>
+                    )}
                 </div>
 
                 {/* Tab Bar */}
-                <div className="flex border-b border-gray-100 shrink-0">
+                <div className={cn(
+                    'border-b border-gray-100 shrink-0',
+                    showExpanded ? 'flex' : 'flex flex-col'
+                )}>
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => handleTabClick(tab.id)}
                             className={cn(
-                                'flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative',
+                                'relative transition-all',
+                                showExpanded
+                                    ? 'flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium'
+                                    : 'flex items-center justify-center py-4',
                                 activeTab === tab.id
-                                    ? 'text-cafe-600'
-                                    : 'text-gray-500 hover:text-gray-900'
+                                    ? 'text-amber-600 bg-amber-50/50'
+                                    : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50/50'
                             )}
+                            title={!showExpanded ? tab.label : undefined}
                         >
-                            {tab.icon}
-                            <span>{tab.label}</span>
-                            {tab.badge && tab.badge > 0 && (
-                                <span className="absolute top-2 right-[calc(50%-20px)] min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1">
-                                    {tab.badge}
-                                </span>
-                            )}
+                            <div className="relative">
+                                {tab.icon}
+                                {tab.badge && tab.badge > 0 && (
+                                    <span className={cn(
+                                        'absolute flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full',
+                                        showExpanded
+                                            ? '-top-1 -right-1 min-w-[16px] h-[16px] px-1'
+                                            : '-top-1 -right-1 min-w-[14px] h-[14px] px-0.5'
+                                    )}>
+                                        {tab.badge > 9 ? '9+' : tab.badge}
+                                    </span>
+                                )}
+                            </div>
+                            {showExpanded && <span>{tab.label}</span>}
+
                             {/* Active indicator */}
-                            {activeTab === tab.id && (
-                                <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-cafe-500 rounded-full" />
+                            {activeTab === tab.id && showExpanded && (
+                                <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full" />
+                            )}
+                            {activeTab === tab.id && !showExpanded && (
+                                <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-amber-500 rounded-full" />
                             )}
                         </button>
                     ))}
                 </div>
 
                 {/* Tab Content */}
-                <div className="flex-1 overflow-hidden min-h-0">
+                <div className={cn(
+                    'flex-1 overflow-hidden min-h-0 transition-opacity duration-200',
+                    showExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                )}>
                     {activeTab === 'ask' && <AskTab />}
                     {activeTab === 'discuss' && <DiscussTab />}
                     {activeTab === 'activity' && <ActivityTab />}
                 </div>
+
+                {/* Collapsed hint */}
+                {!showExpanded && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="text-gray-300 -rotate-90 whitespace-nowrap text-xs font-medium tracking-wider">
+                            CAFÉ DOCK
+                        </div>
+                    </div>
+                )}
             </div>
-        </>
+        </div>
     );
 };

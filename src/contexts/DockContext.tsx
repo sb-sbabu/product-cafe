@@ -1,16 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 /**
- * Dock Context
+ * Dock Context - Enhanced with 3-state dock management
  * 
- * Manages the state of Café Dock across the application:
- * - Whether dock is open/collapsed
- * - Which tab is active
- * - Current page context (what resource/page user is viewing)
+ * States:
+ * - closed: Dock fully hidden, FAB visible
+ * - collapsed: Narrow 56px strip with tab icons (desktop only)
+ * - expanded: Full 360px panel
  */
 
 export type DockTab = 'ask' | 'discuss' | 'activity';
+export type DockState = 'closed' | 'collapsed' | 'expanded';
 
 export interface PageContext {
     type: 'home' | 'resource' | 'faq' | 'person' | 'search' | 'library' | 'community' | 'grab-and-go' | 'my-cafe';
@@ -21,67 +22,132 @@ export interface PageContext {
     title?: string;
 }
 
-interface DockState {
-    isOpen: boolean;
-    isExpanded: boolean;
+interface DockContextState {
+    dockState: DockState;
     activeTab: DockTab;
     pageContext: PageContext;
     unreadCount: number;
 }
 
-interface DockContextType extends DockState {
+interface DockContextType extends DockContextState {
+    // State transitions
     openDock: () => void;
     closeDock: () => void;
     toggleDock: () => void;
-    setActiveTab: (tab: DockTab) => void;
-    setPageContext: (context: PageContext) => void;
     expandDock: () => void;
     collapseDock: () => void;
+    toggleCollapse: () => void;
+
+    // Tab management
+    setActiveTab: (tab: DockTab) => void;
+    setPageContext: (context: PageContext) => void;
     setUnreadCount: (count: number) => void;
+
+    // Computed states
+    isOpen: boolean;
+    isExpanded: boolean;
+    isCollapsed: boolean;
 }
 
 const DockContext = createContext<DockContextType | undefined>(undefined);
 
+// LocalStorage key for persistence
+const DOCK_STATE_KEY = 'cafe-dock-state';
+
+function loadPersistedState(): Partial<DockContextState> {
+    try {
+        const stored = localStorage.getItem(DOCK_STATE_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return {
+                dockState: parsed.dockState || 'collapsed',
+                activeTab: parsed.activeTab || 'ask',
+            };
+        }
+    } catch {
+        // Ignore parse errors
+    }
+    return { dockState: 'collapsed', activeTab: 'ask' };
+}
+
+function persistState(state: Partial<DockContextState>) {
+    try {
+        localStorage.setItem(DOCK_STATE_KEY, JSON.stringify({
+            dockState: state.dockState,
+            activeTab: state.activeTab,
+        }));
+    } catch {
+        // Ignore quota errors
+    }
+}
+
 export function DockProvider({ children }: { children: ReactNode }) {
-    const [state, setState] = useState<DockState>({
-        isOpen: false,
-        isExpanded: false,
-        activeTab: 'ask',
+    const persisted = loadPersistedState();
+
+    const [state, setState] = useState<DockContextState>({
+        dockState: persisted.dockState || 'collapsed',
+        activeTab: persisted.activeTab || 'ask',
         pageContext: { type: 'home' },
-        unreadCount: 3, // Default from mock data
+        unreadCount: 3,
     });
 
+    // Persist state changes
+    useEffect(() => {
+        persistState({ dockState: state.dockState, activeTab: state.activeTab });
+    }, [state.dockState, state.activeTab]);
+
+    // Open dock (to expanded state)
     const openDock = useCallback(() => {
-        setState(prev => ({ ...prev, isOpen: true }));
+        setState(prev => ({ ...prev, dockState: 'expanded' }));
     }, []);
 
+    // Close dock completely
     const closeDock = useCallback(() => {
-        setState(prev => ({ ...prev, isOpen: false, isExpanded: false }));
+        setState(prev => ({ ...prev, dockState: 'closed' }));
     }, []);
 
+    // Toggle between closed and expanded
     const toggleDock = useCallback(() => {
-        setState(prev => ({ ...prev, isOpen: !prev.isOpen }));
+        setState(prev => ({
+            ...prev,
+            dockState: prev.dockState === 'closed' ? 'expanded' : 'closed',
+        }));
+    }, []);
+
+    // Expand from collapsed
+    const expandDock = useCallback(() => {
+        setState(prev => ({ ...prev, dockState: 'expanded' }));
+    }, []);
+
+    // Collapse to strip
+    const collapseDock = useCallback(() => {
+        setState(prev => ({ ...prev, dockState: 'collapsed' }));
+    }, []);
+
+    // Toggle between collapsed and expanded
+    const toggleCollapse = useCallback(() => {
+        setState(prev => ({
+            ...prev,
+            dockState: prev.dockState === 'collapsed' ? 'expanded' : 'collapsed',
+        }));
     }, []);
 
     const setActiveTab = useCallback((tab: DockTab) => {
-        setState(prev => ({ ...prev, activeTab: tab }));
+        setState(prev => ({ ...prev, activeTab: tab, dockState: 'expanded' }));
     }, []);
 
     const setPageContext = useCallback((context: PageContext) => {
         setState(prev => ({ ...prev, pageContext: context }));
     }, []);
 
-    const expandDock = useCallback(() => {
-        setState(prev => ({ ...prev, isExpanded: true }));
-    }, []);
-
-    const collapseDock = useCallback(() => {
-        setState(prev => ({ ...prev, isExpanded: false }));
-    }, []);
-
     const setUnreadCount = useCallback((count: number) => {
         setState(prev => ({ ...prev, unreadCount: count }));
     }, []);
+
+    // Computed states
+    const isOpen = state.dockState !== 'closed';
+    const isExpanded = state.dockState === 'expanded';
+    const isCollapsed = state.dockState === 'collapsed';
 
     return (
         <DockContext.Provider value={{
@@ -89,11 +155,15 @@ export function DockProvider({ children }: { children: ReactNode }) {
             openDock,
             closeDock,
             toggleDock,
-            setActiveTab,
-            setPageContext,
             expandDock,
             collapseDock,
+            toggleCollapse,
+            setActiveTab,
+            setPageContext,
             setUnreadCount,
+            isOpen,
+            isExpanded,
+            isCollapsed,
         }}>
             {children}
         </DockContext.Provider>
