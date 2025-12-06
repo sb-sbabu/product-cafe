@@ -134,29 +134,39 @@ function AppContent() {
   return (
     <>
       <SkipLink href="#main-content">Skip to main content</SkipLink>
-      <Layout
-        activeNav={activePage}
-        onNavigate={handleNavigate}
-        onSearch={handleSearch}
-        isMobile={isMobile}
-      >
-        <main
-          id="main-content"
-          tabIndex={-1}
-          role="main"
-          aria-label="Main content"
-        >
-          <ErrorBoundary>
-            {/* Key forces remount for page transition animation */}
-            <div key={activePage} className="page-transition">
-              {renderPage()}
-            </div>
-          </ErrorBoundary>
-        </main>
-      </Layout>
 
-      {/* Café Dock - Always-visible side pane */}
-      <CafeDock />
+      {/* Main flex container for squeeze layout */}
+      <div className="flex min-h-screen">
+        {/* Main content area - grows to fill available space */}
+        <div className="flex-1 overflow-auto">
+          <Layout
+            activeNav={activePage}
+            onNavigate={handleNavigate}
+            onSearch={handleSearch}
+            isMobile={isMobile}
+          >
+            <main
+              id="main-content"
+              tabIndex={-1}
+              role="main"
+              aria-label="Main content"
+            >
+              <ErrorBoundary>
+                {/* Key forces remount for page transition animation */}
+                <div key={activePage} className="page-transition">
+                  {renderPage()}
+                </div>
+              </ErrorBoundary>
+            </main>
+          </Layout>
+        </div>
+
+        {/* Café Dock - Always visible on right, part of flex layout */}
+        {!isMobile && <CafeDock />}
+      </div>
+
+      {/* Mobile dock - fixed position */}
+      {isMobile && <CafeDock />}
 
       {/* Keyboard shortcuts hint - only on desktop */}
       {!isMobile && (
