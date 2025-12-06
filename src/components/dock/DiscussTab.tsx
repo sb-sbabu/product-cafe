@@ -8,10 +8,10 @@ import {
     getRecentDiscussions,
     getRepliesForDiscussion,
     type Discussion,
-    type Reply
 } from '../../data/discussions';
 import { mockPeople } from '../../data/mockData';
 import { formatDistanceToNow } from '../../lib/utils';
+import { ThreadedReplies } from './ThreadedReplies';
 
 /**
  * DiscussTab - Threaded discussions tab within Café Dock
@@ -110,39 +110,48 @@ const ThreadView: React.FC<ThreadViewProps> = ({ discussion, onBack }) => {
             </div>
 
             {/* Thread content */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
                 {/* Original post */}
-                <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 bg-cafe-200 rounded-full flex items-center justify-center text-cafe-700 text-sm font-medium">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-9 h-9 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center text-amber-700 text-sm font-semibold">
                             {discussion.authorName.charAt(0)}
                         </div>
                         <div>
-                            <span className="text-sm font-medium text-gray-900">{discussion.authorName}</span>
+                            <span className="text-sm font-semibold text-gray-900">{discussion.authorName}</span>
                             <span className="text-xs text-gray-400 ml-2">
                                 {formatDistanceToNow(new Date(discussion.createdAt))}
                             </span>
                         </div>
                     </div>
-                    <p className="text-sm text-gray-700">{discussion.body}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                        <button className="text-xs text-gray-400 hover:text-cafe-600 flex items-center gap-1">
-                            <ThumbsUp className="w-3 h-3" />
-                            {discussion.upvoteCount}
+                    <p className="text-sm text-gray-700 leading-relaxed">{discussion.body}</p>
+                    <div className="mt-3 flex items-center gap-3">
+                        <button className="text-xs text-gray-400 hover:text-amber-600 flex items-center gap-1 transition-colors">
+                            <ThumbsUp className="w-3.5 h-3.5" />
+                            <span className="font-medium">{discussion.upvoteCount}</span>
                         </button>
+                        <span className="text-xs text-gray-300">|</span>
+                        <span className="text-xs text-gray-400">
+                            {discussion.replyCount} {discussion.replyCount === 1 ? 'reply' : 'replies'}
+                        </span>
                     </div>
                 </div>
 
-                {/* Replies */}
-                {replies.map((reply) => (
-                    <ReplyItem key={reply.id} reply={reply} />
-                ))}
+                {/* Threaded Replies - Reddit Style */}
+                <div className="mt-2">
+                    <ThreadedReplies
+                        replies={replies}
+                        onReply={(parentId) => console.log('Reply to:', parentId)}
+                        onUpvote={(replyId) => console.log('Upvote:', replyId)}
+                        maxDepth={5}
+                    />
+                </div>
 
                 {/* Resolved badge */}
                 {discussion.status === 'resolved' && (
-                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
                         <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-700">This discussion was marked as resolved</span>
+                        <span className="text-sm text-green-700 font-medium">This discussion was marked as resolved</span>
                     </div>
                 )}
             </div>
@@ -170,39 +179,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ discussion, onBack }) => {
     );
 };
 
-const ReplyItem: React.FC<{ reply: Reply }> = ({ reply }) => {
-    const indentClass = reply.depth > 0 ? 'ml-4 border-l-2 border-gray-200 pl-3' : '';
-
-    return (
-        <div className={cn('', indentClass)}>
-            <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 text-xs font-medium">
-                    {reply.authorName.charAt(0)}
-                </div>
-                <span className="text-sm font-medium text-gray-900">{reply.authorName}</span>
-                {reply.isExpert && (
-                    <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">Expert</span>
-                )}
-                <span className="text-xs text-gray-400">
-                    {formatDistanceToNow(new Date(reply.createdAt))}
-                </span>
-            </div>
-            <p className="text-sm text-gray-700 mb-1">{reply.body}</p>
-            <div className="flex items-center gap-3">
-                <button className="text-xs text-gray-400 hover:text-cafe-600 flex items-center gap-1">
-                    <ThumbsUp className="w-3 h-3" />
-                    {reply.upvoteCount}
-                </button>
-                {reply.isAcceptedAnswer && (
-                    <span className="text-xs text-green-600 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        Accepted
-                    </span>
-                )}
-            </div>
-        </div>
-    );
-};
+// ReplyItem removed - using ThreadedReplies component instead
 
 export const DiscussTab: React.FC = () => {
     const { pageContext } = useDock();
