@@ -140,7 +140,10 @@ function AppContent() {
           aria-label="Main content"
         >
           <ErrorBoundary>
-            {renderPage()}
+            {/* Key forces remount for page transition animation */}
+            <div key={activePage} className="page-transition">
+              {renderPage()}
+            </div>
           </ErrorBoundary>
         </main>
       </Layout>

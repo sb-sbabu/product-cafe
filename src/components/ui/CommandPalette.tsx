@@ -221,35 +221,47 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 onClick={onClose}
             />
 
-            {/* Palette */}
-            <div className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-xl z-50 animate-scale-in">
-                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+            {/* Palette - Full screen on mobile, centered on desktop */}
+            <div className={cn(
+                "fixed z-50 animate-scale-in",
+                // Mobile: full screen with safe areas
+                "inset-0 p-4 pt-safe",
+                // Desktop: centered modal
+                "md:inset-auto md:top-[20%] md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-xl md:p-0"
+            )}>
+                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 h-full md:h-auto flex flex-col">
                     {/* Search Input */}
-                    <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
-                        <Search className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center gap-3 px-4 py-4 md:py-3 border-b border-gray-100 shrink-0">
+                        <Search className="w-5 h-5 text-gray-400 shrink-0" />
                         <input
                             ref={inputRef}
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Search resources, FAQs, people..."
-                            className="flex-1 text-lg outline-none placeholder:text-gray-400"
+                            className="flex-1 text-lg outline-none placeholder:text-gray-400 min-w-0"
                         />
                         {query && (
                             <button
                                 onClick={() => setQuery('')}
-                                className="p-1 hover:bg-gray-100 rounded"
+                                className="p-2 hover:bg-gray-100 rounded-lg touch-manipulation"
                             >
-                                <X className="w-4 h-4 text-gray-400" />
+                                <X className="w-5 h-5 text-gray-400" />
                             </button>
                         )}
-                        <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs text-gray-500">
+                        <button
+                            onClick={onClose}
+                            className="md:hidden p-2 hover:bg-gray-100 rounded-lg touch-manipulation"
+                        >
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                        <kbd className="hidden md:flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs text-gray-500">
                             esc
                         </kbd>
                     </div>
 
-                    {/* Results */}
-                    <div ref={resultsRef} className="max-h-80 overflow-y-auto py-2">
+                    {/* Results - Scrollable area */}
+                    <div ref={resultsRef} className="flex-1 overflow-y-auto py-2 min-h-0">
                         {isLoading ? (
                             <div className="flex items-center justify-center py-8 text-gray-400">
                                 <Clock className="w-5 h-5 animate-spin" />
