@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, Bell, X, ChevronLeft, Coffee, Sparkles } from 'lucide-react';
+import { MessageCircle, Bell, ChevronLeft, ChevronRight, Coffee, Sparkles, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock, type DockTab } from '../../contexts/DockContext';
 import { AskTab } from './AskTab';
@@ -29,6 +29,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     const {
         activeTab,
         unreadCount,
+        closeDock,
         setActiveTab,
         toggleCollapse,
         isExpanded,
@@ -163,22 +164,26 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
             onMouseEnter={() => isCollapsed && setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
         >
-            {/* Toggle Button (when collapsed) */}
-            {isCollapsed && !isHovering && (
-                <button
-                    onClick={toggleCollapse}
-                    className={cn(
-                        'absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full',
-                        'p-2 bg-white border border-r-0 border-gray-200 rounded-l-xl',
-                        'shadow-lg hover:bg-gray-50 transition-all',
-                        'flex items-center justify-center',
-                        'group'
-                    )}
-                    aria-label="Expand dock"
-                >
-                    <ChevronLeft className="w-4 h-4 text-gray-400 group-hover:text-amber-500 transition-colors" />
-                </button>
-            )}
+            {/* Left Edge Toggle - Premium Collapse/Expand Handle */}
+            <button
+                onClick={toggleCollapse}
+                className={cn(
+                    'absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full',
+                    'p-2.5 bg-white border border-r-0 border-gray-200 rounded-l-xl',
+                    'shadow-lg transition-all duration-200',
+                    'flex items-center justify-center',
+                    'group hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50',
+                    'hover:border-amber-200/50 hover:shadow-amber-100/50'
+                )}
+                aria-label={showExpanded ? 'Collapse dock' : 'Expand dock'}
+                title={showExpanded ? 'Collapse dock (d)' : 'Expand dock (d)'}
+            >
+                {showExpanded ? (
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-amber-600 transition-colors" />
+                ) : (
+                    <ChevronLeft className="w-4 h-4 text-gray-400 group-hover:text-amber-600 transition-colors" />
+                )}
+            </button>
 
             {/* Dock Panel */}
             <div
@@ -204,16 +209,6 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                                     <span className="font-semibold text-gray-900">Café Dock</span>
                                     <Sparkles className="w-3 h-3 text-amber-400" />
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={toggleCollapse}
-                                    className="p-2 hover:bg-white/80 rounded-lg transition-all"
-                                    aria-label="Collapse to strip"
-                                    title="Collapse to strip"
-                                >
-                                    <X className="w-4 h-4 text-gray-400" />
-                                </button>
                             </div>
                         </>
                     ) : (
