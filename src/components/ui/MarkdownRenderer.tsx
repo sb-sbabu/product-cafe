@@ -36,7 +36,7 @@ function parseMarkdown(text: string): Token[] {
     const lines = text.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
-        let line = lines[i];
+        const line = lines[i];
 
         // Code block (```...```)
         if (line.trim().startsWith('```')) {
@@ -77,14 +77,6 @@ function parseMarkdown(text: string): Token[] {
 }
 
 function parseInline(text: string, tokens: Token[]): void {
-    // Regex patterns for inline elements
-    const patterns = [
-        { regex: /\*\*([^*]+)\*\*/g, type: 'bold' as const },
-        { regex: /\*([^*]+)\*/g, type: 'italic' as const },
-        { regex: /`([^`]+)`/g, type: 'code' as const },
-        { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: 'link' as const },
-    ];
-
     // Build a combined regex to find all matches
     let lastIndex = 0;
     const matches: { start: number; end: number; token: Token }[] = [];
