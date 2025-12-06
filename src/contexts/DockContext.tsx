@@ -2,16 +2,17 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 /**
- * Dock Context - Enhanced with 3-state dock management
+ * Dock Context - Side pane with 2-state management
  * 
  * States:
- * - closed: Dock fully hidden, FAB visible
- * - collapsed: Narrow 48px strip with tab icons (desktop only)
+ * - collapsed: Narrow 48px strip with tab icons (always visible)
  * - expanded: Full 360px panel
+ * 
+ * The dock is ALWAYS visible - it never fully hides.
  */
 
 export type DockTab = 'ask' | 'discuss' | 'activity';
-export type DockState = 'closed' | 'collapsed' | 'expanded';
+export type DockState = 'collapsed' | 'expanded';
 
 export interface PageContext {
     type: 'home' | 'resource' | 'faq' | 'person' | 'search' | 'library' | 'community' | 'grab-and-go' | 'my-cafe';
@@ -101,16 +102,16 @@ export function DockProvider({ children }: { children: ReactNode }) {
         setState(prev => ({ ...prev, dockState: 'expanded' }));
     }, []);
 
-    // Close dock completely
+    // Close dock = collapse to strip (dock is always visible)
     const closeDock = useCallback(() => {
-        setState(prev => ({ ...prev, dockState: 'closed' }));
+        setState(prev => ({ ...prev, dockState: 'collapsed' }));
     }, []);
 
-    // Toggle between closed and expanded
+    // Toggle between collapsed and expanded
     const toggleDock = useCallback(() => {
         setState(prev => ({
             ...prev,
-            dockState: prev.dockState === 'closed' ? 'expanded' : 'closed',
+            dockState: prev.dockState === 'collapsed' ? 'expanded' : 'collapsed',
         }));
     }, []);
 
@@ -144,8 +145,8 @@ export function DockProvider({ children }: { children: ReactNode }) {
         setState(prev => ({ ...prev, unreadCount: count }));
     }, []);
 
-    // Computed states
-    const isOpen = state.dockState !== 'closed';
+    // Computed states - dock is always open (visible)
+    const isOpen = true; // Dock never fully hides
     const isExpanded = state.dockState === 'expanded';
     const isCollapsed = state.dockState === 'collapsed';
 

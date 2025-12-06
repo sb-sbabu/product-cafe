@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, Bell, X, ChevronRight, ChevronLeft, Coffee, Sparkles } from 'lucide-react';
+import { MessageCircle, Bell, X, ChevronLeft, Coffee, Sparkles } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock, type DockTab } from '../../contexts/DockContext';
 import { AskTab } from './AskTab';
@@ -29,12 +29,10 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     const {
         activeTab,
         unreadCount,
-        closeDock,
         setActiveTab,
         toggleCollapse,
         isExpanded,
         isCollapsed,
-        isOpen,
     } = useDock();
 
     const [isMobile, setIsMobile] = useState(false);
@@ -48,16 +46,16 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Handle escape key
+    // Handle escape key - collapse instead of close
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isOpen) {
-                closeDock();
+            if (e.key === 'Escape' && isExpanded) {
+                toggleCollapse();
             }
         };
         window.addEventListener('keydown', handleEscape);
         return () => window.removeEventListener('keydown', handleEscape);
-    }, [isOpen, closeDock]);
+    }, [isExpanded, toggleCollapse]);
 
     const tabs: { id: DockTab; label: string; icon: React.ReactNode; badge?: number }[] = [
         { id: 'ask', label: 'Ask', icon: <Coffee className="w-5 h-5" /> },
@@ -69,7 +67,8 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
         setActiveTab(tab);
     }, [setActiveTab]);
 
-    if (!isOpen) return null;
+    // Desktop dock is always visible (no closed state)
+    // Mobile uses bottom sheet overlay
 
     // Mobile: always show as bottom sheet, full expanded
     if (isMobile) {
@@ -210,14 +209,8 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                                 <button
                                     onClick={toggleCollapse}
                                     className="p-2 hover:bg-white/80 rounded-lg transition-all"
-                                    aria-label="Collapse"
-                                >
-                                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                                </button>
-                                <button
-                                    onClick={closeDock}
-                                    className="p-2 hover:bg-white/80 rounded-lg transition-all"
-                                    aria-label="Close"
+                                    aria-label="Collapse to strip"
+                                    title="Collapse to strip"
                                 >
                                     <X className="w-4 h-4 text-gray-400" />
                                 </button>

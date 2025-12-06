@@ -7,7 +7,7 @@ import { CommunityPage } from './features/community/CommunityPage';
 import { SearchResultsPage } from './features/search/SearchResultsPage';
 import { MyCafePage } from './features/my-cafe/MyCafePage';
 import { ErrorBoundary, ToastProvider, SkipLink, useToast, CommandPalette } from './components/ui';
-import { CafeDock, DockTrigger } from './components/dock';
+import { CafeDock } from './components/dock/CafeDock';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DockProvider, useDock } from './contexts/DockContext';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -155,9 +155,8 @@ function AppContent() {
         </main>
       </Layout>
 
-      {/* Café Dock - Contextual Intelligence Layer */}
+      {/* Café Dock - Always-visible side pane */}
       <CafeDock />
-      <DockTrigger />
 
       {/* Keyboard shortcuts hint - only on desktop */}
       {!isMobile && (
