@@ -1,6 +1,6 @@
 import React from 'react';
 import { Coffee, Bell, Heart, Award } from 'lucide-react';
-import { SearchBar } from '../ui/SearchBar';
+import { CafeFinderBar } from '../search/CafeFinderBar';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { usePointsStore } from '../../stores/pointsStore';
@@ -44,9 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Search - Center */}
                     <div className="flex-1 max-w-xl hidden md:block">
-                        <SearchBar
+                        <CafeFinderBar
                             placeholder="Search resources, FAQs, people..."
-                            onSearch={onSearch}
                             size="sm"
                         />
                     </div>
