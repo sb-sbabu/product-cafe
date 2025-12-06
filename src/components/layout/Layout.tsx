@@ -117,10 +117,12 @@ export const Layout: React.FC<LayoutProps> = ({
                 <span className="font-medium">Ask Café Assistant</span>
             </button>
 
-            {/* Chat Panel */}
+            {/* Chat Panel - BUG 2/3 FIX: Pass position info for dock awareness */}
             <ChatPanel
                 isOpen={isChatOpen}
                 onClose={closeChat}
+                dockWidth={dockWidth}
+                assistantPosition={dragPosition}
             />
         </div>
     );

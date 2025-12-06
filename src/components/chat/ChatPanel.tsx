@@ -10,6 +10,8 @@ import type { QuickReply } from '../../types';
 interface ChatPanelProps {
     isOpen: boolean;
     onClose: () => void;
+    dockWidth?: number;  // BUG 2 FIX: Account for dock width
+    assistantPosition?: { x: number; y: number } | null;  // BUG 3 FIX: Position near assistant
 }
 
 const initialQuickReplies: QuickReply[] = [
@@ -20,7 +22,12 @@ const initialQuickReplies: QuickReply[] = [
     { id: 'tool', label: 'Tool Help', value: 'need tool access', icon: '🔧' },
 ];
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
+export const ChatPanel: React.FC<ChatPanelProps> = ({
+    isOpen,
+    onClose,
+    dockWidth = 380,  // Default dock width
+    assistantPosition
+}) => {
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +71,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
+    // BUG 2 & 3 FIX: Calculate panel position
+    // - Always stay in main content area (not overlapping dock)
+    // - If assistant dragged, position near it; otherwise use default
+    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const isOnLeftSide = assistantPosition && assistantPosition.x < windowWidth / 2;
+
+    // Panel style calculation - respects dock width and assistant position
+    const panelStyle: React.CSSProperties = assistantPosition
+        ? {
+            // Position near assistant - adjust side based on where assistant is
+            left: isOnLeftSide ? assistantPosition.x : 'auto',
+            right: isOnLeftSide ? 'auto' : `${Math.max(dockWidth + 24, windowWidth - assistantPosition.x)}px`,
+            top: Math.max(100, assistantPosition.y - 300),
+            bottom: 'auto',
+        }
+        : {
+            // Default: position left of dock
+            right: `${dockWidth + 24}px`,
+            bottom: '24px',
+            top: 'auto',
+            left: 'auto',
+        };
+
     return (
         <>
             {/* Backdrop */}
@@ -72,17 +102,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
                 onClick={onClose}
             />
 
-            {/* Panel */}
+            {/* Panel - BUG 2 FIX: Position in main content, not over dock */}
             <div
                 className={cn(
                     `fixed z-50 bg-white shadow-2xl flex flex-col
            animate-slide-in-right`,
                     // Mobile: full screen
                     'inset-0',
-                    // Desktop: side panel
-                    'md:inset-auto md:right-4 md:bottom-4 md:top-auto md:left-auto',
+                    // Desktop: positioned based on dock and assistant
+                    'md:inset-auto',
                     'md:w-[420px] md:h-[600px] md:rounded-2xl md:max-h-[80vh]'
                 )}
+                style={panelStyle}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

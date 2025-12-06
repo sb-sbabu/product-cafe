@@ -33,11 +33,9 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
         setActiveTab,
         toggleCollapse,
         isExpanded,
-        isCollapsed,
     } = useDock();
 
     const [isMobile, setIsMobile] = useState(false);
-    const [isHovering, setIsHovering] = useState(false);
 
     // Responsive detection
     useEffect(() => {
@@ -151,8 +149,8 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
         );
     }
 
-    // Desktop: Collapsible side panel
-    const showExpanded = isExpanded || isHovering;
+    // Desktop: Collapsible side panel - NO hover logic, click-only
+    const showExpanded = isExpanded;
 
     return (
         <div
@@ -164,8 +162,6 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                 showExpanded ? 'w-[380px]' : 'w-[70px]',
                 className
             )}
-            onMouseEnter={() => isCollapsed && setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
         >
             {/* Header with Toggle */}
             <div className={cn(
