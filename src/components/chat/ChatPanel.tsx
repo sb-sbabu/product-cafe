@@ -71,28 +71,57 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
     if (!isOpen) return null;
 
-    // BUG 2 & 3 FIX: Calculate panel position
-    // - Always stay in main content area (not overlapping dock)
-    // - If assistant dragged, position near it; otherwise use default
+    // BUG 2 & 3 FIX: Calculate panel position with viewport clamping
     const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
-    const isOnLeftSide = assistantPosition && assistantPosition.x < windowWidth / 2;
+    const PANEL_WIDTH = 420;
+    const MARGIN = 24;
 
-    // Panel style calculation - respects dock width and assistant position
-    const panelStyle: React.CSSProperties = assistantPosition
-        ? {
-            // Position near assistant - adjust side based on where assistant is
-            left: isOnLeftSide ? assistantPosition.x : 'auto',
-            right: isOnLeftSide ? 'auto' : `${Math.max(dockWidth + 24, windowWidth - assistantPosition.x)}px`,
-            top: Math.max(100, assistantPosition.y - 300),
-            bottom: 'auto',
+    const panelStyle: React.CSSProperties = {};
+
+    if (assistantPosition) {
+        // Dragged position logic
+        // 1. Horizontal positioning
+        let left = assistantPosition.x;
+
+        // If on right half of screen, anchor to right side of button/screen to avoid overflow
+        // But simplest usage is to calculate Left and CLAMP it.
+
+        // If button is on right side (x > windowWidth/2), align panel to LEFT of button
+        // Assuming button width ~180px (icon + text) or ~60px (collapsed?)
+        // Let's assume user wants it "near" the click.
+
+        if (assistantPosition.x > windowWidth / 2) {
+            // Align right edge of panel near the button's x
+            // assistantPosition.x is left edge of button.
+            // We want: left = buttonLeft - PANEL_WIDTH
+            left = assistantPosition.x - PANEL_WIDTH;
         }
-        : {
-            // Default: position left of dock
-            right: `${dockWidth + 24}px`,
-            bottom: '24px',
-            top: 'auto',
-            left: 'auto',
-        };
+        // Else (left half) -> left = assistantPosition.x (anchors to left edge of button)
+
+        // CLAMP Horizontal
+        left = Math.max(MARGIN, left); // Min left
+        left = Math.min(left, windowWidth - PANEL_WIDTH - MARGIN); // Max left
+
+        panelStyle.left = left;
+        panelStyle.right = 'auto';
+
+        // 2. Vertical positioning - Ensure input visible (anchor bottom)
+        // Anchor bottom of panel near bottom of screen, but respect margin
+        // If button is higher up, we can align top to button top?
+        // But height 600px... might overflow bottom.
+        // Safest strategy: Always anchor bottom to the screen bottom margin, 
+        // effectively making it a "docked" panel at bottom, horizontally aligned with button.
+
+        panelStyle.bottom = MARGIN;
+        panelStyle.top = 'auto';
+
+    } else {
+        // Default position (not dragged) - docked to right
+        panelStyle.right = dockWidth + MARGIN;
+        panelStyle.bottom = MARGIN;
+        panelStyle.left = 'auto';
+        panelStyle.top = 'auto';
+    }
 
     return (
         <>

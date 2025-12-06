@@ -158,14 +158,14 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                 'h-screen flex flex-col shrink-0',
                 'bg-white/95 backdrop-blur-xl',
                 'border-l border-gray-200/80',
-                'shadow-2xl transition-all duration-300 ease-out',
+                'shadow-2xl transition-all duration-300 ease-out will-change-[width]',
                 showExpanded ? 'w-[380px]' : 'w-[70px]',
                 className
             )}
         >
-            {/* Header with Toggle */}
+            {/* Header with Toggle - Matches main Header h-16 (64px) */}
             <div className={cn(
-                'flex items-center justify-between px-3 py-3 border-b border-gray-100/80 shrink-0',
+                'flex items-center justify-between px-4 border-b border-gray-100/80 shrink-0 h-16',
                 'bg-gradient-to-r from-amber-50/50 to-orange-50/50'
             )}>
                 {showExpanded ? (

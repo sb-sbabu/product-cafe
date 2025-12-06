@@ -22,7 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({
     isMobile,
 }) => {
     const { isChatOpen, openChat, closeChat } = useUIStore();
-    const { dockWidth } = useDock();
+    const { dockWidth, isExpanded } = useDock();
 
     // BUG 2b FIX: Draggable state for Café Assistant button
     const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
@@ -61,11 +61,12 @@ export const Layout: React.FC<LayoutProps> = ({
                 onChatOpen={openChat}
             />
 
-            {/* Main Content - Squeeze Layout: shrinks when dock expands */}
+            {/* Main Content - Squeeze Layout: shrinks ONLY when dock expands */}
             <main
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6 transition-all duration-300 ease-out"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6 transition-all duration-300 ease-out will-change-[margin] transform-gpu"
                 style={{
-                    marginRight: !isMobile ? `${dockWidth}px` : undefined,
+                    // BUG 1 FIX: Only shift layout when expanded. Collapsed state stays centered.
+                    marginRight: !isMobile && isExpanded ? '380px' : undefined,
                 }}
             >
                 {children}
