@@ -298,6 +298,7 @@ class SearchIndex {
         faqs: FAQResult[];
         resources: ResourceResult[];
         discussions: DiscussionResult[];
+        lopSessions: [];  // Placeholder - LOP sessions not yet implemented
     } {
         return {
             people: this.searchPeople(query, limitPerType),
@@ -305,6 +306,7 @@ class SearchIndex {
             faqs: this.searchFAQs(query, limitPerType),
             resources: this.searchResources(query, limitPerType),
             discussions: this.searchDiscussions(query, limitPerType),
+            lopSessions: [],  // TODO: Implement LOP sessions search in Phase 2
         };
     }
 }

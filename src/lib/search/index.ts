@@ -8,14 +8,12 @@ import type {
     SearchResponse,
     SearchContext,
     SearchConfig,
-    SearchResult,
     SearchMetrics,
-    DEFAULT_SEARCH_CONFIG,
 } from './types';
 import { processQuery } from './queryProcessor';
 import { classifyIntent } from './intentClassifier';
 import { extractEntities } from './entityExtractor';
-import { searchIndex, flattenResults, countResults } from './searchIndex';
+import { searchIndex, countResults } from './searchIndex';
 
 // Default config (inline to avoid import issues)
 const DEFAULT_CONFIG: SearchConfig = {
@@ -66,87 +64,167 @@ class CafeFinderEngine {
         const startTime = performance.now();
 
         // Ensure initialized
-        if (!this.initialized) this.initialize();
+        if (!this.initialized) {
+            try {
+                this.initialize();
+            } catch (initError) {
+                console.error('[CafeFinder] Failed to initialize:', initError);
+                return this.createEmptyResponse(rawQuery, startTime, 'Search engine initialization failed');
+            }
+        }
+
+        // Handle null/undefined/empty query
+        if (!rawQuery || typeof rawQuery !== 'string' || !rawQuery.trim()) {
+            return this.createEmptyResponse('', startTime);
+        }
 
         // Track timing
         const metrics: Partial<SearchMetrics> = {
             timestamp: new Date().toISOString(),
         };
 
-        // ============================================
-        // STEP 1: Query Processing
-        // ============================================
-        const queryProcessingStart = performance.now();
+        try {
+            // ============================================
+            // STEP 1: Query Processing
+            // ============================================
+            const queryProcessingStart = performance.now();
 
-        const processedQuery = processQuery(rawQuery, context);
+            const processedQuery = processQuery(rawQuery, context);
 
-        // Extract entities
-        const entities = extractEntities(rawQuery, processedQuery.tokens);
+            // If query processing failed (empty result), return early
+            if (!processedQuery.normalized && !processedQuery.tokens.length) {
+                return this.createEmptyResponse(rawQuery, startTime);
+            }
 
-        // Classify intent
-        const intent = classifyIntent(rawQuery, processedQuery.tokens);
+            // Extract entities
+            const entities = extractEntities(rawQuery, processedQuery.tokens);
 
-        const query: SearchQuery = {
-            ...processedQuery,
-            entities,
-            intent,
+            // Classify intent
+            const intent = classifyIntent(rawQuery, processedQuery.tokens);
+
+            const query: SearchQuery = {
+                ...processedQuery,
+                entities,
+                intent,
+            };
+
+            metrics.queryProcessingMs = performance.now() - queryProcessingStart;
+
+            // ============================================
+            // STEP 2: Search Execution
+            // ============================================
+            const searchExecutionStart = performance.now();
+
+            // Get search terms (use expanded tokens for better recall)
+            const searchTerms = query.expandedTokens.length > 0
+                ? query.expandedTokens.join(' ')
+                : query.normalized;
+
+            // Guard against empty search terms
+            if (!searchTerms.trim()) {
+                return this.createEmptyResponse(rawQuery, startTime);
+            }
+
+            // Execute searches across all indexes
+            const rawResults = searchIndex.searchAll(
+                searchTerms,
+                this.config.maxResultsPerType
+            );
+
+            metrics.searchExecutionMs = performance.now() - searchExecutionStart;
+
+            // ============================================
+            // STEP 3: Re-ranking (boost by intent)
+            // ============================================
+            const rerankResults = this.rerankByIntent(rawResults, query);
+
+            // ============================================
+            // STEP 4: Answer Synthesis (placeholder for now)
+            // ============================================
+            const answerSynthesisStart = performance.now();
+
+            // TODO: Implement in Phase 3
+            const answer = undefined;
+
+            metrics.answerSynthesisMs = performance.now() - answerSynthesisStart;
+
+            // ============================================
+            // STEP 5: Build Response
+            // ============================================
+            metrics.totalTimeMs = performance.now() - startTime;
+
+            const response: SearchResponse = {
+                query,
+                answer,
+                results: rerankResults,
+                totalCount: countResults(rerankResults),
+                metrics: metrics as SearchMetrics,
+                suggestions: this.generateSuggestions(query, rerankResults),
+            };
+
+            // Debug logging (use console.debug which can be filtered)
+            console.debug(`[CafeFinder] Search: "${rawQuery}" → ${response.totalCount} results in ${metrics.totalTimeMs?.toFixed(1)}ms (${intent.primary})`);
+
+            return response;
+        } catch (error) {
+            console.error('[CafeFinder] Search failed:', error);
+            return this.createEmptyResponse(
+                rawQuery,
+                startTime,
+                error instanceof Error ? error.message : 'Search failed'
+            );
+        }
+    }
+
+    /**
+     * Create an empty response (for errors or empty queries)
+     */
+    private createEmptyResponse(
+        rawQuery: string,
+        startTime: number,
+        errorMessage?: string
+    ): SearchResponse {
+        const emptyResults = {
+            people: [],
+            tools: [],
+            faqs: [],
+            resources: [],
+            discussions: [],
+            lopSessions: [],
         };
 
-        metrics.queryProcessingMs = performance.now() - queryProcessingStart;
-
-        // ============================================
-        // STEP 2: Search Execution
-        // ============================================
-        const searchExecutionStart = performance.now();
-
-        // Get search terms (use expanded tokens for better recall)
-        const searchTerms = query.expandedTokens.length > 0
-            ? query.expandedTokens.join(' ')
-            : query.normalized;
-
-        // Execute searches across all indexes
-        const rawResults = searchIndex.searchAll(
-            searchTerms,
-            this.config.maxResultsPerType
-        );
-
-        metrics.searchExecutionMs = performance.now() - searchExecutionStart;
-
-        // ============================================
-        // STEP 3: Re-ranking (boost by intent)
-        // ============================================
-        const rerankResults = this.rerankByIntent(rawResults, query);
-
-        // ============================================
-        // STEP 4: Answer Synthesis (placeholder for now)
-        // ============================================
-        const answerSynthesisStart = performance.now();
-
-        // TODO: Implement in Phase 3
-        const answer = undefined;
-
-        metrics.answerSynthesisMs = performance.now() - answerSynthesisStart;
-
-        // ============================================
-        // STEP 5: Build Response
-        // ============================================
-        metrics.totalTimeMs = performance.now() - startTime;
-
-        const response: SearchResponse = {
-            query,
-            answer,
-            results: rerankResults,
-            totalCount: countResults(rerankResults),
-            metrics: metrics as SearchMetrics,
-            suggestions: this.generateSuggestions(query, rerankResults),
+        return {
+            query: {
+                raw: rawQuery,
+                normalized: rawQuery?.toLowerCase?.()?.trim?.() || '',
+                tokens: [],
+                expandedTokens: [],
+                entities: [],
+                intent: {
+                    primary: 'GENERAL_SEARCH',
+                    confidence: 0,
+                    secondary: [],
+                    queryType: 'KEYWORD',
+                    expectedResult: 'MIXED',
+                },
+            },
+            answer: undefined,
+            results: emptyResults,
+            totalCount: 0,
+            metrics: {
+                totalTimeMs: performance.now() - startTime,
+                queryProcessingMs: 0,
+                searchExecutionMs: 0,
+                answerSynthesisMs: 0,
+                timestamp: new Date().toISOString(),
+            },
+            suggestions: errorMessage
+                ? ['Try a different search', 'Browse all resources']
+                : this.generateSuggestions(
+                    { raw: rawQuery, normalized: '', tokens: [], expandedTokens: [], entities: [], intent: { primary: 'GENERAL_SEARCH', confidence: 0, secondary: [], queryType: 'KEYWORD', expectedResult: 'MIXED' } },
+                    emptyResults
+                ),
         };
-
-        console.log(`[CafeFinder] Search completed in ${metrics.totalTimeMs?.toFixed(2)}ms`);
-        console.log(`[CafeFinder] Intent: ${intent.primary} (${(intent.confidence * 100).toFixed(0)}%)`);
-        console.log(`[CafeFinder] Entities:`, entities.map(e => `${e.type}:${e.normalizedValue}`));
-        console.log(`[CafeFinder] Results: ${response.totalCount}`);
-
-        return response;
     }
 
     /**

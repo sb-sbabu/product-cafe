@@ -182,8 +182,86 @@ export function extractQuotedPhrases(query: string): {
 }
 
 // ============================================
+// INPUT VALIDATION CONSTANTS
+// ============================================
+
+/** Maximum allowed query length to prevent DoS */
+const MAX_QUERY_LENGTH = 500;
+
+/** Minimum query length to trigger search */
+const MIN_QUERY_LENGTH = 1;
+
+/** Patterns that could indicate malicious input */
+const SUSPICIOUS_PATTERNS = [
+    /<script/i,
+    /javascript:/i,
+    /on\w+=/i,
+    /data:/i,
+];
+
+// ============================================
 // MAIN QUERY PROCESSOR
 // ============================================
+
+/**
+ * Sanitize input to remove potentially harmful characters
+ */
+export function sanitizeInput(input: string): string {
+    if (!input || typeof input !== 'string') return '';
+
+    return input
+        // Remove null bytes
+        .replace(/\0/g, '')
+        // Remove control characters (except newline, tab)
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // Trim excessive whitespace
+        .trim();
+}
+
+/**
+ * Check if query contains suspicious patterns
+ */
+export function containsSuspiciousPatterns(query: string): boolean {
+    return SUSPICIOUS_PATTERNS.some(pattern => pattern.test(query));
+}
+
+/**
+ * Validate query input
+ */
+export function validateQuery(rawQuery: unknown): { valid: boolean; error?: string; sanitized: string } {
+    // Type check
+    if (rawQuery === null || rawQuery === undefined) {
+        return { valid: false, error: 'Query is required', sanitized: '' };
+    }
+
+    if (typeof rawQuery !== 'string') {
+        return { valid: false, error: 'Query must be a string', sanitized: '' };
+    }
+
+    // Sanitize
+    const sanitized = sanitizeInput(rawQuery);
+
+    // Minimum length check
+    if (sanitized.length < MIN_QUERY_LENGTH) {
+        return { valid: false, error: 'Query is too short', sanitized };
+    }
+
+    // Maximum length check
+    if (sanitized.length > MAX_QUERY_LENGTH) {
+        return {
+            valid: false,
+            error: `Query exceeds maximum length of ${MAX_QUERY_LENGTH} characters`,
+            sanitized: sanitized.slice(0, MAX_QUERY_LENGTH)
+        };
+    }
+
+    // Suspicious pattern check (warn but allow)
+    if (containsSuspiciousPatterns(sanitized)) {
+        console.warn('[QueryProcessor] Suspicious pattern detected in query:', sanitized.slice(0, 50));
+    }
+
+    return { valid: true, sanitized };
+}
 
 /**
  * Process a raw search query
@@ -192,8 +270,11 @@ export function processQuery(
     rawQuery: string,
     context?: SearchContext
 ): Omit<SearchQuery, 'entities' | 'intent'> {
-    // Handle empty query
-    if (!rawQuery || !rawQuery.trim()) {
+    // Validate and sanitize input
+    const validation = validateQuery(rawQuery);
+
+    // Handle empty/invalid query
+    if (!validation.valid || !validation.sanitized.trim()) {
         return {
             raw: '',
             normalized: '',
@@ -203,29 +284,43 @@ export function processQuery(
         };
     }
 
-    // Normalize
-    const normalized = normalizeQuery(rawQuery);
+    const sanitizedQuery = validation.sanitized;
 
-    // Extract quoted phrases
-    const { phrases, remainder } = extractQuotedPhrases(rawQuery);
+    try {
+        // Normalize
+        const normalized = normalizeQuery(sanitizedQuery);
 
-    // Tokenize
-    const tokens = tokenize(remainder);
-    const normalizedTokens = tokens.map(normalizeToken).filter(Boolean);
+        // Extract quoted phrases
+        const { phrases, remainder } = extractQuotedPhrases(sanitizedQuery);
 
-    // Add quoted phrases as single tokens
-    const allTokens = [...normalizedTokens, ...phrases.map(p => p.toLowerCase())];
+        // Tokenize
+        const tokens = tokenize(remainder);
+        const normalizedTokens = tokens.map(normalizeToken).filter(Boolean);
 
-    // Expand with synonyms
-    const expandedTokens = expandWithSynonyms(allTokens);
+        // Add quoted phrases as single tokens
+        const allTokens = [...normalizedTokens, ...phrases.map(p => p.toLowerCase())];
 
-    return {
-        raw: rawQuery,
-        normalized,
-        tokens: allTokens,
-        expandedTokens,
-        context,
-    };
+        // Expand with synonyms (limit to prevent explosion)
+        const expandedTokens = expandWithSynonyms(allTokens).slice(0, 50);
+
+        return {
+            raw: sanitizedQuery,
+            normalized,
+            tokens: allTokens,
+            expandedTokens,
+            context,
+        };
+    } catch (error) {
+        console.error('[QueryProcessor] Error processing query:', error);
+        // Return safe fallback
+        return {
+            raw: sanitizedQuery,
+            normalized: sanitizedQuery.toLowerCase().trim(),
+            tokens: sanitizedQuery.toLowerCase().split(/\s+/).filter(Boolean),
+            expandedTokens: [],
+            context,
+        };
+    }
 }
 
 /**

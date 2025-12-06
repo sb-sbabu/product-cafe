@@ -198,6 +198,12 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                     onFocus={() => setIsFocused(true)}
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
+                    role="combobox"
+                    aria-expanded={showDropdown}
+                    aria-haspopup="listbox"
+                    aria-autocomplete="list"
+                    aria-controls="cafe-finder-results"
+                    aria-describedby="cafe-finder-hint"
                     className={cn(
                         'w-full bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400',
                         'transition-all duration-200',
@@ -207,6 +213,9 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                         isFocused && 'ring-2 ring-cafe-500/20 border-cafe-500 shadow-lg'
                     )}
                 />
+                <span id="cafe-finder-hint" className="sr-only">
+                    Type to search. Use up and down arrows to navigate results, Enter to select.
+                </span>
 
                 {/* Shortcut Badge or Clear Button */}
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -230,6 +239,9 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
             {showDropdown && (
                 <div
                     ref={dropdownRef}
+                    id="cafe-finder-results"
+                    role="listbox"
+                    aria-label="Search results"
                     className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden z-50 max-h-[400px] overflow-y-auto"
                 >
                     {/* Results */}

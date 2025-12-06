@@ -102,15 +102,23 @@ export const useSearchStore = create<SearchState>()(
                 }
             },
 
-            // Quick search (for autocomplete, no recent tracking)
+            // Quick search (for autocomplete, with error handling)
             quickSearch: (query) => {
-                if (!query.trim()) {
-                    set({ results: null });
+                if (!query || typeof query !== 'string' || !query.trim()) {
+                    set({ results: null, error: null });
                     return;
                 }
 
-                const results = cafeFinder.search(query, get().context || undefined);
-                set({ results, query });
+                try {
+                    const results = cafeFinder.search(query, get().context || undefined);
+                    set({ results, query, error: null, isSearching: false });
+                } catch (error) {
+                    console.error('[SearchStore] Quick search error:', error);
+                    set({
+                        error: error instanceof Error ? error.message : 'Search failed',
+                        isSearching: false
+                    });
+                }
             },
 
             // Clear results
