@@ -12,6 +12,7 @@ import {
 import { mockPeople } from '../../data/mockData';
 import { formatDistanceToNow } from '../../lib/utils';
 import { ThreadedReplies } from './ThreadedReplies';
+import { NewDiscussionForm } from './NewDiscussionForm';
 
 /**
  * DiscussTab - Threaded discussions tab within Café Dock
@@ -184,6 +185,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({ discussion, onBack }) => {
 export const DiscussTab: React.FC = () => {
     const { pageContext } = useDock();
     const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
+    const [showNewDiscussionForm, setShowNewDiscussionForm] = useState(false);
 
     // Get discussions based on context
     const discussions = pageContext.resourceId
@@ -218,11 +220,20 @@ export const DiscussTab: React.FC = () => {
 
             {/* New discussion button */}
             <div className="p-3 shrink-0">
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cafe-500 text-white text-sm font-medium rounded-lg hover:bg-cafe-600 transition-colors">
+                <button
+                    onClick={() => setShowNewDiscussionForm(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm hover:shadow"
+                >
                     <MessageSquarePlus className="w-4 h-4" />
                     New Discussion
                 </button>
             </div>
+
+            {/* New Discussion Form Modal */}
+            <NewDiscussionForm
+                isOpen={showNewDiscussionForm}
+                onClose={() => setShowNewDiscussionForm(false)}
+            />
 
             {/* Discussion list */}
             <div className="flex-1 overflow-y-auto">
