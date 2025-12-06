@@ -48,6 +48,7 @@ interface DockContextType extends DockContextState {
     isOpen: boolean;
     isExpanded: boolean;
     isCollapsed: boolean;
+    dockWidth: number; // For squeeze layout
 }
 
 const DockContext = createContext<DockContextType | undefined>(undefined);
@@ -149,6 +150,7 @@ export function DockProvider({ children }: { children: ReactNode }) {
     const isOpen = true; // Dock never fully hides
     const isExpanded = state.dockState === 'expanded';
     const isCollapsed = state.dockState === 'collapsed';
+    const dockWidth = isExpanded ? 380 : 70; // For squeeze layout
 
     return (
         <DockContext.Provider value={{
@@ -165,6 +167,7 @@ export function DockProvider({ children }: { children: ReactNode }) {
             isOpen,
             isExpanded,
             isCollapsed,
+            dockWidth,
         }}>
             {children}
         </DockContext.Provider>

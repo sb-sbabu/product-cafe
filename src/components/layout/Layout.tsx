@@ -4,6 +4,7 @@ import { Navigation } from './Navigation';
 import { ChatPanel } from '../chat/ChatPanel';
 import { cn } from '../../lib/utils';
 import { useUIStore } from '../../stores';
+import { useDock } from '../../contexts/DockContext';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -18,8 +19,10 @@ export const Layout: React.FC<LayoutProps> = ({
     activeNav = 'home',
     onNavigate,
     onSearch,
+    isMobile,
 }) => {
     const { isChatOpen, openChat, closeChat } = useUIStore();
+    const { dockWidth } = useDock();
 
     return (
         <div className="min-h-screen bg-surface-muted">
@@ -34,8 +37,13 @@ export const Layout: React.FC<LayoutProps> = ({
                 onChatOpen={openChat}
             />
 
-            {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6">
+            {/* Main Content - Squeeze Layout: shrinks when dock expands */}
+            <main
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6 transition-all duration-300 ease-out"
+                style={{
+                    marginRight: !isMobile ? `${dockWidth}px` : undefined,
+                }}
+            >
                 {children}
             </main>
 
