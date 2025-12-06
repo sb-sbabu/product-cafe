@@ -27,56 +27,89 @@ interface DiscussionCardProps {
 }
 
 const DiscussionCard: React.FC<DiscussionCardProps> = ({ discussion, onClick }) => {
-    const statusColors = {
-        open: 'bg-amber-100 text-amber-700',
-        resolved: 'bg-green-100 text-green-700',
-        stale: 'bg-gray-100 text-gray-500',
+    const statusConfig = {
+        open: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', pill: 'bg-amber-100' },
+        resolved: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', pill: 'bg-green-100' },
+        stale: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-500', pill: 'bg-gray-100' },
     };
 
+    const style = statusConfig[discussion.status];
     const StatusIcon = discussion.status === 'resolved' ? CheckCircle : Clock;
 
+    // Get mock participants for facepile (would come from API in real app)
+    const participants = mockPeople.slice(0, Math.min(3, discussion.replyCount + 1));
+
     return (
-        <button
+        <div
+            className={cn(
+                'group bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer m-2',
+                'hover:border-amber-200/50 hover:-translate-y-0.5',
+                style.border
+            )}
             onClick={onClick}
-            className="w-full text-left p-3 bg-white hover:bg-gray-50 border-b border-gray-100 transition-colors"
         >
-            <div className="flex items-start justify-between gap-2 mb-1">
-                <span className="text-sm font-medium text-gray-900 line-clamp-1">
-                    {discussion.authorName}
-                </span>
-                <span className="text-xs text-gray-400 shrink-0">
-                    {formatDistanceToNow(new Date(discussion.createdAt))}
-                </span>
-            </div>
-
-            <h4 className="text-sm font-semibold text-gray-800 mb-1 line-clamp-1">
-                {discussion.title}
-            </h4>
-
-            <p className="text-xs text-gray-500 line-clamp-2 mb-2">
-                {discussion.body}
-            </p>
-
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        {discussion.replyCount}
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" />
-                        {discussion.upvoteCount}
+            {/* Card Header - Title + Metadata */}
+            <div className="px-3 pt-3 pb-2 border-b border-gray-50">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                    <h4 className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-amber-700 transition-colors">
+                        {discussion.title}
+                    </h4>
+                    <span className={cn(
+                        'text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 font-medium',
+                        style.pill, style.text
+                    )}>
+                        <StatusIcon className="w-2.5 h-2.5" />
+                        {discussion.status}
                     </span>
                 </div>
-                <span className={cn(
-                    'text-xs px-2 py-0.5 rounded-full flex items-center gap-1',
-                    statusColors[discussion.status]
-                )}>
-                    <StatusIcon className="w-3 h-3" />
-                    {discussion.status.charAt(0).toUpperCase() + discussion.status.slice(1)}
-                </span>
+                <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                    <span className="font-mono">#{discussion.id.slice(-4)}</span>
+                    <span>•</span>
+                    <span>{formatDistanceToNow(new Date(discussion.createdAt))}</span>
+                </div>
             </div>
-        </button>
+
+            {/* Card Body - Preview */}
+            <div className="px-3 py-2">
+                <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                    {discussion.body}
+                </p>
+            </div>
+
+            {/* Card Footer - Stats + Facepile */}
+            <div className="px-3 pb-2.5 flex items-center justify-between">
+                {/* Stats */}
+                <div className="flex items-center gap-2.5 text-[10px] text-gray-400">
+                    <span className="flex items-center gap-0.5 hover:text-amber-600 transition-colors">
+                        <MessageCircle className="w-3 h-3" />
+                        <span className="font-medium">{discussion.replyCount}</span>
+                    </span>
+                    <span className="flex items-center gap-0.5 hover:text-amber-600 transition-colors">
+                        <ThumbsUp className="w-3 h-3" />
+                        <span className="font-medium">{discussion.upvoteCount}</span>
+                    </span>
+                </div>
+
+                {/* Participant Facepile */}
+                <div className="flex items-center -space-x-1.5">
+                    {participants.map((person, idx) => (
+                        <div
+                            key={person.id}
+                            className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 border-2 border-white flex items-center justify-center text-[8px] font-semibold text-amber-700"
+                            style={{ zIndex: participants.length - idx }}
+                            title={person.displayName}
+                        >
+                            {person.displayName.charAt(0)}
+                        </div>
+                    ))}
+                    {discussion.replyCount > 3 && (
+                        <div className="w-5 h-5 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-[8px] font-medium text-gray-500">
+                            +{discussion.replyCount - 3}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -186,13 +219,29 @@ export const DiscussTab: React.FC = () => {
     const { pageContext } = useDock();
     const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
     const [showNewDiscussionForm, setShowNewDiscussionForm] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<'all' | 'mentions' | 'unread' | 'action'>('all');
+
+    // Filter capsules configuration
+    const filterCapsules = [
+        { id: 'all' as const, label: 'All', count: null },
+        { id: 'mentions' as const, label: 'Mentions', count: 2 },
+        { id: 'unread' as const, label: 'Unread', count: 3 },
+        { id: 'action' as const, label: 'Action', count: 1 },
+    ];
 
     // Get discussions based on context
-    const discussions = pageContext.resourceId
+    const allDiscussions = pageContext.resourceId
         ? getDiscussionsByResource(pageContext.resourceId)
         : pageContext.type === 'home'
             ? getRecentDiscussions(5)
             : getGeneralDiscussions();
+
+    // Apply filter (simplified - in real app would use backend filtering)
+    const discussions = activeFilter === 'all'
+        ? allDiscussions
+        : activeFilter === 'action'
+            ? allDiscussions.filter(d => d.status === 'open')
+            : allDiscussions.slice(0, activeFilter === 'unread' ? 3 : 2);
 
     // Get potential experts for this context
     const experts = pageContext.resourceId
@@ -217,6 +266,36 @@ export const DiscussTab: React.FC = () => {
                     <h4 className="text-sm font-medium text-gray-900 truncate">{pageContext.title}</h4>
                 </div>
             )}
+
+            {/* Filter Bar - Capsule Filters */}
+            <div className="px-3 py-2 border-b border-gray-100 shrink-0">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                    {filterCapsules.map(filter => (
+                        <button
+                            key={filter.id}
+                            onClick={() => setActiveFilter(filter.id)}
+                            className={cn(
+                                'flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap',
+                                activeFilter === filter.id
+                                    ? 'bg-amber-500 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            )}
+                        >
+                            {filter.label}
+                            {filter.count !== null && (
+                                <span className={cn(
+                                    'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                                    activeFilter === filter.id
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-amber-100 text-amber-700'
+                                )}>
+                                    {filter.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* New discussion button */}
             <div className="p-3 shrink-0">

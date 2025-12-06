@@ -191,7 +191,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                     'h-full bg-white/95 backdrop-blur-xl flex flex-col',
                     'border-l border-gray-200/80',
                     'shadow-2xl transition-all duration-300 ease-out',
-                    showExpanded ? 'w-[360px]' : 'w-[48px]'
+                    showExpanded ? 'w-[380px]' : 'w-[70px]'
                 )}
             >
                 {/* Header */}
