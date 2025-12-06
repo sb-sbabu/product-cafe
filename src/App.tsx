@@ -6,13 +6,19 @@ import { LibraryPage } from './features/library/LibraryPage';
 import { CommunityPage } from './features/community/CommunityPage';
 import { SearchResultsPage } from './features/search/SearchResultsPage';
 import { MyCafePage } from './features/my-cafe/MyCafePage';
+import { GamificationDemo } from './features/demo/GamificationDemo';
+import { AdminPage } from './features/admin/AdminPage';
+import { ProfilePage } from './features/profile/ProfilePage';
+import { LeaderboardPage } from './features/leaderboard/LeaderboardPage';
 import { ErrorBoundary, ToastProvider, SkipLink, useToast, CommandPalette } from './components/ui';
 import { CafeDock } from './components/dock/CafeDock';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DockProvider, useDock } from './contexts/DockContext';
+import { GamificationProvider } from './contexts/GamificationContext';
 import { useAnalytics } from './hooks/useAnalytics';
+import { GamificationEngine } from './components/gamification/GamificationEngine';
 
-type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe';
+type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard';
 
 // Hook for responsive detection
 function useIsMobile() {
@@ -29,7 +35,13 @@ function useIsMobile() {
 }
 
 function AppContent() {
-  const [activePage, setActivePage] = useState<ActivePage>('home');
+  const [activePage, setActivePage] = useState<ActivePage>(() => {
+    const path = window.location.pathname;
+    if (path === '/demo') return 'demo';
+    if (path === '/leaderboard') return 'leaderboard';
+    if (path === '/admin') return 'admin';
+    return 'home';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -41,7 +53,9 @@ function AppContent() {
   // Track page views and update dock context
   useEffect(() => {
     trackPageView(activePage);
-    setPageContext({ type: activePage });
+    if (activePage !== 'demo') {
+      setPageContext({ type: activePage });
+    }
   }, [activePage, trackPageView, setPageContext]);
 
   const handleNavigate = useCallback((pageId: string) => {
@@ -126,6 +140,14 @@ function AppContent() {
         return <SearchResultsPage initialQuery={searchQuery} onNavigate={handleNavigate} />;
       case 'my-cafe':
         return <MyCafePage onNavigate={handleNavigate} />;
+      case 'demo':
+        return <GamificationDemo />;
+      case 'admin':
+        return <AdminPage />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'leaderboard':
+        return <LeaderboardPage />;
       default:
         return <HomePage onNavigate={handleNavigate} userName={user?.firstName || 'there'} />;
     }
@@ -192,9 +214,12 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <DockProvider>
-          <ToastProvider>
-            <AppContent />
-          </ToastProvider>
+          <GamificationProvider>
+            <GamificationEngine />
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </GamificationProvider>
         </DockProvider>
       </AuthProvider>
     </ErrorBoundary>

@@ -1,4 +1,5 @@
 import type { Person } from '../types';
+import type { Reaction } from '../types/gamification';
 
 // ========================================
 // DISCUSSION TYPES
@@ -16,8 +17,11 @@ export interface Discussion {
     status: 'open' | 'resolved' | 'stale';
     resolvedAt?: string;
     resolvedById?: string;
+    acceptedReplyId?: string; // Best answer
     replyCount: number;
     upvoteCount: number;
+    upvotedBy?: string[]; // User IDs who upvoted
+    reactions?: Reaction[]; // Emoji reactions
     viewCount: number;
     promotedToFAQId?: string;
     createdAt: string;
@@ -36,6 +40,8 @@ export interface Reply {
     authorName: string;
     isExpert: boolean;
     upvoteCount: number;
+    upvotedBy?: string[]; // User IDs who upvoted
+    reactions?: Reaction[]; // Emoji reactions
     isAcceptedAnswer: boolean;
     createdAt: string;
     updatedAt: string;
@@ -50,8 +56,8 @@ export const mockDiscussions: Discussion[] = [
         id: 'd1',
         attachedToType: 'resource',
         attachedToId: 'r5', // COB Decision Tree
-        title: 'Medicare Secondary Payer clarification',
-        body: "This doc doesn't cover Medicare Secondary Payer rules. Should we add a section or link to a separate guide? I've had 3 people ask me about MSP in the past week.",
+        title: 'Medicare Secondary Payer clarification #priority/high #team/claims',
+        body: "I've been reviewing the new MSP requirements. There seems to be a conflict with our current payment logic regarding primacy. Need a SME to clarify. #priority/high #team/claims #type/gap #status/blocked",
         authorId: 'p2',
         authorEmail: 'sarah.chen@company.com',
         authorName: 'Sarah Chen',

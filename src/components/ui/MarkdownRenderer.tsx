@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { cn } from '../../lib/utils';
+import { TagPill } from './TagPill';
+import { useTagStore } from '../../stores/tagStore';
 
 /**
  * MarkdownRenderer - Safe markdown parsing for discussions/comments
@@ -29,6 +31,7 @@ type Token =
     | { type: 'link'; text: string; url: string }
     | { type: 'bullet'; content: string }
     | { type: 'blockquote'; content: string }
+    | { type: 'hashtag'; content: string } // New Token
     | { type: 'newline' };
 
 function parseMarkdown(text: string): Token[] {
@@ -110,6 +113,13 @@ function parseInline(text: string, tokens: Token[]): void {
         matches.push({ start: match.index, end: match.index + match[0].length, token: { type: 'link', text: match[1], url: match[2] } });
     }
 
+    // Hashtags: #namespace/value or #tag
+    // Negative lookbehind (?<!\w) to ensure we don't match mid-word (e.g. email#hash)
+    const hashtagRegex = /(?<!\w)#([a-zA-Z0-9_\-/]+)/g;
+    while ((match = hashtagRegex.exec(text)) !== null) {
+        matches.push({ start: match.index, end: match.index + match[0].length, token: { type: 'hashtag', content: match[0] } });
+    }
+
     // Sort matches by position
     matches.sort((a, b) => a.start - b.start);
 
@@ -130,6 +140,16 @@ function parseInline(text: string, tokens: Token[]): void {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className }) => {
     const tokens = parseMarkdown(content);
+    const { registerTag } = useTagStore();
+
+    // Auto-register tags found in content
+    useEffect(() => {
+        tokens.forEach(token => {
+            if (token.type === 'hashtag') {
+                registerTag(token.content);
+            }
+        });
+    }, [content, registerTag]); // Depend on content string
 
     return (
         <div className={cn('markdown-body leading-relaxed', className)}>
@@ -142,6 +162,10 @@ function renderToken(token: Token, key: number): React.ReactNode {
     switch (token.type) {
         case 'text':
             return <span key={key}>{token.content}</span>;
+
+        case 'hashtag':
+            return <TagPill key={key} tag={token.content} size="sm" className="mx-0.5 align-middle" />;
+
 
         case 'bold':
             return <strong key={key} className="font-semibold text-gray-900">{token.content}</strong>;

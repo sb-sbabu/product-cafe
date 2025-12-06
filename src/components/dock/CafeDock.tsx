@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, Bell, ChevronLeft, ChevronRight, Coffee, Sparkles, X } from 'lucide-react';
+import { MessageCircle, Bell, ChevronLeft, ChevronRight, Coffee, Sparkles, X, Hash } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock, type DockTab } from '../../contexts/DockContext';
 import { AskTab } from './AskTab';
 import { DiscussTab } from './DiscussTab';
 import { ActivityTab } from './ActivityTab';
+import { TagDirectory } from './TagDirectory';
 
 /**
  * CafeDock - Premium collapsible side panel
@@ -59,6 +60,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     const tabs: { id: DockTab; label: string; icon: React.ReactNode; badge?: number }[] = [
         { id: 'ask', label: 'Ask', icon: <Coffee className="w-5 h-5" /> },
         { id: 'discuss', label: 'Discuss', icon: <MessageCircle className="w-5 h-5" /> },
+        { id: 'directory', label: 'Directory', icon: <Hash className="w-5 h-5" /> },
         { id: 'activity', label: 'Activity', icon: <Bell className="w-5 h-5" />, badge: unreadCount },
     ];
 
@@ -142,6 +144,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                     <div className="flex-1 overflow-hidden min-h-0">
                         {activeTab === 'ask' && <AskTab />}
                         {activeTab === 'discuss' && <DiscussTab />}
+                        {activeTab === 'directory' && <TagDirectory onSelectTag={() => setActiveTab('discuss')} />}
                         {activeTab === 'activity' && <ActivityTab />}
                     </div>
                 </div>
@@ -237,23 +240,19 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                             {tab.icon}
                             {tab.badge && tab.badge > 0 && (
                                 <span className={cn(
-                                    'absolute flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full',
-                                    showExpanded
-                                        ? '-top-1 -right-1 min-w-[16px] h-[16px] px-1'
-                                        : '-top-1 -right-1 min-w-[14px] h-[14px] px-0.5'
+                                    'absolute -top-1 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1',
+                                    !showExpanded && 'scale-75'
                                 )}>
-                                    {tab.badge > 9 ? '9+' : tab.badge}
+                                    {tab.badge}
                                 </span>
                             )}
                         </div>
                         {showExpanded && <span>{tab.label}</span>}
-
-                        {/* Active indicator */}
                         {activeTab === tab.id && showExpanded && (
                             <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full" />
                         )}
                         {activeTab === tab.id && !showExpanded && (
-                            <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-amber-500 rounded-full" />
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-amber-500 rounded-r-full" />
                         )}
                     </button>
                 ))}
@@ -266,6 +265,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
             )}>
                 {activeTab === 'ask' && <AskTab />}
                 {activeTab === 'discuss' && <DiscussTab />}
+                {activeTab === 'directory' && <TagDirectory onSelectTag={() => setActiveTab('discuss')} />}
                 {activeTab === 'activity' && <ActivityTab />}
             </div>
 

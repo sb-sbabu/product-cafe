@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
-import { MessageSquarePlus, ChevronLeft, CheckCircle, Clock, ThumbsUp, MessageCircle, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageSquarePlus, ChevronLeft, CheckCircle, Clock, MessageCircle, ExternalLink, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock } from '../../contexts/DockContext';
-import {
-    getDiscussionsByResource,
-    getGeneralDiscussions,
-    getRecentDiscussions,
-    getRepliesForDiscussion,
-    type Discussion,
-} from '../../data/discussions';
+import type { Discussion } from '../../data/discussions';
 import { mockPeople } from '../../data/mockData';
 import { formatDistanceToNow } from '../../lib/utils';
 import { ThreadedReplies } from './ThreadedReplies';
 import { NewDiscussionForm } from './NewDiscussionForm';
+import { useDiscussionStore } from '../../stores/discussionStore';
+import { usePointsStore } from '../../stores/pointsStore';
+import { MarkdownRenderer } from '../ui/MarkdownRenderer';
+import { SmartTextarea } from '../ui/SmartTextarea';
+import { VoteButton, ReactionPicker, ReactionBar } from '../discussions';
+import { DiscussionActionMenu } from '../discussions/DiscussionActionMenu';
+import { DiscussionStatus } from '../discussions/DiscussionStatus';
+import type { ReactionType } from '../../types/gamification';
 
 /**
  * DiscussTab - Threaded discussions tab within Café Dock
@@ -27,14 +29,13 @@ interface DiscussionCardProps {
 }
 
 const DiscussionCard: React.FC<DiscussionCardProps> = ({ discussion, onClick }) => {
-    const statusConfig = {
-        open: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', pill: 'bg-amber-100' },
-        resolved: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', pill: 'bg-green-100' },
-        stale: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-500', pill: 'bg-gray-100' },
-    };
+    const { toggleUpvoteDiscussion, hasUserUpvotedDiscussion } = useDiscussionStore();
+    const currentUserId = 'current-user'; // Mock - in real app from auth context
+    const hasVoted = hasUserUpvotedDiscussion(discussion.id, currentUserId);
 
-    const style = statusConfig[discussion.status];
-    const StatusIcon = discussion.status === 'resolved' ? CheckCircle : Clock;
+    const handleVote = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Don't trigger card click
+    };
 
     // Get mock participants for facepile (would come from API in real app)
     const participants = mockPeople.slice(0, Math.min(3, discussion.replyCount + 1));
@@ -44,7 +45,8 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({ discussion, onClick }) 
             className={cn(
                 'group bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer m-2',
                 'hover:border-amber-200/50 hover:-translate-y-0.5',
-                style.border
+                // Use simplified border styles or just default
+                discussion.status === 'resolved' ? 'border-green-200' : 'border-gray-100'
             )}
             onClick={onClick}
         >
@@ -54,13 +56,7 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({ discussion, onClick }) 
                     <h4 className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-amber-700 transition-colors">
                         {discussion.title}
                     </h4>
-                    <span className={cn(
-                        'text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 font-medium',
-                        style.pill, style.text
-                    )}>
-                        <StatusIcon className="w-2.5 h-2.5" />
-                        {discussion.status}
-                    </span>
+                    <DiscussionStatus status={discussion.status} />
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-gray-400">
                     <span className="font-mono">#{discussion.id.slice(-4)}</span>
@@ -78,15 +74,19 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({ discussion, onClick }) 
 
             {/* Card Footer - Stats + Facepile */}
             <div className="px-3 pb-2.5 flex items-center justify-between">
-                {/* Stats */}
-                <div className="flex items-center gap-2.5 text-[10px] text-gray-400">
-                    <span className="flex items-center gap-0.5 hover:text-amber-600 transition-colors">
+                {/* Stats - Using new VoteButton */}
+                <div className="flex items-center gap-2.5">
+                    <div onClick={handleVote}>
+                        <VoteButton
+                            count={discussion.upvoteCount}
+                            hasVoted={hasVoted}
+                            onVote={() => { }}
+                            size="sm"
+                        />
+                    </div>
+                    <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
                         <MessageCircle className="w-3 h-3" />
                         <span className="font-medium">{discussion.replyCount}</span>
-                    </span>
-                    <span className="flex items-center gap-0.5 hover:text-amber-600 transition-colors">
-                        <ThumbsUp className="w-3 h-3" />
-                        <span className="font-medium">{discussion.upvoteCount}</span>
                     </span>
                 </div>
 
@@ -120,26 +120,97 @@ interface ThreadViewProps {
 
 const ThreadView: React.FC<ThreadViewProps> = ({ discussion, onBack }) => {
     const [replyText, setReplyText] = useState('');
+    const {
+        toggleUpvoteDiscussion,
+        addReactionToDiscussion,
+        removeReactionFromDiscussion,
+        addReply,
+        getRepliesForDiscussion,
+        acceptAnswer,
+        resolveDiscussion,
+        deleteDiscussion,
+        editDiscussion,
+        promoteToFAQ,
+    } = useDiscussionStore();
+    const { awardPoints } = usePointsStore();
+
+    // Get replies from STORE (not static import)
     const replies = getRepliesForDiscussion(discussion.id);
 
     const handleSubmitReply = () => {
         if (!replyText.trim()) return;
-        // In real app, would call API to create reply
-        console.log('Submitting reply:', replyText);
+        // Save the reply to the store
+        addReply({
+            discussionId: discussion.id,
+            body: replyText,
+            authorId: 'current-user',
+            authorName: 'You',
+            authorEmail: 'user@company.com',
+            upvoteCount: 0,
+            isExpert: false,
+            isAcceptedAnswer: false,
+            depth: 0,
+        });
+        // Award points
+        awardPoints('post_answer', { discussionId: discussion.id });
         setReplyText('');
+    };
+
+    const handleAcceptAnswer = (replyId: string) => {
+        acceptAnswer(discussion.id, replyId);
+        awardPoints('answer_accepted', { discussionId: discussion.id, answerId: replyId });
+    };
+
+    const handleResolve = () => {
+        resolveDiscussion(discussion.id);
     };
 
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="p-3 border-b border-gray-100 shrink-0">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
-                >
-                    <ChevronLeft className="w-4 h-4" />
-                    Back to discussions
-                </button>
+                <div className="flex items-center justify-between mb-2">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Back to discussions
+                    </button>
+                    {/* Mark Resolved button - only for author if not already resolved */}
+                    {discussion.authorId === 'current-user' && discussion.status !== 'resolved' && (
+                        <button
+                            onClick={handleResolve}
+                            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors mr-2"
+                        >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Mark Resolved
+                        </button>
+                    )}
+
+                    <DiscussionStatus status={discussion.status} className="mr-2" />
+
+                    <DiscussionActionMenu
+                        discussionId={discussion.id}
+                        authorId={discussion.authorId}
+                        currentUserId="current-user"
+                        onEdit={() => {
+                            const newTitle = window.prompt('Edit Title', discussion.title);
+                            if (newTitle) editDiscussion(discussion.id, { title: newTitle });
+                        }}
+                        onDelete={() => {
+                            if (window.confirm('Are you sure you want to delete this discussion?')) {
+                                deleteDiscussion(discussion.id);
+                                onBack();
+                            }
+                        }}
+                        onReport={() => alert('Reported content to admins.')}
+                        onPromoteToFAQ={() => {
+                            promoteToFAQ(discussion.id);
+                            alert('Discussion promoted to FAQ candidates.');
+                        }}
+                    />
+                </div>
                 <h3 className="font-semibold text-gray-900 text-sm">{discussion.title}</h3>
             </div>
 
@@ -158,44 +229,74 @@ const ThreadView: React.FC<ThreadViewProps> = ({ discussion, onBack }) => {
                             </span>
                         </div>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">{discussion.body}</p>
+
+                    <div className="text-sm text-gray-700 leading-relaxed">
+                        <MarkdownRenderer content={discussion.body} />
+                    </div>
                     <div className="mt-3 flex items-center gap-3">
-                        <button className="text-xs text-gray-400 hover:text-amber-600 flex items-center gap-1 transition-colors">
-                            <ThumbsUp className="w-3.5 h-3.5" />
-                            <span className="font-medium">{discussion.upvoteCount}</span>
-                        </button>
-                        <span className="text-xs text-gray-300">|</span>
+                        <VoteButton
+                            count={discussion.upvoteCount}
+                            hasVoted={false}
+                            onVote={() => toggleUpvoteDiscussion(discussion.id, 'current-user')}
+                            size="sm"
+                        />
+                        <ReactionPicker
+                            onSelect={(type: ReactionType) => addReactionToDiscussion(discussion.id, 'current-user', type)}
+                        />
                         <span className="text-xs text-gray-400">
                             {discussion.replyCount} {discussion.replyCount === 1 ? 'reply' : 'replies'}
                         </span>
                     </div>
+                    {discussion.reactions && discussion.reactions.length > 0 && (
+                        <div className="mt-2">
+                            <ReactionBar
+                                reactions={discussion.reactions}
+                                currentUserId="current-user"
+                                onToggle={(type) => {
+                                    // Toggle reaction
+                                    const hasReacted = discussion.reactions?.some(
+                                        r => r.userId === 'current-user' && r.type === type
+                                    );
+                                    if (hasReacted) {
+                                        removeReactionFromDiscussion(discussion.id, 'current-user', type);
+                                    } else {
+                                        addReactionToDiscussion(discussion.id, 'current-user', type);
+                                    }
+                                }}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Threaded Replies - Reddit Style */}
                 <div className="mt-2">
                     <ThreadedReplies
                         replies={replies}
-                        onReply={(parentId) => console.log('Reply to:', parentId)}
-                        onUpvote={(replyId) => console.log('Upvote:', replyId)}
+                        discussionId={discussion.id}
+                        discussionAuthorId={discussion.authorId}
+                        onAcceptAnswer={handleAcceptAnswer}
                         maxDepth={5}
                     />
                 </div>
 
                 {/* Resolved badge */}
-                {discussion.status === 'resolved' && (
-                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-700 font-medium">This discussion was marked as resolved</span>
-                    </div>
-                )}
-            </div>
+                {
+                    discussion.status === 'resolved' && (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-100">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span className="text-sm text-green-700 font-medium">This discussion was marked as resolved</span>
+                        </div>
+                    )
+                }
+            </div >
 
             {/* Reply input */}
-            <div className="p-3 border-t border-gray-100 shrink-0 bg-gray-50/50">
-                <textarea
+            < div className="p-3 border-t border-gray-100 shrink-0 bg-gray-50/50" >
+                <SmartTextarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Add a reply..."
+                    onValueChange={setReplyText}
+                    placeholder="Add a reply... (try typing #)"
                     className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-cafe-500/20 focus:border-cafe-400"
                     rows={2}
                 />
@@ -217,9 +318,22 @@ const ThreadView: React.FC<ThreadViewProps> = ({ discussion, onBack }) => {
 
 export const DiscussTab: React.FC = () => {
     const { pageContext } = useDock();
+    const {
+        discussions: storeDiscussions,
+        activeTagFilter,
+        setTagFilter,
+        loadDiscussions,
+        getDiscussionsByResource,
+        getRecentDiscussions,
+    } = useDiscussionStore();
     const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
     const [showNewDiscussionForm, setShowNewDiscussionForm] = useState(false);
     const [activeFilter, setActiveFilter] = useState<'all' | 'mentions' | 'unread' | 'action'>('all');
+
+    // CRITICAL: Load discussions from store on mount
+    useEffect(() => {
+        loadDiscussions();
+    }, [loadDiscussions]);
 
     // Filter capsules configuration
     const filterCapsules = [
@@ -229,19 +343,26 @@ export const DiscussTab: React.FC = () => {
         { id: 'action' as const, label: 'Action', count: 1 },
     ];
 
-    // Get discussions based on context
+    // Get discussions from STORE (not static imports)
     const allDiscussions = pageContext.resourceId
         ? getDiscussionsByResource(pageContext.resourceId)
         : pageContext.type === 'home'
             ? getRecentDiscussions(5)
-            : getGeneralDiscussions();
+            : storeDiscussions.filter(d => d.attachedToType === 'general');
 
     // Apply filter (simplified - in real app would use backend filtering)
-    const discussions = activeFilter === 'all'
+    let discussions = activeFilter === 'all'
         ? allDiscussions
         : activeFilter === 'action'
             ? allDiscussions.filter(d => d.status === 'open')
             : allDiscussions.slice(0, activeFilter === 'unread' ? 3 : 2);
+
+    // Phase 7.2: Apply Tag Filter
+    if (activeTagFilter) {
+        discussions = discussions.filter(d =>
+            (d.title + d.body).toLowerCase().includes(activeTagFilter.toLowerCase())
+        );
+    }
 
     // Get potential experts for this context
     const experts = pageContext.resourceId
@@ -313,6 +434,25 @@ export const DiscussTab: React.FC = () => {
                 isOpen={showNewDiscussionForm}
                 onClose={() => setShowNewDiscussionForm(false)}
             />
+
+            {/* Active Tag Filter Banner (Phase 7.2) */}
+            {activeTagFilter && (
+                <div className="px-3 py-2 bg-amber-50 border-b border-amber-100 flex items-center justify-between shrink-0 animate-in fade-in slide-in-from-top-1">
+                    <div className="flex items-center gap-2 text-xs text-amber-800">
+                        <span className="font-medium">Filtering by:</span>
+                        <span className="px-1.5 py-0.5 bg-white rounded-full border border-amber-200 font-mono">
+                            {activeTagFilter}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => setTagFilter(null)}
+                        className="p-1 hover:bg-amber-100 rounded-full text-amber-600 transition-colors"
+                        title="Clear filter"
+                    >
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
 
             {/* Discussion list */}
             <div className="flex-1 overflow-y-auto">

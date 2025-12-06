@@ -7,6 +7,9 @@ import {
     MessageCircle,
     Star,
     Settings,
+    Shield,
+    User,
+    Trophy,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -42,9 +45,18 @@ const mainNavItems: NavItem[] = [
         href: '/community',
         color: 'text-cyan-600',
     },
+    {
+        id: 'leaderboard',
+        label: 'Leaderboard',
+        icon: Trophy,
+        href: '/leaderboard',
+        color: 'text-pink-600',
+    },
 ];
 
 const secondaryNavItems: NavItem[] = [
+    { id: 'profile', label: 'My Profile', icon: User, href: '/profile', color: 'text-emerald-600' },
+    { id: 'admin', label: 'Admin Panel', icon: Shield, href: '/admin', color: 'text-violet-600' },
     { id: 'favorites', label: 'My Favorites', icon: Star, href: '/favorites' },
     { id: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
 ];
@@ -108,6 +120,10 @@ export const Navigation: React.FC<NavigationProps> = ({
     }
 
     if (variant === 'tabs') {
+        // Combine main items with personal items (profile, admin) for full navigation
+        const tabItems = [...mainNavItems];
+        const personalItems = secondaryNavItems.slice(0, 2); // Profile and Admin only
+
         return (
             <nav
                 className={cn(
@@ -116,27 +132,54 @@ export const Navigation: React.FC<NavigationProps> = ({
                 )}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin py-2">
-                        {mainNavItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = activeItem === item.id;
-                            return (
-                                <button
-                                    key={item.id}
-                                    onClick={() => onNavigate?.(item.id)}
-                                    className={cn(
-                                        `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                    <div className="flex items-center justify-between py-2">
+                        {/* Main navigation */}
+                        <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
+                            {tabItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = activeItem === item.id;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => onNavigate?.(item.id)}
+                                        className={cn(
+                                            `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
                      whitespace-nowrap transition-all duration-200`,
-                                        isActive
-                                            ? 'bg-cafe-50 text-cafe-700'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                    )}
-                                >
-                                    <Icon className={cn('w-4 h-4', isActive && item.color)} />
-                                    {item.label}
-                                </button>
-                            );
-                        })}
+                                            isActive
+                                                ? 'bg-cafe-50 text-cafe-700'
+                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        )}
+                                    >
+                                        <Icon className={cn('w-4 h-4', isActive && item.color)} />
+                                        {item.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Personal navigation - Profile and Admin */}
+                        <div className="flex items-center gap-1 border-l border-gray-200 ml-2 pl-2">
+                            {personalItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = activeItem === item.id;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => onNavigate?.(item.id)}
+                                        className={cn(
+                                            `flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+                     whitespace-nowrap transition-all duration-200`,
+                                            isActive
+                                                ? 'bg-cafe-50 text-cafe-700'
+                                                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                                        )}
+                                    >
+                                        <Icon className={cn('w-3.5 h-3.5', item.color)} />
+                                        {item.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </nav>

@@ -1,8 +1,11 @@
 import React from 'react';
-import { Coffee, Bell } from 'lucide-react';
+import { Coffee, Bell, Heart, Award } from 'lucide-react';
 import { SearchBar } from '../ui/SearchBar';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
+import { usePointsStore } from '../../stores/pointsStore';
+import { useLevelStore } from '../../stores/levelStore';
+import { useBadgeStore } from '../../stores/badgeStore';
 
 interface HeaderProps {
     onSearch?: (query: string) => void;
@@ -15,6 +18,10 @@ export const Header: React.FC<HeaderProps> = ({
     userName = 'User',
     className,
 }) => {
+    const { totalPoints } = usePointsStore();
+    const { currentLevel } = useLevelStore();
+    const { earnedBadges } = useBadgeStore();
+
     return (
         <header
             className={cn(
@@ -46,6 +53,28 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 shrink-0">
+                        {/* Café Credits Display */}
+                        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-pink-50 to-rose-50 rounded-full border border-pink-100">
+                            <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
+                            <span className="text-sm font-semibold text-pink-700">{totalPoints.toLocaleString()}</span>
+                        </div>
+
+                        {/* Level Badge */}
+                        {currentLevel && (
+                            <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-amber-50 rounded-full border border-amber-100">
+                                <span className="text-sm">{currentLevel.icon}</span>
+                                <span className="text-xs font-medium text-amber-700">L{currentLevel.id}</span>
+                            </div>
+                        )}
+
+                        {/* Badge Count */}
+                        {earnedBadges.length > 0 && (
+                            <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full border border-purple-100">
+                                <Award className="w-3.5 h-3.5 text-purple-500" />
+                                <span className="text-xs font-medium text-purple-700">{earnedBadges.length}</span>
+                            </div>
+                        )}
+
                         {/* Mobile Search Toggle */}
                         <Button
                             variant="ghost"

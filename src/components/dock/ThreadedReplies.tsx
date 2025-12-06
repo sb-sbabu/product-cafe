@@ -1,9 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { ChevronDown, ChevronUp, MessageCircle, ThumbsUp, Reply as ReplyIcon } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageCircle, Reply as ReplyIcon, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatDistanceToNow } from '../../lib/utils';
 import type { Reply } from '../../data/discussions';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
+import { VoteButton, ReactionPicker, ReactionBar } from '../discussions';
+import { useDiscussionStore } from '../../stores/discussionStore';
+import { usePointsStore } from '../../stores/pointsStore';
+import type { ReactionType } from '../../types/gamification';
 
 /**
  * ThreadedReplies - Reddit-style nested comment threading
@@ -13,22 +17,25 @@ import { MarkdownRenderer } from '../ui/MarkdownRenderer';
  * - Collapse/expand individual threads
  * - Depth-based indentation (max visual depth of 5)
  * - Reply action at any level
+ * - Accept answer functionality
  */
 
 interface ThreadedRepliesProps {
     replies: Reply[];
-    onReply?: (parentReplyId: string) => void;
-    onUpvote?: (replyId: string) => void;
+    discussionId: string;
+    discussionAuthorId?: string;
+    onAcceptAnswer?: (replyId: string) => void;
     maxDepth?: number;
 }
 
 interface ReplyNodeProps {
     reply: Reply;
     allReplies: Reply[];
+    discussionId: string;
+    discussionAuthorId?: string;
     depth: number;
     maxDepth: number;
-    onReply?: (parentReplyId: string) => void;
-    onUpvote?: (replyId: string) => void;
+    onAcceptAnswer?: (replyId: string) => void;
 }
 
 // Thread line colors for visual hierarchy
@@ -40,17 +47,33 @@ const threadColors = [
     'border-pink-400',
 ];
 
+const currentUserId = 'current-user'; // Mock - in real app from auth context
+
 const ReplyNode: React.FC<ReplyNodeProps> = ({
     reply,
     allReplies,
+    discussionId,
+    discussionAuthorId,
     depth,
     maxDepth,
-    onReply,
-    onUpvote,
+    onAcceptAnswer,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showReplyInput, setShowReplyInput] = useState(false);
     const [replyText, setReplyText] = useState('');
+
+    // Store actions
+    const {
+        addReply,
+        toggleUpvoteReply,
+        hasUserUpvotedReply,
+        addReactionToReply,
+        removeReactionFromReply,
+    } = useDiscussionStore();
+    const { awardPoints } = usePointsStore();
+
+    // Check if current user has upvoted
+    const hasVoted = hasUserUpvotedReply(reply.id, currentUserId);
 
     // Get child replies
     const childReplies = allReplies.filter(r => r.parentReplyId === reply.id);
@@ -60,12 +83,52 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
     const visualDepth = Math.min(depth, maxDepth);
     const threadColor = threadColors[visualDepth % threadColors.length];
 
+    // Check if current user is discussion author (can accept answers)
+    const canAcceptAnswer = discussionAuthorId === currentUserId && !reply.isAcceptedAnswer;
+
     const handleSubmitReply = useCallback(() => {
         if (!replyText.trim()) return;
-        onReply?.(reply.id);
+
+        // CRITICAL: Actually save the nested reply to store
+        addReply({
+            discussionId,
+            parentReplyId: reply.id, // This makes it nested
+            body: replyText,
+            authorId: currentUserId,
+            authorName: 'You',
+            authorEmail: 'user@company.com',
+            upvoteCount: 0,
+            isExpert: false,
+            isAcceptedAnswer: false,
+            depth: depth + 1,
+        });
+
+        // Award points for posting answer
+        awardPoints('post_answer', { discussionId, answerId: reply.id });
+
         setReplyText('');
         setShowReplyInput(false);
-    }, [replyText, reply.id, onReply]);
+    }, [replyText, reply.id, discussionId, depth, addReply, awardPoints]);
+
+    const handleUpvote = useCallback(() => {
+        const added = toggleUpvoteReply(reply.id, currentUserId);
+        if (added) {
+            // Award points for giving upvote
+            awardPoints('give_upvote', { answerId: reply.id });
+        }
+    }, [reply.id, toggleUpvoteReply, awardPoints]);
+
+    const handleReaction = useCallback((type: ReactionType) => {
+        const hasReacted = reply.reactions?.some(
+            r => r.userId === currentUserId && r.type === type
+        );
+        if (hasReacted) {
+            removeReactionFromReply(reply.id, currentUserId, type);
+        } else {
+            addReactionToReply(reply.id, currentUserId, type);
+            awardPoints('give_reaction', { answerId: reply.id });
+        }
+    }, [reply.id, reply.reactions, addReactionToReply, removeReactionFromReply, awardPoints]);
 
     const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
@@ -121,8 +184,9 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
 
                     {/* Accepted answer badge */}
                     {reply.isAcceptedAnswer && (
-                        <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-semibold">
-                            ✓ ACCEPTED
+                        <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-semibold flex items-center gap-1">
+                            <Check className="w-3 h-3" />
+                            ACCEPTED
                         </span>
                     )}
 
@@ -155,13 +219,14 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
 
                         {/* Actions */}
                         <div className="flex items-center gap-3 mt-2">
-                            <button
-                                onClick={() => onUpvote?.(reply.id)}
-                                className="flex items-center gap-1 text-xs text-gray-400 hover:text-amber-600 transition-colors"
-                            >
-                                <ThumbsUp className="w-3.5 h-3.5" />
-                                <span>{reply.upvoteCount}</span>
-                            </button>
+                            <VoteButton
+                                count={reply.upvoteCount}
+                                hasVoted={hasVoted}
+                                onVote={handleUpvote}
+                                size="sm"
+                            />
+
+                            <ReactionPicker onSelect={handleReaction} />
 
                             <button
                                 onClick={() => setShowReplyInput(!showReplyInput)}
@@ -171,12 +236,34 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
                                 <span>Reply</span>
                             </button>
 
+                            {/* Accept Answer button */}
+                            {canAcceptAnswer && (
+                                <button
+                                    onClick={() => onAcceptAnswer?.(reply.id)}
+                                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-green-600 transition-colors"
+                                >
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>Accept</span>
+                                </button>
+                            )}
+
                             {hasChildren && isCollapsed && (
                                 <span className="text-xs text-gray-400">
                                     {childReplies.length} {childReplies.length === 1 ? 'reply' : 'replies'} hidden
                                 </span>
                             )}
                         </div>
+
+                        {/* Reaction Bar */}
+                        {reply.reactions && reply.reactions.length > 0 && (
+                            <div className="mt-2">
+                                <ReactionBar
+                                    reactions={reply.reactions}
+                                    currentUserId={currentUserId}
+                                    onToggle={handleReaction}
+                                />
+                            </div>
+                        )}
 
                         {/* Inline reply input */}
                         {showReplyInput && (
@@ -231,10 +318,11 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
                                 key={childReply.id}
                                 reply={childReply}
                                 allReplies={allReplies}
+                                discussionId={discussionId}
+                                discussionAuthorId={discussionAuthorId}
                                 depth={depth + 1}
                                 maxDepth={maxDepth}
-                                onReply={onReply}
-                                onUpvote={onUpvote}
+                                onAcceptAnswer={onAcceptAnswer}
                             />
                         ))
                     )}
@@ -246,8 +334,9 @@ const ReplyNode: React.FC<ReplyNodeProps> = ({
 
 export const ThreadedReplies: React.FC<ThreadedRepliesProps> = ({
     replies,
-    onReply,
-    onUpvote,
+    discussionId,
+    discussionAuthorId,
+    onAcceptAnswer,
     maxDepth = 5,
 }) => {
     // Get top-level replies (no parent)
@@ -269,10 +358,11 @@ export const ThreadedReplies: React.FC<ThreadedRepliesProps> = ({
                     key={reply.id}
                     reply={reply}
                     allReplies={replies}
+                    discussionId={discussionId}
+                    discussionAuthorId={discussionAuthorId}
                     depth={0}
                     maxDepth={maxDepth}
-                    onReply={onReply}
-                    onUpvote={onUpvote}
+                    onAcceptAnswer={onAcceptAnswer}
                 />
             ))}
         </div>

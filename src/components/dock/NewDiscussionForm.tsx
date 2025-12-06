@@ -4,8 +4,8 @@ import { cn } from '../../lib/utils';
 import { useDock } from '../../contexts/DockContext';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer';
 import { useDiscussionStore } from '../../stores/discussionStore';
-import { MentionsInput } from './MentionsInput';
-import type { Person } from '../../data/mockData';
+import { SmartTextarea } from '../ui/SmartTextarea';
+import type { Person } from '../../types';
 
 /**
  * NewDiscussionForm - Modal form for creating new discussions
@@ -30,13 +30,15 @@ export const NewDiscussionForm: React.FC<NewDiscussionFormProps> = ({ isOpen, on
     const [body, setBody] = useState('');
     const [showPreview, setShowPreview] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [mentionedExperts, setMentionedExperts] = useState<Person[]>([]);
+    // Note: mentionedExperts will be populated when MentionsInput is re-integrated with SmartTextarea
+    const mentionedExperts: Person[] = [];
 
-    const handleMention = useCallback((person: Person) => {
-        setMentionedExperts(prev =>
-            prev.some(p => p.id === person.id) ? prev : [...prev, person]
-        );
-    }, []);
+    // TODO: Re-enable when MentionsInput is re-integrated with SmartTextarea
+    // const handleMention = useCallback((person: Person) => {
+    //     setMentionedExperts(prev =>
+    //         prev.some(p => p.id === person.id) ? prev : [...prev, person]
+    //     );
+    // }, []);
 
     const handleSubmit = useCallback(async () => {
         if (!title.trim() || !body.trim()) return;
@@ -161,11 +163,12 @@ export const NewDiscussionForm: React.FC<NewDiscussionFormProps> = ({ isOpen, on
                                 )}
                             </div>
                         ) : (
-                            <MentionsInput
+                            <SmartTextarea
                                 value={body}
-                                onChange={setBody}
-                                onMention={handleMention}
-                                placeholder="Add context, mention @experts with autocomplete. Markdown supported!"
+                                onChange={(e) => setBody(e.target.value)}
+                                onValueChange={setBody}
+                                placeholder="Add context to your discussion... Type # to tag concepts."
+                                className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-colors"
                                 rows={5}
                             />
                         )}
@@ -175,8 +178,8 @@ export const NewDiscussionForm: React.FC<NewDiscussionFormProps> = ({ isOpen, on
                     <div className="flex items-start gap-2 text-xs text-gray-500">
                         <HelpCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                         <span>
-                            Use <code className="px-1 py-0.5 bg-gray-100 rounded">**bold**</code>,{' '}
-                            <code className="px-1 py-0.5 bg-gray-100 rounded">`code`</code>, and{' '}
+                            Use <code className="px-1 py-0.5 bg-gray-100 rounded">**bold**</code>
+                            <code className="px-1 py-0.5 bg-gray-100 rounded">#tags</code>, and{' '}
                             <code className="px-1 py-0.5 bg-gray-100 rounded">[links](url)</code> for formatting.
                         </span>
                     </div>

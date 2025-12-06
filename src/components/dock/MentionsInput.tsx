@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '../../lib/utils';
-import { mockPeople, type Person } from '../../data/mockData';
+import { mockPeople } from '../../data/mockData';
+import type { Person } from '../../types';
 
 /**
  * MentionsInput - Textarea with @mentions autocomplete for experts

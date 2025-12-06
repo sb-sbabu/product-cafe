@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import type { Person } from '../../types';
+import { UserHoverCard } from '../profile';
 
 interface PersonCardProps {
     person: Person;
@@ -121,24 +122,37 @@ export const PersonCard: React.FC<PersonCardProps> = ({
     // Default variant
     return (
         <Card className="p-6 h-full flex flex-col">
-            {/* Header with Avatar */}
+            {/* Header with Avatar - wrapped in UserHoverCard */}
             <div className="flex items-start gap-4 mb-4">
-                <div
-                    className={cn(
-                        'w-14 h-14 rounded-full flex items-center justify-center text-white font-semibold text-lg shrink-0',
-                        avatarColor
-                    )}
+                <UserHoverCard
+                    userId={person.id}
+                    displayName={person.displayName}
+                    title={person.title}
+                    team={person.team}
+                    avatarUrl={person.avatarUrl}
+                    totalPoints={Math.floor(Math.random() * 1000) + 100}
+                    discussionCount={Math.floor(Math.random() * 50)}
+                    replyCount={Math.floor(Math.random() * 100)}
+                    badgeCount={Math.floor(Math.random() * 10)}
+                    levelNumber={Math.floor(Math.random() * 5) + 1}
                 >
-                    {person.avatarUrl ? (
-                        <img
-                            src={person.avatarUrl}
-                            alt={person.displayName}
-                            className="w-full h-full rounded-full object-cover"
-                        />
-                    ) : (
-                        initials
-                    )}
-                </div>
+                    <div
+                        className={cn(
+                            'w-14 h-14 rounded-full flex items-center justify-center text-white font-semibold text-lg shrink-0 cursor-pointer transition-transform hover:scale-105',
+                            avatarColor
+                        )}
+                    >
+                        {person.avatarUrl ? (
+                            <img
+                                src={person.avatarUrl}
+                                alt={person.displayName}
+                                className="w-full h-full rounded-full object-cover"
+                            />
+                        ) : (
+                            initials
+                        )}
+                    </div>
+                </UserHoverCard>
                 <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 text-lg">{person.displayName}</h3>
                     <p className="text-gray-600">{person.title}</p>

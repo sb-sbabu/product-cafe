@@ -11,11 +11,12 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
  * The dock is ALWAYS visible - it never fully hides.
  */
 
-export type DockTab = 'ask' | 'discuss' | 'activity';
-export type DockState = 'collapsed' | 'expanded';
+// Basic types
+export type DockTab = 'ask' | 'discuss' | 'activity' | 'directory';
+export type DockState = 'closed' | 'collapsed' | 'expanded';
 
 export interface PageContext {
-    type: 'home' | 'resource' | 'faq' | 'person' | 'search' | 'library' | 'community' | 'grab-and-go' | 'my-cafe';
+    type: 'home' | 'resource' | 'faq' | 'person' | 'search' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard';
     resourceId?: string;
     faqId?: string;
     personId?: string;
