@@ -8,7 +8,6 @@ import {
     TOOL_SYNONYMS,
     TOPIC_SYNONYMS,
     TEAM_SYNONYMS,
-    TEAM_SYNONYMS,
     // getCanonical,
 } from './synonyms';
 import { normalizeToken } from './queryProcessor';
