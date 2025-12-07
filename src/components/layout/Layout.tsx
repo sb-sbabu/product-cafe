@@ -8,7 +8,7 @@ import { useDock } from '../../contexts/DockContext';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activeNav?: string;
+    activePage: 'home' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'person' | 'faq' | 'resource' | 'search' | 'demo' | 'leaderboard' | 'profile' | 'admin' | 'pulse';
     onNavigate?: (itemId: string) => void;
     onSearch?: (query: string) => void;
     isMobile?: boolean;
@@ -16,7 +16,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({
     children,
-    activeNav = 'home',
+    activePage = 'home',
     onNavigate,
     onSearch,
     isMobile,
@@ -56,7 +56,7 @@ export const Layout: React.FC<LayoutProps> = ({
             {/* Tab Navigation */}
             <Navigation
                 variant="tabs"
-                activeItem={activeNav}
+                activeItem={activePage}
                 onNavigate={onNavigate}
                 onChatOpen={openChat}
             />
@@ -76,7 +76,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="md:hidden">
                 <Navigation
                     variant="bottom"
-                    activeItem={activeNav}
+                    activeItem={activePage}
                     onNavigate={onNavigate}
                     onChatOpen={openChat}
                 />

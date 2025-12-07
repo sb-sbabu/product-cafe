@@ -15,10 +15,11 @@ import { CafeDock } from './components/dock/CafeDock';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DockProvider, useDock } from './contexts/DockContext';
 import { GamificationProvider } from './contexts/GamificationContext';
-import { useAnalytics } from './hooks/useAnalytics';
 import { GamificationEngine } from './components/gamification/GamificationEngine';
+import { useAnalytics } from './hooks/useAnalytics';
+import { PulseDashboard } from './components/pulse/PulseDashboard';
 
-type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard';
+type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse';
 
 // Hook for responsive detection
 function useIsMobile() {
@@ -40,6 +41,7 @@ function AppContent() {
     if (path === '/demo') return 'demo';
     if (path === '/leaderboard') return 'leaderboard';
     if (path === '/admin') return 'admin';
+    if (path === '/pulse') return 'pulse';
     return 'home';
   });
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,6 +150,8 @@ function AppContent() {
         return <ProfilePage />;
       case 'leaderboard':
         return <LeaderboardPage />;
+      case 'pulse':
+        return <PulseDashboard />;
       default:
         return <HomePage onNavigate={handleNavigate} userName={user?.firstName || 'there'} />;
     }
@@ -162,7 +166,7 @@ function AppContent() {
         {/* Main content area - grows to fill available space */}
         <div className="flex-1 overflow-auto">
           <Layout
-            activeNav={activePage}
+            activePage={activePage}
             onNavigate={handleNavigate}
             onSearch={handleSearch}
             isMobile={isMobile}
