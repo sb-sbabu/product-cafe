@@ -3,7 +3,7 @@
  * Fuse.js-based fuzzy search with specialized indexes
  */
 
-import Fuse, { type IFuseOptions, type FuseResult, type FuseResultMatch } from 'fuse.js';
+import Fuse, { type IFuseOptions, type FuseResult } from 'fuse.js';
 import type {
     PersonResult,
     ToolResult,
@@ -334,6 +334,7 @@ class SearchIndex {
             } else if (value.includes('/')) {
                 // Date range
                 const [startStr, endStr] = value.split('/');
+                // const [startStr, endStr] = value.split('/');
                 const start = new Date(startStr);
                 const end = new Date(endStr);
                 sourceData = sourceData.filter(s => {

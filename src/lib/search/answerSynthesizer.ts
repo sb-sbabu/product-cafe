@@ -42,7 +42,7 @@ export function synthesizeAnswer(
 
     // 2. Intent-specific generation
     const intent = query.intent.primary;
-    const scoreThreshold = 0.7; // Minimum score to confidentaly answer
+    // const scoreThreshold = 0.7; // Minimum score to confidentaly answer
 
     // If top result is weak, maybe don't generate an instant answer unless it's a direct question
     if (topResult.score < 0.6 && intent !== 'EXPLAIN_CONCEPT') {

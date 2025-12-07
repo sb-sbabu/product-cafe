@@ -14,7 +14,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-    onSearch,
+    onSearch: _onSearch,
     userName = 'User',
     className,
 }) => {

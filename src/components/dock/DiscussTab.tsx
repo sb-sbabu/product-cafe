@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquarePlus, ChevronLeft, CheckCircle, Clock, MessageCircle, ExternalLink, X } from 'lucide-react';
+import { MessageSquarePlus, ChevronLeft, CheckCircle, MessageCircle, ExternalLink, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock } from '../../contexts/DockContext';
 import type { Discussion } from '../../data/discussions';
@@ -29,7 +29,7 @@ interface DiscussionCardProps {
 }
 
 const DiscussionCard: React.FC<DiscussionCardProps> = ({ discussion, onClick }) => {
-    const { toggleUpvoteDiscussion, hasUserUpvotedDiscussion } = useDiscussionStore();
+    const { hasUserUpvotedDiscussion } = useDiscussionStore();
     const currentUserId = 'current-user'; // Mock - in real app from auth context
     const hasVoted = hasUserUpvotedDiscussion(discussion.id, currentUserId);
 

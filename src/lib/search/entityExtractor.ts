@@ -8,7 +8,8 @@ import {
     TOOL_SYNONYMS,
     TOPIC_SYNONYMS,
     TEAM_SYNONYMS,
-    getCanonical,
+    TEAM_SYNONYMS,
+    // getCanonical,
 } from './synonyms';
 import { normalizeToken } from './queryProcessor';
 
@@ -230,7 +231,7 @@ function extractFromToken(
  */
 function extractMultiWordEntities(
     query: string,
-    existingPositions: Set<number>
+    _existingPositions: Set<number>
 ): ExtractionResult[] {
     const results: ExtractionResult[] = [];
     const normalized = query.toLowerCase();
@@ -399,8 +400,7 @@ function extractTemporalEntities(query: string): ExtractionResult[] {
     let nextMatch;
     while ((nextMatch = nextPattern.exec(normalized)) !== null) {
         const fullPhrase = nextMatch[0];
-        const modifier = nextMatch[1]; // next, upcoming
-        const target = nextMatch[2]; // week, month, session, lop
+        const target = nextMatch[2]?.toLowerCase();
 
         let rangeValue = 'future'; // Default
 
@@ -526,6 +526,8 @@ export function extractEntities(query: string, tokens: string[]): Entity[] {
             entities.push(result.entity);
         }
     }
+
+    // const existingPositions = entities.map(e => ({ start: e.position.start, end: e.position.end }));
 
     // Sort by position
     entities.sort((a, b) => a.position.start - b.position.start);

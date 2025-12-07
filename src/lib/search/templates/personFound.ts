@@ -5,7 +5,7 @@
 import type { SynthesizedAnswer, PersonResult, SearchQuery } from '../types';
 
 export function generatePersonAnswer(
-    query: SearchQuery,
+    _query: SearchQuery,
     person: PersonResult
 ): SynthesizedAnswer {
     // const isSelf = query.raw.toLowerCase().includes('my '); // Unused for now

@@ -14,7 +14,7 @@ interface DiscussionActionMenuProps {
 }
 
 export const DiscussionActionMenu: React.FC<DiscussionActionMenuProps> = ({
-    discussionId,
+    discussionId: _discussionId,
     authorId,
     currentUserId,
     onEdit,
