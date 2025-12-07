@@ -4,7 +4,8 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, X, Clock, TrendingUp, Sparkles, User, Wrench, HelpCircle, FileText, MessageSquare, Calendar } from 'lucide-react';
+import { Search, X, Clock, TrendingUp } from 'lucide-react';
+import { SearchResults } from './SearchResults';
 import { cn } from '../../lib/utils';
 import { useSearchStore } from '../../stores/searchStore';
 import { cafeFinder } from '../../lib/search';
@@ -248,182 +249,12 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                 >
                     {/* Results */}
                     {hasResults ? (
-                        <div className="py-2">
-                            {/* FAQs */}
-                            {results.results.faqs.length > 0 && (
-                                <div>
-                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                                        <HelpCircle size={12} />
-                                        FAQs
-                                    </div>
-                                    {results.results.faqs.slice(0, 3).map((faq) => (
-                                        <button
-                                            key={faq.id}
-                                            onClick={() => handleResultClick(faq)}
-                                            className={cn(
-                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3 transition-colors',
-                                                allResults.indexOf(faq) === selectedIndex && 'bg-cafe-50'
-                                            )}
-                                        >
-                                            <HelpCircle size={16} className="text-amber-500 mt-0.5 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900 truncate">{faq.question}</div>
-                                                <div className="text-xs text-gray-500 truncate">{faq.answerSummary}</div>
-                                            </div>
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">FAQ</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* People */}
-                            {results.results.people.length > 0 && (
-                                <div>
-                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mt-2">
-                                        <User size={12} />
-                                        People
-                                    </div>
-                                    {results.results.people.slice(0, 3).map((person) => (
-                                        <button
-                                            key={person.id}
-                                            onClick={() => handleResultClick(person)}
-                                            className={cn(
-                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors',
-                                                allResults.indexOf(person) === selectedIndex && 'bg-cafe-50'
-                                            )}
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-cafe-100 flex items-center justify-center text-cafe-600 font-medium text-sm shrink-0">
-                                                {person.name.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900">{person.name}</div>
-                                                <div className="text-xs text-gray-500">{person.title} • {person.team}</div>
-                                            </div>
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Person</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Tools */}
-                            {results.results.tools.length > 0 && (
-                                <div>
-                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mt-2">
-                                        <Wrench size={12} />
-                                        Tools
-                                    </div>
-                                    {results.results.tools.slice(0, 3).map((tool) => (
-                                        <button
-                                            key={tool.id}
-                                            onClick={() => handleResultClick(tool)}
-                                            className={cn(
-                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3 transition-colors',
-                                                allResults.indexOf(tool) === selectedIndex && 'bg-cafe-50'
-                                            )}
-                                        >
-                                            <Wrench size={16} className="text-blue-500 mt-0.5 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900">{tool.name}</div>
-                                                <div className="text-xs text-gray-500 truncate">{tool.description}</div>
-                                            </div>
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Tool</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Resources */}
-                            {results.results.resources.length > 0 && (
-                                <div>
-                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mt-2">
-                                        <FileText size={12} />
-                                        Resources
-                                    </div>
-                                    {results.results.resources.slice(0, 3).map((resource) => (
-                                        <button
-                                            key={resource.id}
-                                            onClick={() => handleResultClick(resource)}
-                                            className={cn(
-                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3 transition-colors',
-                                                allResults.indexOf(resource) === selectedIndex && 'bg-cafe-50'
-                                            )}
-                                        >
-                                            <FileText size={16} className="text-green-500 mt-0.5 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900 truncate">{resource.title}</div>
-                                                <div className="text-xs text-gray-500">{resource.pillar} • {resource.category}</div>
-                                            </div>
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Resource</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Discussions */}
-                            {results.results.discussions.length > 0 && (
-                                <div>
-                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mt-2">
-                                        <MessageSquare size={12} />
-                                        Discussions
-                                    </div>
-                                    {results.results.discussions.slice(0, 2).map((discussion) => (
-                                        <button
-                                            key={discussion.id}
-                                            onClick={() => handleResultClick(discussion)}
-                                            className={cn(
-                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3 transition-colors',
-                                                allResults.indexOf(discussion) === selectedIndex && 'bg-cafe-50'
-                                            )}
-                                        >
-                                            <MessageSquare size={16} className="text-purple-500 mt-0.5 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900 truncate">{discussion.title}</div>
-                                                <div className="text-xs text-gray-500">{discussion.authorName} • {discussion.replyCount} replies</div>
-                                            </div>
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Discussion</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* LOP Sessions */}
-                            {results.results.lopSessions.length > 0 && (
-                                <div>
-                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mt-2">
-                                        <Calendar size={12} />
-                                        Sessions
-                                    </div>
-                                    {results.results.lopSessions.slice(0, 2).map((session) => (
-                                        <button
-                                            key={session.id}
-                                            onClick={() => handleResultClick(session)}
-                                            className={cn(
-                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3 transition-colors',
-                                                allResults.indexOf(session) === selectedIndex && 'bg-cafe-50'
-                                            )}
-                                        >
-                                            <Calendar size={16} className="text-pink-500 mt-0.5 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900 truncate">{session.title}</div>
-                                                <div className="text-xs text-gray-500">{new Date(session.sessionDate).toLocaleDateString()} • {session.speakerName}</div>
-                                            </div>
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Session</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Search metrics footer */}
-                            <div className="px-3 py-2 mt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-                                <span>
-                                    {results.totalCount} result{results.totalCount !== 1 ? 's' : ''} in {results.metrics.totalTimeMs.toFixed(0)}ms
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Sparkles size={12} className="text-cafe-500" />
-                                    Powered by Café Finder
-                                </span>
-                            </div>
-                        </div>
+                        <SearchResults
+                            data={results}
+                            onResultClick={handleResultClick}
+                            selectedIndex={selectedIndex}
+                            allResults={allResults}
+                        />
                     ) : localQuery ? (
                         /* No results */
                         <div className="py-8 text-center">
@@ -485,8 +316,8 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                             </div>
                         </div>
                     )}
-                </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };
