@@ -7,6 +7,7 @@ import { CompetitorRadar } from './CompetitorRadar';
 import { RegulatoryPanel } from './RegulatoryPanel';
 import { TechnologyPanel } from './TechnologyPanel';
 import { MarketPanel } from './MarketPanel';
+import { SearchPanel } from './SearchPanel';
 import { PulseErrorBoundary } from './PulseErrorBoundary';
 import {
     Activity,
@@ -77,6 +78,8 @@ export const PulseDashboard: React.FC = () => {
     const filteredSignals = getFilteredSignals();
     const competitorsWithSignals = getCompetitorsWithSignals();
     const [showCompetitorPanel, setShowCompetitorPanel] = useState(true);
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    const [searchResults, setSearchResults] = useState<typeof filteredSignals | null>(null);
 
     const formatTimeAgo = (isoString: string | null) => {
         if (!isoString) return 'Never';
@@ -226,6 +229,17 @@ export const PulseDashboard: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Advanced Search Panel */}
+                {showAdvancedSearch && (
+                    <div className="mb-6">
+                        <SearchPanel
+                            signals={filteredSignals}
+                            onResultsChange={setSearchResults}
+                            className="shadow-md"
+                        />
+                    </div>
+                )}
+
                 {/* Filters & Domain Tabs */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
@@ -265,6 +279,7 @@ export const PulseDashboard: React.FC = () => {
                                 placeholder="Search signals..."
                                 value={filter.search || ''}
                                 onChange={(e) => setFilter({ search: e.target.value || undefined })}
+                                onFocus={() => setShowAdvancedSearch(true)}
                                 className="pl-9 pr-4 py-2 w-64 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cafe-500/20 focus:border-cafe-500 text-sm transition-all"
                             />
                         </div>
@@ -289,7 +304,7 @@ export const PulseDashboard: React.FC = () => {
                     {/* Left: Signal Feed */}
                     <div className="flex-1 min-w-0">
                         <SignalFeed
-                            signals={filteredSignals}
+                            signals={searchResults || filteredSignals}
                             isLoading={isLoading}
                             activeDomain={activeDomain}
                             onMarkRead={markAsRead}
