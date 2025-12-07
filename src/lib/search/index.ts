@@ -359,9 +359,9 @@ class CafeFinderEngine {
         if (!this.initialized) this.initialize();
 
         return {
-            people: searchIndex.searchPeople(rawQuery, limit),
+            people: searchIndex.searchPeople(rawQuery, [], limit),
             faqs: searchIndex.searchFAQs(rawQuery, limit),
-            resources: searchIndex.searchResources(rawQuery, limit),
+            resources: searchIndex.searchResources(rawQuery, [], limit),
         };
     }
 }

@@ -2,7 +2,7 @@
  * Template for Zero Results
  */
 
-import { SynthesizedAnswer, SearchQuery } from '../types';
+import type { SynthesizedAnswer, SearchQuery } from '../types';
 
 export function generateZeroResultsAnswer(
     query: SearchQuery

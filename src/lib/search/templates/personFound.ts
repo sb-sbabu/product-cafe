@@ -2,13 +2,13 @@
  * Template for person search results
  */
 
-import { SynthesizedAnswer, PersonResult, SearchQuery } from '../types';
+import type { SynthesizedAnswer, PersonResult, SearchQuery } from '../types';
 
 export function generatePersonAnswer(
     query: SearchQuery,
     person: PersonResult
 ): SynthesizedAnswer {
-    const isSelf = query.raw.toLowerCase().includes('my '); // Simple heuristic
+    // const isSelf = query.raw.toLowerCase().includes('my '); // Unused for now
 
     return {
         type: 'PERSON_CARD',

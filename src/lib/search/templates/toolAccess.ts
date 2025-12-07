@@ -2,7 +2,7 @@
  * Template for tool access/search results
  */
 
-import { SynthesizedAnswer, ToolResult, SearchQuery } from '../types';
+import type { SynthesizedAnswer, ToolResult, SearchQuery } from '../types';
 
 export function generateToolAnswer(
     query: SearchQuery,

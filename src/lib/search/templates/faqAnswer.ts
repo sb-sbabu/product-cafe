@@ -2,7 +2,7 @@
  * Template for FAQ answers
  */
 
-import { SynthesizedAnswer, FAQResult } from '../types';
+import type { SynthesizedAnswer, FAQResult } from '../types';
 
 export function generateFAQAnswer(
     faq: FAQResult

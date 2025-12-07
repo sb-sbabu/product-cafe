@@ -2,10 +2,10 @@
  * Template for Concept Explanations
  */
 
-import { SynthesizedAnswer, FAQResult, SearchQuery } from '../types';
+import type { SynthesizedAnswer, FAQResult, SearchQuery } from '../types';
 
 export function generateConceptAnswer(
-    query: SearchQuery,
+    _query: SearchQuery,
     bestMatch: FAQResult
 ): SynthesizedAnswer {
     // If it's a specific "what is X" question, we treat it as a concept explanation

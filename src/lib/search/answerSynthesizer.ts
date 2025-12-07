@@ -3,7 +3,7 @@
  * Generates human-readable answers from search results based on intent
  */
 
-import {
+import type {
     SearchQuery,
     SearchResponse,
     SynthesizedAnswer,

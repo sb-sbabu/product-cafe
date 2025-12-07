@@ -48,7 +48,7 @@ interface DiscussionState {
 
     // Management
     deleteDiscussion: (id: string) => void;
-    editDiscussion: (id: string, updates: Partial<Pick<Discussion, 'title' | 'body' | 'tags'>>) => void;
+    editDiscussion: (id: string, updates: Partial<Pick<Discussion, 'title' | 'body'>>) => void;
     promoteToFAQ: (id: string) => void;
 
     // Getters
@@ -346,6 +346,22 @@ export const useDiscussionStore = create<DiscussionState>()(
                     discussions: state.discussions.map(d =>
                         d.id === id ? { ...d, promotedToFAQId: `faq_${Date.now()}`, updatedAt: now } : d
                     ),
+                }));
+            },
+
+            editDiscussion: (id, updates) => {
+                const now = new Date().toISOString();
+                set(state => ({
+                    discussions: state.discussions.map(d =>
+                        d.id === id ? { ...d, ...updates, updatedAt: now } : d
+                    ),
+                }));
+            },
+
+            deleteDiscussion: (id) => {
+                set(state => ({
+                    discussions: state.discussions.filter(d => d.id !== id),
+                    replies: state.replies.filter(r => r.discussionId !== id),
                 }));
             },
 

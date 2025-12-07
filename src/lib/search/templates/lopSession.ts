@@ -2,7 +2,7 @@
  * Template for LOP Session answers
  */
 
-import { SynthesizedAnswer, LOPSessionResult, SearchQuery } from '../types';
+import type { SynthesizedAnswer, LOPSessionResult, SearchQuery } from '../types';
 
 export function generateLopAnswer(
     query: SearchQuery,

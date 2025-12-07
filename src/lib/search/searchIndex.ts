@@ -3,13 +3,12 @@
  * Fuse.js-based fuzzy search with specialized indexes
  */
 
-import Fuse from 'fuse.js';
+import Fuse, { type IFuseOptions, type FuseResult, type FuseResultMatch } from 'fuse.js';
 import type {
     PersonResult,
     ToolResult,
     FAQResult,
     ResourceResult,
-    DiscussionResult,
     DiscussionResult,
     LOPSessionResult,
     Entity,
@@ -25,7 +24,7 @@ import type { Discussion } from '../../data/discussions';
 // INDEX CONFIGURATION
 // ============================================
 
-const PEOPLE_FUSE_OPTIONS: Fuse.IFuseOptions<Person> = {
+const PEOPLE_FUSE_OPTIONS: IFuseOptions<Person> = {
     keys: [
         { name: 'displayName', weight: 3 },
         { name: 'email', weight: 1 },
@@ -40,7 +39,7 @@ const PEOPLE_FUSE_OPTIONS: Fuse.IFuseOptions<Person> = {
     minMatchCharLength: 2,
 };
 
-const RESOURCES_FUSE_OPTIONS: Fuse.IFuseOptions<Resource> = {
+const RESOURCES_FUSE_OPTIONS: IFuseOptions<Resource> = {
     keys: [
         { name: 'title', weight: 3 },
         { name: 'description', weight: 2 },
@@ -54,7 +53,7 @@ const RESOURCES_FUSE_OPTIONS: Fuse.IFuseOptions<Resource> = {
     minMatchCharLength: 2,
 };
 
-const FAQS_FUSE_OPTIONS: Fuse.IFuseOptions<FAQ> = {
+const FAQS_FUSE_OPTIONS: IFuseOptions<FAQ> = {
     keys: [
         { name: 'question', weight: 4 },
         { name: 'alternateQuestions', weight: 3 },
@@ -68,7 +67,7 @@ const FAQS_FUSE_OPTIONS: Fuse.IFuseOptions<FAQ> = {
     minMatchCharLength: 2,
 };
 
-const DISCUSSIONS_FUSE_OPTIONS: Fuse.IFuseOptions<Discussion> = {
+const DISCUSSIONS_FUSE_OPTIONS: IFuseOptions<Discussion> = {
     keys: [
         { name: 'title', weight: 3 },
         { name: 'body', weight: 2 },
@@ -80,7 +79,7 @@ const DISCUSSIONS_FUSE_OPTIONS: Fuse.IFuseOptions<Discussion> = {
     minMatchCharLength: 2,
 };
 
-const LOP_FUSE_OPTIONS: Fuse.IFuseOptions<LopSession> = {
+const LOP_FUSE_OPTIONS: IFuseOptions<LopSession> = {
     keys: [
         { name: 'title', weight: 4 },
         { name: 'description', weight: 2 },
@@ -153,7 +152,7 @@ class SearchIndex {
         }
 
         // If filtering reduced data significantly, re-index or just search filtered
-        let results: Fuse.FuseResult<Person>[];
+        let results: FuseResult<Person>[];
         if (sourceData.length < mockPeople.length) {
             const filteredIndex = new Fuse(sourceData, PEOPLE_FUSE_OPTIONS);
             results = filteredIndex.search(query || teamEntity?.value || 'person', { limit });
@@ -210,7 +209,7 @@ class SearchIndex {
             );
         }
 
-        let results: Fuse.FuseResult<Resource>[];
+        let results: FuseResult<Resource>[];
         if (sourceData.length < mockResources.length) { // Approximation
             const filteredIndex = new Fuse(sourceData, RESOURCES_FUSE_OPTIONS);
             results = filteredIndex.search(query || 'resource', { limit });
@@ -351,7 +350,7 @@ class SearchIndex {
             }
         }
 
-        let results: Fuse.FuseResult<LopSession>[];
+        let results: FuseResult<LopSession>[];
 
         // If temporal search dominated (e.g. "next lop"), we rely more on the filter
         // If we have a query string besides the temporal keywords, run Fuse
