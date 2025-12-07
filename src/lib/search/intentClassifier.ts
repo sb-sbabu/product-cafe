@@ -10,7 +10,7 @@ import type {
     ExpectedResultType,
 } from './types';
 import { classifyTokens, normalizeQuery, matchesPattern } from './queryProcessor';
-import { TOOL_SYNONYMS, TOPIC_SYNONYMS, TEAM_SYNONYMS } from './synonyms';
+import { TOOL_SYNONYMS, TEAM_SYNONYMS } from './synonyms';
 
 // ============================================
 // INTENT PATTERNS
@@ -29,13 +29,14 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'FIND_PERSON',
         patterns: [
-            /who (?:is|knows|can help)/i,
-            /contact (?:info|information|details)/i,
-            /(?:find|reach|talk to|message|email)\s+(?:someone|person|expert)/i,
+            /who (?:is|knows|can help|owns|manages|leads)/i,
+            /contact (?:info|information|details|for)/i,
+            /(?:find|reach|talk to|message|email|contact)\s+(?:someone|person|expert|lead)/i,
             /expert (?:in|on|for|about)/i,
-            /(?:slack|teams|email) (?:for|of)/i,
+            /(?:slack|teams|email) (?:for|of)\s+\w+/i,
+            /whose (?:team|responsibility)/i,
         ],
-        keywords: ['who', 'contact', 'expert', 'person', 'email', 'slack', 'teams', 'reach out', 'talk to'],
+        keywords: ['who', 'contact', 'expert', 'person', 'email', 'slack', 'teams', 'reach out', 'talk to', 'owner', 'lead'],
         expectedResult: 'ENTITY_CARD',
         baseConfidence: 0.85,
     },
@@ -44,8 +45,10 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'FIND_TOOL',
         patterns: [
-            /(?:where is|open|launch|go to)\s+\w+/i,
+            /(?:where is|open|launch|go to|start)\s+\w+/i,
             /link to\s+\w+/i,
+            /(?:url|address|site) (?:for|of)/i,
+            /access \w+ tool/i,
         ],
         keywords: Object.keys(TOOL_SYNONYMS),
         expectedResult: 'ENTITY_CARD',
@@ -56,13 +59,15 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'TOOL_ACCESS',
         patterns: [
-            /(?:get|request|need|want)\s+(?:\w+\s+)?access/i,
-            /how (?:do i|to|can i)\s+(?:get|request)\s+\w+/i,
+            /(?:get|request|need|want|grant)\s+(?:\w+\s+)?access/i,
+            /how (?:do i|to|can i)\s+(?:get|request|gain)\s+\w+/i,
             /access (?:to|for)\s+\w+/i,
-            /\w+\s+access request/i,
-            /request\s+\w+\s+(?:access|permission)/i,
+            /\w+\s+access (?:request|form)/i,
+            /request\s+\w+\s+(?:access|permission|license)/i,
+            /no access to/i,
+            /locked out of/i,
         ],
-        keywords: ['access', 'permission', 'request', 'login', 'account'],
+        keywords: ['access', 'permission', 'request', 'login', 'account', 'license', 'approval'],
         expectedResult: 'ACTIONABLE_ANSWER',
         baseConfidence: 0.90,
     },
@@ -72,14 +77,15 @@ const INTENT_PATTERNS: IntentPattern[] = [
         intent: 'FIND_FAQ',
         patterns: [
             /how (?:do|does|can|should|would|to)/i,
-            /what (?:is|are|does|do)/i,
-            /when (?:do|does|should|is)/i,
-            /where (?:do|does|can|is)/i,
-            /why (?:do|does|is|are)/i,
+            /what (?:is|are|does|do|happens if)\s+\w+/i,
+            /when (?:do|does|should|is|will)/i,
+            /where (?:do|does|can|is)\s+\w+/i,
+            /why (?:do|does|is|are)\s+\w+/i,
             /can i\s+/i,
             /is there\s+/i,
+            /do i need to/i,
         ],
-        keywords: ['how', 'what', 'when', 'where', 'why', 'faq', 'question'],
+        keywords: ['how', 'what', 'when', 'where', 'why', 'faq', 'question', 'help', 'troubleshoot'],
         expectedResult: 'DIRECT_ANSWER',
         baseConfidence: 0.75,
     },
@@ -88,12 +94,13 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'EXPLAIN_CONCEPT',
         patterns: [
-            /what is (?:a |an |the )?/i,
-            /(?:explain|define|meaning of)\s+/i,
-            /what does\s+\w+\s+mean/i,
-            /tell me about\s+/i,
+            /what is (?:a |an |the )?\w+/i,
+            /(?:explain|define|meaning of|definition of)\s+/i,
+            /what does\s+\w+\s+(?:mean|stand for)/i,
+            /tell me about\s+\w+/i,
+            /overview of\s+\w+/i,
         ],
-        keywords: ['what is', 'explain', 'define', 'meaning', 'understand', 'about'],
+        keywords: ['what is', 'explain', 'define', 'meaning', 'understand', 'about', 'concept', 'term'],
         expectedResult: 'DIRECT_ANSWER',
         baseConfidence: 0.85,
     },
@@ -102,12 +109,15 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'LEARN_PROCESS',
         patterns: [
-            /how does\s+.+\s+work/i,
+            /how (?:does|do)\s+.+\s+work/i,
             /process (?:for|of)\s+/i,
             /steps (?:for|to)\s+/i,
             /procedure (?:for|to)\s+/i,
+            /workflow (?:for|of)/i,
+            /guide (?:for|to)/i,
+            /walkthrough/i,
         ],
-        keywords: ['process', 'steps', 'procedure', 'workflow', 'how does'],
+        keywords: ['process', 'steps', 'procedure', 'workflow', 'how does', 'guide', 'tutorial', ' SOP'],
         expectedResult: 'DIRECT_ANSWER',
         baseConfidence: 0.80,
     },
@@ -116,12 +126,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'COMPARE',
         patterns: [
-            /\w+\s+(?:vs|versus|or)\s+\w+/i,
+            /\w+\s+(?:vs|versus|or|compared to)\s+\w+/i,
             /difference between\s+/i,
             /compare\s+/i,
-            /\w+\s+compared to\s+\w+/i,
+            /(?:pros|cons|advantages) of/i,
         ],
-        keywords: ['vs', 'versus', 'compare', 'difference', 'between'],
+        keywords: ['vs', 'versus', 'compare', 'difference', 'between', 'better', 'preference'],
         expectedResult: 'DIRECT_ANSWER',
         baseConfidence: 0.85,
     },
@@ -130,10 +140,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'FIND_RESOURCE',
         patterns: [
-            /(?:find|search|look for|show)\s+(?:a |the )?\w+/i,
-            /\w+\s+(?:template|guide|document|doc|checklist)/i,
+            /(?:find|search|look for|show|get)\s+(?:a |the )?(?:document|file|deck|preso)/i,
+            /\w+\s+(?:template|guide|document|doc|checklist|playbook|slides)/i,
+            /where is the \w+ (?:doc|file)/i,
+            /example of/i,
         ],
-        keywords: ['find', 'search', 'document', 'template', 'guide', 'resource', 'file'],
+        keywords: ['find', 'search', 'document', 'template', 'guide', 'resource', 'file', 'slide', 'deck'],
         expectedResult: 'RESOURCE_LIST',
         baseConfidence: 0.70,
     },
@@ -142,11 +154,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'FIND_TEAM',
         patterns: [
-            /(?:who|which team)\s+(?:works on|owns|manages)/i,
+            /(?:who|which team)\s+(?:works on|owns|manages|handles)/i,
             /\w+\s+team\b/i,
-            /team (?:for|of)\s+/i,
+            /team (?:for|of|behind)\s+/i,
+            /org chart/i,
         ],
-        keywords: [...Object.keys(TEAM_SYNONYMS), 'team', 'group', 'department'],
+        keywords: [...Object.keys(TEAM_SYNONYMS), 'team', 'group', 'department', 'squad', 'pod'],
         expectedResult: 'ENTITY_CARD',
         baseConfidence: 0.80,
     },
@@ -157,9 +170,11 @@ const INTENT_PATTERNS: IntentPattern[] = [
         patterns: [
             /(?:ask|discuss|question about)\s+/i,
             /i have a question/i,
-            /need help with/i,
+            /need (?:help|advice) with/i,
+            /anyone (?:know|seen)/i,
+            /problem with/i,
         ],
-        keywords: ['ask', 'discuss', 'question', 'help with'],
+        keywords: ['ask', 'discuss', 'question', 'help with', 'issue', 'problem', 'advice'],
         expectedResult: 'ACTIONABLE_ANSWER',
         baseConfidence: 0.75,
     },
@@ -168,11 +183,13 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'CONTACT_EXPERT',
         patterns: [
-            /talk to (?:someone|expert|person)/i,
+            /talk to (?:someone|expert|person|human)/i,
             /reach out to/i,
-            /who can help/i,
+            /who can (?:help|assist)/i,
+            /connect with/i,
+            /schedule (?:time|meeting) with/i,
         ],
-        keywords: ['talk to', 'reach out', 'contact', 'help', 'expert'],
+        keywords: ['talk to', 'reach out', 'contact', 'help', 'expert', 'connect'],
         expectedResult: 'ENTITY_CARD',
         baseConfidence: 0.80,
     },
@@ -182,11 +199,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
         intent: 'NAVIGATE',
         patterns: [
             /go to\s+/i,
-            /open\s+/i,
-            /show me\s+/i,
+            /open\s+(?:page|section|tab)/i,
+            /show me\s+(?:my )?\w+/i,
             /take me to\s+/i,
+            /navigate to/i,
         ],
-        keywords: ['go', 'open', 'show', 'navigate', 'take me'],
+        keywords: ['go', 'open', 'show', 'navigate', 'take me', 'view'],
         expectedResult: 'NAVIGATION',
         baseConfidence: 0.85,
     },
@@ -195,11 +213,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'LOP_NEXT',
         patterns: [
-            /next lop/i,
+            /next (?:lop|product talk|session)/i,
             /upcoming (?:lop|product talk|session)/i,
-            /when is (?:the )?(?:next )?lop/i,
+            /when is (?:the )?(?:next )?(?:lop|talk)/i,
+            /future (?:lop|session)/i,
         ],
-        keywords: ['next lop', 'upcoming lop', 'when lop'],
+        keywords: ['next lop', 'upcoming lop', 'when lop', 'next talk'],
         expectedResult: 'ENTITY_CARD',
         baseConfidence: 0.90,
     },
@@ -208,11 +227,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'LOP_FIND',
         patterns: [
-            /lop (?:about|on|for)\s+/i,
-            /product talk (?:about|on)\s+/i,
-            /session (?:about|on)\s+/i,
+            /(?:lop|product talk|session) (?:about|on|for)\s+/i,
+            /watch (?:lop|talk)/i,
+            /recording of/i,
+            /previous (?:lop|talk)/i,
         ],
-        keywords: ['lop', 'product talk', 'session', 'presentation'],
+        keywords: ['lop', 'product talk', 'session', 'presentation', 'recording', 'watch'],
         expectedResult: 'RESOURCE_LIST',
         baseConfidence: 0.85,
     },
@@ -221,11 +241,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'LOP_SPEAKER',
         patterns: [
-            /who (?:spoke|presented|talked) (?:about|on)/i,
+            /who (?:spoke|presented|talked) (?:about|on|at)/i,
             /\w+(?:'s| 's) lop/i,
             /lop by\s+\w+/i,
+            /presenter for/i,
         ],
-        keywords: ['spoke', 'presented', 'speaker', 'by'],
+        keywords: ['spoke', 'presented', 'speaker', 'by', 'presenter'],
         expectedResult: 'ENTITY_CARD',
         baseConfidence: 0.80,
     },
@@ -235,8 +256,10 @@ const INTENT_PATTERNS: IntentPattern[] = [
         intent: 'BROWSE',
         patterns: [
             /(?:all|list|browse|show)\s+(?:the )?\w+s?\b/i,
+            /directory of/i,
+            /catalog/i,
         ],
-        keywords: ['all', 'list', 'browse', 'show'],
+        keywords: ['all', 'list', 'browse', 'show', 'catalog', 'directory'],
         expectedResult: 'RESOURCE_LIST',
         baseConfidence: 0.70,
     },
@@ -245,10 +268,12 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'RECENT',
         patterns: [
-            /(?:recent|new|latest|fresh)\s+/i,
+            /(?:recent|new|latest|fresh|created)\s+/i,
             /what's new/i,
+            /recently added/i,
+            /just (?:added|updated)/i,
         ],
-        keywords: ['recent', 'new', 'latest', 'fresh'],
+        keywords: ['recent', 'new', 'latest', 'fresh', 'updated'],
         expectedResult: 'RESOURCE_LIST',
         baseConfidence: 0.75,
     },
@@ -257,9 +282,11 @@ const INTENT_PATTERNS: IntentPattern[] = [
     {
         intent: 'POPULAR',
         patterns: [
-            /(?:popular|top|trending|most used)\s+/i,
+            /(?:popular|top|trending|most used|essential)\s+/i,
+            /best (?:rated|viewed)/i,
+            /hot/i,
         ],
-        keywords: ['popular', 'top', 'trending', 'most used', 'best'],
+        keywords: ['popular', 'top', 'trending', 'most used', 'best', 'hot'],
         expectedResult: 'RESOURCE_LIST',
         baseConfidence: 0.75,
     },
@@ -278,15 +305,17 @@ function detectQueryType(query: string): QueryType {
     }
 
     // Command patterns
-    if (/^(show|open|go|find|get|list|browse|take|navigate)\b/i.test(normalized)) {
+    if (/^(show|open|go|find|get|list|browse|take|navigate|search|fetch)\b/i.test(normalized)) {
         return 'COMMAND';
     }
 
     // Name pattern (capitalized words, 2-4 words)
+    // Heuristic: check original query for casing
     const words = query.trim().split(/\s+/);
     if (words.length >= 1 && words.length <= 4) {
-        const allCapitalized = words.every(w => /^[A-Z]/.test(w));
-        if (allCapitalized) {
+        // If >50% of words start with capital letter, plausible name
+        const capitalizedCount = words.filter(w => /^[A-Z]/.test(w)).length;
+        if (capitalizedCount > 0 && capitalizedCount >= words.length / 2) {
             return 'NAME';
         }
     }
@@ -310,6 +339,7 @@ function containsKeyword(tokens: string[], keywords: string[]): boolean {
     const tokenSet = new Set(tokens.map(t => t.toLowerCase()));
     return keywords.some(kw => {
         const kwParts = kw.toLowerCase().split(/\s+/);
+        // All parts of the keyword phrase must be present
         return kwParts.every(part => tokenSet.has(part));
     });
 }
@@ -331,9 +361,12 @@ function calculateIntentScore(
 
     // Check keyword matches (additive boost)
     if (containsKeyword(tokens, pattern.keywords)) {
-        score += 0.1;
+        // Boost depends on uniqueness - if pattern matched, simpler keyword is less special
+        // If pattern didn't match, keyword carries more weight but starts lower
+        score += score > 0 ? 0.15 : 0.3;
     }
 
+    // Cap at 1.0
     return Math.min(score, 1.0);
 }
 
@@ -352,7 +385,7 @@ export function classifyIntent(
 
     for (const pattern of INTENT_PATTERNS) {
         const score = calculateIntentScore(normalized, classified.all, pattern);
-        if (score > 0) {
+        if (score > 0.3) { // Minimum threshold to even consider
             scores.push({
                 intent: pattern.intent,
                 score,
@@ -367,7 +400,7 @@ export function classifyIntent(
     // Detect query type
     const queryType = detectQueryType(query);
 
-    // If no patterns matched, fall back to GENERAL_SEARCH
+    // If no patterns matched significantly (or at all)
     if (scores.length === 0) {
         return {
             primary: 'GENERAL_SEARCH',
@@ -379,10 +412,16 @@ export function classifyIntent(
     }
 
     const primary = scores[0];
-    const secondary = scores.slice(1, 4).map(s => ({
-        intent: s.intent,
-        confidence: s.score,
-    }));
+
+    // Filter secondary intents - must be relevant enough relative to primary
+    // e.g. if primary is 0.9, secondary must be > 0.45
+    const separateThreshold = 0.4;
+    const secondary = scores.slice(1, 4)
+        .filter(s => s.score >= separateThreshold)
+        .map(s => ({
+            intent: s.intent,
+            confidence: s.score,
+        }));
 
     return {
         primary: primary.intent,

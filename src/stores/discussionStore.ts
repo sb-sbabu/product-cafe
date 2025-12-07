@@ -278,7 +278,7 @@ export const useDiscussionStore = create<DiscussionState>()(
                     const now = new Date().toISOString();
                     const updatedDiscussions = state.discussions.map(d =>
                         d.id === discussionId
-                            ? { ...d, acceptedReplyId: replyId, status: 'resolved', resolvedAt: now, updatedAt: now }
+                            ? { ...d, acceptedReplyId: replyId, status: 'resolved' as const, resolvedAt: now, updatedAt: now }
                             : d
                     );
                     const updatedReplies = state.replies.map(r => ({
@@ -303,7 +303,7 @@ export const useDiscussionStore = create<DiscussionState>()(
                 set(state => ({
                     discussions: state.discussions.map(d =>
                         d.id === discussionId
-                            ? { ...d, acceptedReplyId: undefined, status: 'open', resolvedAt: undefined, updatedAt: now }
+                            ? { ...d, acceptedReplyId: undefined, status: 'open' as const, resolvedAt: undefined, updatedAt: now }
                             : d
                     ),
                     replies: state.replies.map(r =>
@@ -318,7 +318,7 @@ export const useDiscussionStore = create<DiscussionState>()(
                 set(state => {
                     const now = new Date().toISOString();
                     const updatedDiscussions = state.discussions.map(d =>
-                        d.id === id ? { ...d, status: 'resolved', resolvedAt: now, updatedAt: now } : d
+                        d.id === id ? { ...d, status: 'resolved' as const, resolvedAt: now, updatedAt: now } : d
                     );
 
                     const discussion = updatedDiscussions.find(d => d.id === id);
@@ -335,7 +335,7 @@ export const useDiscussionStore = create<DiscussionState>()(
                 const now = new Date().toISOString();
                 set(state => ({
                     discussions: state.discussions.map(d =>
-                        d.id === id ? { ...d, status: 'open', resolvedAt: undefined, updatedAt: now } : d
+                        d.id === id ? { ...d, status: 'open' as const, resolvedAt: undefined, updatedAt: now } : d
                     ),
                 }));
             },

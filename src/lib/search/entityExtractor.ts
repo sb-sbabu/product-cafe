@@ -333,6 +333,136 @@ function extractPersonNames(query: string): ExtractionResult[] {
 }
 
 /**
+ * Detect date/time expressions
+ */
+function extractTemporalEntities(query: string): ExtractionResult[] {
+    const results: ExtractionResult[] = [];
+    const normalized = query.toLowerCase();
+
+    // Helper to add days to today
+    const addDays = (days: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return d.toISOString();
+    };
+
+    // Helper to get matching range
+    const getRange = (start: Date, end: Date) => {
+        return `${start.toISOString()}/${end.toISOString()}`;
+    };
+
+    // 1. Relative days
+    const relativePatterns = [
+        { pattern: /\btoday\b/g, value: addDays(0), type: 'DATE' },
+        { pattern: /\btomorrow\b/g, value: addDays(1), type: 'DATE' },
+        { pattern: /\bz\b/g, value: addDays(-1), type: 'DATE' } // 'yesterday' matches 'yesterday'
+    ];
+
+    // Explicit fix for "yesterday" manually since 'z' was placeholder
+    if (normalized.includes('yesterday')) {
+        const index = normalized.indexOf('yesterday');
+        results.push({
+            entity: {
+                type: 'DATE',
+                value: 'yesterday',
+                normalizedValue: addDays(-1),
+                confidence: 0.95,
+                position: { start: index, end: index + 9 }
+            },
+            matchedText: 'yesterday'
+        });
+    }
+
+    relativePatterns.forEach(({ pattern, value, type }) => {
+        let match;
+        // Reset lastIndex for global regex
+        pattern.lastIndex = 0;
+        while ((match = pattern.exec(normalized)) !== null) {
+            // Skip placeholders
+            if (pattern.source === '\\bz\\b') continue;
+
+            results.push({
+                entity: {
+                    type: type as any,
+                    value: match[0],
+                    normalizedValue: value,
+                    confidence: 0.95,
+                    position: { start: match.index, end: match.index + match[0].length }
+                },
+                matchedText: match[0]
+            });
+        }
+    });
+
+    // 2. "Next" expressions
+    const nextPattern = /\b(next|upcoming|future)\s+(\w+)\b/g;
+    let nextMatch;
+    while ((nextMatch = nextPattern.exec(normalized)) !== null) {
+        const fullPhrase = nextMatch[0];
+        const modifier = nextMatch[1]; // next, upcoming
+        const target = nextMatch[2]; // week, month, session, lop
+
+        let rangeValue = 'future'; // Default
+
+        if (target === 'week') {
+            const d = new Date();
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1) + 7; // Next Monday
+            const nextMon = new Date(d.setDate(diff));
+            const nextSun = new Date(d.setDate(nextMon.getDate() + 6));
+            rangeValue = getRange(nextMon, nextSun);
+        } else if (target === 'month') {
+            const d = new Date();
+            const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+            const endNextMonth = new Date(d.getFullYear(), d.getMonth() + 2, 0);
+            rangeValue = getRange(nextMonth, endNextMonth);
+        } else if (['lop', 'session', 'meeting'].includes(target)) {
+            rangeValue = 'next_occurrence';
+        }
+
+        results.push({
+            entity: {
+                type: 'TIME_RANGE',
+                value: fullPhrase,
+                normalizedValue: rangeValue,
+                confidence: 0.90,
+                position: { start: nextMatch.index, end: nextMatch.index + fullPhrase.length }
+            },
+            matchedText: fullPhrase
+        });
+    }
+
+    // 3. Quarters (Q1, Q2, Q3, Q4)
+    const quarterPattern = /\b(q[1-4])\b/g;
+    let qMatch;
+    while ((qMatch = quarterPattern.exec(normalized)) !== null) {
+        const quarter = qMatch[1];
+        const year = new Date().getFullYear();
+        let startMonth = 0;
+
+        if (quarter === 'q2') startMonth = 3;
+        if (quarter === 'q3') startMonth = 6;
+        if (quarter === 'q4') startMonth = 9;
+
+        const start = new Date(year, startMonth, 1);
+        const end = new Date(year, startMonth + 3, 0);
+
+        results.push({
+            entity: {
+                type: 'TIME_RANGE',
+                value: quarter.toUpperCase(),
+                normalizedValue: getRange(start, end),
+                confidence: 0.95,
+                position: { start: qMatch.index, end: qMatch.index + qMatch[0].length }
+            },
+            matchedText: qMatch[0]
+        });
+    }
+
+    return results;
+}
+
+/**
  * Main entity extraction function
  */
 export function extractEntities(query: string, tokens: string[]): Entity[] {
@@ -367,7 +497,24 @@ export function extractEntities(query: string, tokens: string[]): Entity[] {
         }
     }
 
-    // 3. Extract potential person names
+    // 3. Extract temporal entities
+    const temporalResults = extractTemporalEntities(query);
+    for (const result of temporalResults) {
+        // Only add if no overlap
+        const hasOverlap = entities.some(e =>
+            (result.entity.position.start >= e.position.start && result.entity.position.start < e.position.end) ||
+            (result.entity.position.end > e.position.start && result.entity.position.end <= e.position.end)
+        );
+        if (!hasOverlap) {
+            entities.push(result.entity);
+            // Mark positions as used
+            for (let i = result.entity.position.start; i < result.entity.position.end; i++) {
+                usedPositions.add(i);
+            }
+        }
+    }
+
+    // 4. Extract potential person names
     const nameResults = extractPersonNames(query);
     for (const result of nameResults) {
         // Only add if no overlap with existing entities

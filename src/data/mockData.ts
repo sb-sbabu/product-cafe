@@ -1120,3 +1120,60 @@ export function getResourcesByCategory(category: string): Resource[] {
 export function getResourcesByPillar(pillar: string): Resource[] {
     return mockResources.filter(r => r.pillar === pillar && !r.isArchived);
 }
+
+// ========================================
+// MOCK LOP SESSIONS
+// ========================================
+
+import type { LopSession } from '../types';
+
+export const mockLopSessions: LopSession[] = [
+    {
+        id: 'lop1',
+        title: 'Navigating Stakeholder Conflicts',
+        description: 'November session on managing difficult stakeholder conversations and finding win-win solutions.',
+        date: '2024-11-20T10:00:00Z',
+        speakerIds: ['p2'],
+        recordingUrl: 'https://video.company.com/lop/nov-2024',
+        slidesUrl: 'https://slides.company.com/lop/nov-2024',
+        tags: ['stakeholders', 'conflict', 'communication', 'soft skills'],
+        attendeeCount: 145,
+        rating: 4.8,
+    },
+    {
+        id: 'lop2',
+        title: 'Lessons from Product Failures',
+        description: 'Candid stories from PMs about features that flopped and what we learned.',
+        date: '2024-10-18T10:00:00Z',
+        speakerIds: ['p3', 'p4'],
+        recordingUrl: 'https://video.company.com/lop/oct-2024',
+        slidesUrl: 'https://slides.company.com/lop/oct-2024',
+        tags: ['failure', 'learning', 'retrospective', 'case study'],
+        attendeeCount: 160,
+        rating: 4.9,
+    },
+    {
+        id: 'lop3',
+        title: 'The Art of Saying No',
+        description: 'How to prioritize ruthlessly and push back on scope creep.',
+        date: '2024-09-20T10:00:00Z',
+        speakerIds: ['p4'],
+        recordingUrl: 'https://video.company.com/lop/sep-2024',
+        slidesUrl: 'https://slides.company.com/lop/sep-2024',
+        tags: ['prioritization', 'scope creep', 'roadmap'],
+        attendeeCount: 130,
+        rating: 4.7,
+    },
+    {
+        id: 'lop4',
+        title: 'Upcoming: 2025 Roadmap Preview',
+        description: 'Sneak peek into the major strategic pillars for next year.',
+        date: '2024-12-20T10:00:00Z',
+        speakerIds: ['p5', 'p1'],
+        recordingUrl: '',
+        slidesUrl: '',
+        tags: ['roadmap', 'strategy', 'future', 'planning'],
+        attendeeCount: 0,
+        rating: 0,
+    },
+];

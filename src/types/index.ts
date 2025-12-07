@@ -119,6 +119,21 @@ export interface Person {
     lastUpdatedAt: string;
 }
 
+// -------------------- LOP SESSION --------------------
+
+export interface LopSession {
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    speakerIds: string[];
+    recordingUrl?: string;
+    slidesUrl?: string;
+    tags: string[];
+    attendeeCount: number;
+    rating?: number;
+}
+
 // -------------------- CHATBOT --------------------
 
 export type IntentPatternType = 'keyword' | 'regex' | 'phrase';
@@ -238,6 +253,7 @@ export interface SearchResult {
     resources: Resource[];
     faqs: FAQ[];
     people: Person[];
+    lopSessions: LopSession[];
     totalCount: number;
     query: string;
 }

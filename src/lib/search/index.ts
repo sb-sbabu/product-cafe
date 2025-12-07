@@ -14,6 +14,7 @@ import { processQuery } from './queryProcessor';
 import { classifyIntent } from './intentClassifier';
 import { extractEntities } from './entityExtractor';
 import { searchIndex, countResults } from './searchIndex';
+import { synthesizeAnswer } from './answerSynthesizer';
 
 // Default config (inline to avoid import issues)
 const DEFAULT_CONFIG: SearchConfig = {
@@ -128,6 +129,7 @@ class CafeFinderEngine {
             // Execute searches across all indexes
             const rawResults = searchIndex.searchAll(
                 searchTerms,
+                entities,
                 this.config.maxResultsPerType
             );
 
@@ -143,8 +145,8 @@ class CafeFinderEngine {
             // ============================================
             const answerSynthesisStart = performance.now();
 
-            // TODO: Implement in Phase 3
-            const answer = undefined;
+            // Perform answer synthesis
+            const answer = synthesizeAnswer(query, rerankResults, this.config);
 
             metrics.answerSynthesisMs = performance.now() - answerSynthesisStart;
 

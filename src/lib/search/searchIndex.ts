@@ -10,12 +10,15 @@ import type {
     FAQResult,
     ResourceResult,
     DiscussionResult,
+    DiscussionResult,
+    LOPSessionResult,
+    Entity,
 } from './types';
 
 // Import mock data
-import { mockPeople, mockResources, mockFAQs } from '../../data/mockData';
+import { mockPeople, mockResources, mockFAQs, mockLopSessions } from '../../data/mockData';
 import { mockDiscussions } from '../../data/discussions';
-import type { Person, Resource, FAQ } from '../../types';
+import type { Person, Resource, FAQ, LopSession } from '../../types';
 import type { Discussion } from '../../data/discussions';
 
 // ============================================
@@ -77,6 +80,18 @@ const DISCUSSIONS_FUSE_OPTIONS: Fuse.IFuseOptions<Discussion> = {
     minMatchCharLength: 2,
 };
 
+const LOP_FUSE_OPTIONS: Fuse.IFuseOptions<LopSession> = {
+    keys: [
+        { name: 'title', weight: 4 },
+        { name: 'description', weight: 2 },
+        { name: 'tags', weight: 3 },
+    ],
+    threshold: 0.4,
+    includeScore: true,
+    includeMatches: true,
+    minMatchCharLength: 2,
+};
+
 // ============================================
 // SEARCH INDEX CLASS
 // ============================================
@@ -86,6 +101,7 @@ class SearchIndex {
     private resourcesIndex: Fuse<Resource> | null = null;
     private faqsIndex: Fuse<FAQ> | null = null;
     private discussionsIndex: Fuse<Discussion> | null = null;
+    private lopIndex: Fuse<LopSession> | null = null;
 
     private initialized = false;
 
@@ -111,6 +127,9 @@ class SearchIndex {
         // Discussions index
         this.discussionsIndex = new Fuse(mockDiscussions, DISCUSSIONS_FUSE_OPTIONS);
 
+        // LOP index
+        this.lopIndex = new Fuse(mockLopSessions, LOP_FUSE_OPTIONS);
+
         this.initialized = true;
 
         const elapsed = performance.now() - start;
@@ -120,10 +139,27 @@ class SearchIndex {
     /**
      * Search people
      */
-    searchPeople(query: string, limit = 10): PersonResult[] {
+    searchPeople(query: string, entities: Entity[] = [], limit = 10): PersonResult[] {
         if (!this.peopleIndex) this.initialize();
 
-        const results = this.peopleIndex!.search(query, { limit });
+        let sourceData = mockPeople;
+        const teamEntity = entities.find(e => e.type === 'TEAM');
+
+        // Filter by team if present
+        if (teamEntity) {
+            sourceData = sourceData.filter(p =>
+                p.team.toLowerCase().includes(teamEntity.normalizedValue.toLowerCase())
+            );
+        }
+
+        // If filtering reduced data significantly, re-index or just search filtered
+        let results: Fuse.FuseResult<Person>[];
+        if (sourceData.length < mockPeople.length) {
+            const filteredIndex = new Fuse(sourceData, PEOPLE_FUSE_OPTIONS);
+            results = filteredIndex.search(query || teamEntity?.value || 'person', { limit });
+        } else {
+            results = this.peopleIndex!.search(query, { limit });
+        }
 
         return results.map(result => {
             const person = result.item;
@@ -152,10 +188,35 @@ class SearchIndex {
     /**
      * Search resources
      */
-    searchResources(query: string, limit = 10): ResourceResult[] {
+    searchResources(query: string, entities: Entity[] = [], limit = 10): ResourceResult[] {
         if (!this.resourcesIndex) this.initialize();
 
-        const results = this.resourcesIndex!.search(query, { limit });
+        let sourceData = mockResources.filter(r => !r.isArchived);
+
+        // Filter by Pillar
+        const pillarEntity = entities.find(e => e.type === 'PILLAR');
+        if (pillarEntity) {
+            sourceData = sourceData.filter(r =>
+                r.pillar.toLowerCase() === pillarEntity.normalizedValue.toLowerCase()
+            );
+        }
+
+        // Filter by Resource Type
+        const typeEntity = entities.find(e => e.type === 'RESOURCE_TYPE');
+        if (typeEntity) {
+            sourceData = sourceData.filter(r =>
+                r.contentType.toLowerCase() === typeEntity.normalizedValue.toLowerCase() ||
+                r.category.toLowerCase().includes(typeEntity.normalizedValue.toLowerCase())
+            );
+        }
+
+        let results: Fuse.FuseResult<Resource>[];
+        if (sourceData.length < mockResources.length) { // Approximation
+            const filteredIndex = new Fuse(sourceData, RESOURCES_FUSE_OPTIONS);
+            results = filteredIndex.search(query || 'resource', { limit });
+        } else {
+            results = this.resourcesIndex!.search(query, { limit });
+        }
 
         return results.map(result => {
             const resource = result.item;
@@ -247,6 +308,102 @@ class SearchIndex {
     }
 
     /**
+     * Search LOP sessions
+     */
+    /**
+     * Search LOP sessions with entity filtering
+     */
+    searchLopSessions(query: string, entities: Entity[] = [], limit = 5): LOPSessionResult[] {
+        if (!this.lopIndex) this.initialize();
+
+        let sourceData = mockLopSessions;
+        const now = new Date();
+
+        // 1. Filter by temporal entities
+        const temporalEntity = entities.find(e => e.type === 'TIME_RANGE' || e.type === 'DATE');
+        let isTemporalSearch = false;
+
+        if (temporalEntity) {
+            isTemporalSearch = true;
+            const value = temporalEntity.normalizedValue;
+
+            if (value === 'future') {
+                sourceData = sourceData.filter(s => new Date(s.date) >= now);
+            } else if (value === 'next_occurrence') {
+                // Return only future sessions
+                sourceData = sourceData.filter(s => new Date(s.date) >= now);
+            } else if (value.includes('/')) {
+                // Date range
+                const [startStr, endStr] = value.split('/');
+                const start = new Date(startStr);
+                const end = new Date(endStr);
+                sourceData = sourceData.filter(s => {
+                    const d = new Date(s.date);
+                    return d >= start && d <= end;
+                });
+            } else if (!isNaN(Date.parse(value))) {
+                // Specific date
+                const target = new Date(value);
+                sourceData = sourceData.filter(s => {
+                    const d = new Date(s.date);
+                    return d.toDateString() === target.toDateString();
+                });
+            }
+        }
+
+        let results: Fuse.FuseResult<LopSession>[];
+
+        // If temporal search dominated (e.g. "next lop"), we rely more on the filter
+        // If we have a query string besides the temporal keywords, run Fuse
+        // Heuristic: remove temporal words from query to see if anything remains
+        const cleanQuery = query.replace(/\b(next|upcoming|future|session|lop|meeting|q[1-4]|tomorrow|today)\b/gi, '').trim();
+
+        if (isTemporalSearch && cleanQuery.length < 2 && temporalEntity?.normalizedValue === 'next_occurrence') {
+            // "next lop" -> Just sort by date and take top
+            sourceData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            // Mock fuse result structure for compatibility
+            results = sourceData.slice(0, limit).map(item => ({
+                item,
+                score: 0.01,
+                matches: [],
+                refIndex: 0
+            }));
+        } else if (sourceData.length < mockLopSessions.length) {
+            // Re-index filtered data (expensive but accurate) or just search if small
+            const filteredIndex = new Fuse(sourceData, LOP_FUSE_OPTIONS);
+            results = filteredIndex.search(query || 'session', { limit });
+        } else {
+            // No filter applied or query dominant
+            results = this.lopIndex!.search(query, { limit });
+        }
+
+        return results.map(result => {
+            const session = result.item;
+            const matchedTerms = result.matches?.map(m => m.value || '').filter(Boolean) || [];
+
+            // Find speaker name if possible (naive lookup for now)
+            const speaker = mockPeople.find(p => session.speakerIds.includes(p.id));
+
+            return {
+                id: session.id,
+                type: 'lop_session' as const,
+                score: 1 - (result.score || 0),
+                matchedTerms,
+                sessionNumber: 0, // Not in mock data yet
+                title: session.title,
+                description: session.description,
+                speakerName: speaker?.displayName || 'Unknown Speaker',
+                speakerId: session.speakerIds[0] || '',
+                sessionDate: session.date,
+                duration: '60 min',
+                topics: session.tags,
+                videoUrl: session.recordingUrl,
+                slidesUrl: session.slidesUrl,
+            };
+        });
+    }
+
+    /**
      * Search tools (from resources with tool contentType)
      */
     searchTools(query: string, limit = 10): ToolResult[] {
@@ -292,21 +449,21 @@ class SearchIndex {
     /**
      * Search all indexes
      */
-    searchAll(query: string, limitPerType = 5): {
+    searchAll(query: string, entities: Entity[] = [], limitPerType = 5): {
         people: PersonResult[];
         tools: ToolResult[];
         faqs: FAQResult[];
         resources: ResourceResult[];
         discussions: DiscussionResult[];
-        lopSessions: [];  // Placeholder - LOP sessions not yet implemented
+        lopSessions: LOPSessionResult[];
     } {
         return {
-            people: this.searchPeople(query, limitPerType),
-            tools: this.searchTools(query, limitPerType),
+            people: this.searchPeople(query, entities, limitPerType),
+            tools: this.searchTools(query, limitPerType), // Tools logic is mostly name-based
             faqs: this.searchFAQs(query, limitPerType),
-            resources: this.searchResources(query, limitPerType),
+            resources: this.searchResources(query, entities, limitPerType),
             discussions: this.searchDiscussions(query, limitPerType),
-            lopSessions: [],  // TODO: Implement LOP sessions search in Phase 2
+            lopSessions: this.searchLopSessions(query, entities, limitPerType),
         };
     }
 }
@@ -321,7 +478,7 @@ export const searchIndex = new SearchIndex();
 // RESULT TYPE
 // ============================================
 
-export type AnySearchResult = PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult;
+export type AnySearchResult = PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult | LOPSessionResult;
 
 // ============================================
 // HELPER FUNCTIONS

@@ -4,17 +4,17 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, X, Clock, TrendingUp, Sparkles, User, Wrench, HelpCircle, FileText, MessageSquare } from 'lucide-react';
+import { Search, X, Clock, TrendingUp, Sparkles, User, Wrench, HelpCircle, FileText, MessageSquare, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSearchStore } from '../../stores/searchStore';
 import { cafeFinder } from '../../lib/search';
-import type { PersonResult, ToolResult, FAQResult, ResourceResult, DiscussionResult } from '../../lib/search/types';
+import type { PersonResult, ToolResult, FAQResult, ResourceResult, DiscussionResult, LOPSessionResult } from '../../lib/search/types';
 
 interface CafeFinderBarProps {
     placeholder?: string;
     size?: 'sm' | 'md' | 'lg';
     className?: string;
-    onResultClick?: (result: PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult) => void;
+    onResultClick?: (result: PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult | LOPSessionResult) => void;
     showShortcut?: boolean;
 }
 
@@ -94,6 +94,7 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                         ...results.results.tools,
                         ...results.results.resources,
                         ...results.results.discussions,
+                        ...results.results.lopSessions,
                     ];
                     if (allResults[selectedIndex]) {
                         handleResultClick(allResults[selectedIndex]);
@@ -111,7 +112,7 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
     };
 
     // Handle result click
-    const handleResultClick = (result: PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult) => {
+    const handleResultClick = (result: PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult | LOPSessionResult) => {
         addRecentSearch(localQuery);
         onResultClick?.(result);
         handleClear();
@@ -171,6 +172,7 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
         ...results.results.tools,
         ...results.results.resources,
         ...results.results.discussions,
+        ...results.results.lopSessions,
     ] : [];
 
     return (
@@ -254,7 +256,7 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                                         <HelpCircle size={12} />
                                         FAQs
                                     </div>
-                                    {results.results.faqs.slice(0, 3).map((faq, idx) => (
+                                    {results.results.faqs.slice(0, 3).map((faq) => (
                                         <button
                                             key={faq.id}
                                             onClick={() => handleResultClick(faq)}
@@ -379,6 +381,33 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                                                 <div className="text-xs text-gray-500">{discussion.authorName} • {discussion.replyCount} replies</div>
                                             </div>
                                             <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Discussion</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* LOP Sessions */}
+                            {results.results.lopSessions.length > 0 && (
+                                <div>
+                                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mt-2">
+                                        <Calendar size={12} />
+                                        Sessions
+                                    </div>
+                                    {results.results.lopSessions.slice(0, 2).map((session) => (
+                                        <button
+                                            key={session.id}
+                                            onClick={() => handleResultClick(session)}
+                                            className={cn(
+                                                'w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3 transition-colors',
+                                                allResults.indexOf(session) === selectedIndex && 'bg-cafe-50'
+                                            )}
+                                        >
+                                            <Calendar size={16} className="text-pink-500 mt-0.5 shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-sm font-medium text-gray-900 truncate">{session.title}</div>
+                                                <div className="text-xs text-gray-500">{new Date(session.sessionDate).toLocaleDateString()} • {session.speakerName}</div>
+                                            </div>
+                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">Session</span>
                                         </button>
                                     ))}
                                 </div>

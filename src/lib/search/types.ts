@@ -122,7 +122,9 @@ export type EntityType =
     | 'RESOURCE_TYPE'
     | 'ACTION'
     | 'PILLAR'
-    | 'TAG';
+    | 'TAG'
+    | 'DATE'
+    | 'TIME_RANGE';
 
 /**
  * An extracted entity from the query
