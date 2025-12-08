@@ -12,6 +12,7 @@ import { useToastStore } from '../toastStore';
 import { ToastFeed } from './ToastFeed';
 import { QuickToastModal } from './QuickToastModal';
 import { StandingOvationWizard } from './StandingOvationWizard';
+import { TeamToastModal } from './TeamToastModal';
 import { COMPANY_VALUES, BADGES } from '../data';
 
 export const ToastHomePage: React.FC = () => {
@@ -31,6 +32,7 @@ export const ToastHomePage: React.FC = () => {
     // Modal states
     const [showQuickToast, setShowQuickToast] = useState(false);
     const [showStandingOvation, setShowStandingOvation] = useState(false);
+    const [showTeamToast, setShowTeamToast] = useState(false);
 
     // Top values this month
     const topValues = useMemo(() => {
@@ -173,7 +175,7 @@ export const ToastHomePage: React.FC = () => {
 
                     {/* Team Toast */}
                     <button
-                        onClick={() => setShowStandingOvation(true)}
+                        onClick={() => setShowTeamToast(true)}
                         className="group relative p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 hover:border-blue-300 hover:shadow-md transition-all text-left"
                     >
                         <div className="flex items-start gap-4">
@@ -332,6 +334,10 @@ export const ToastHomePage: React.FC = () => {
             <StandingOvationWizard
                 isOpen={showStandingOvation}
                 onClose={() => setShowStandingOvation(false)}
+            />
+            <TeamToastModal
+                isOpen={showTeamToast}
+                onClose={() => setShowTeamToast(false)}
             />
         </div>
     );
