@@ -19,6 +19,8 @@ import { GamificationEngine } from './components/gamification/GamificationEngine
 import { useAnalytics } from './hooks/useAnalytics';
 import { usePulseInit } from './hooks/usePulseInit';
 import { PulseDashboard } from './components/pulse/PulseDashboard';
+import { Sidebar } from './components/layout/Sidebar';
+import { cn } from './lib/utils';
 
 type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits';
 
@@ -169,8 +171,11 @@ function AppContent() {
 
       {/* Main flex container for squeeze layout */}
       <div className="flex min-h-screen">
-        {/* Main content area - grows to fill available space */}
-        <div className="flex-1 overflow-auto">
+        {/* Left Sidebar - Premium Navigation */}
+        {!isMobile && <Sidebar activePage={activePage} onNavigate={handleNavigate} />}
+
+        {/* Main content area - grows to fill available space, with margin for fixed dock */}
+        <div className={cn("flex-1 overflow-auto", !isMobile && "mr-[70px]")}>
           <Layout
             activePage={activePage as string}
             onNavigate={handleNavigate}
@@ -192,12 +197,12 @@ function AppContent() {
             </main>
           </Layout>
         </div>
-
-        {/* Café Dock - Always visible on right, part of flex layout */}
-        {!isMobile && <CafeDock />}
       </div>
 
-      {/* Mobile dock - fixed position */}
+      {/* Café Dock - Fixed position on right (desktop only) */}
+      {!isMobile && <CafeDock />}
+
+      {/* Mobile dock */}
       {isMobile && <CafeDock />}
 
       {/* Keyboard shortcuts hint - only on desktop */}

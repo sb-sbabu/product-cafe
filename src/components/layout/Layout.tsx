@@ -53,13 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({
             {/* Fixed Header */}
             <Header onSearch={onSearch} userName="Natasha" />
 
-            {/* Tab Navigation */}
-            <Navigation
-                variant="tabs"
-                activeItem={activePage}
-                onNavigate={onNavigate}
-                onChatOpen={openChat}
-            />
+            {/* Tab Navigation - REMOVED: Sidebar now handles navigation */}
 
             {/* Main Content - Squeeze Layout: shrinks ONLY when dock expands */}
             <main

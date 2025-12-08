@@ -1,307 +1,374 @@
 import React from 'react';
 import {
-    Zap,
-    BookOpen,
-    Users,
     ArrowRight,
-    Sparkles,
+    Activity,
+    Users,
+    BookOpen,
+    Lightbulb,
+    Calendar,
+    ChevronRight,
+    Zap,
+    MessageSquare,
     TrendingUp,
-    Coffee,
-    Clock,
-    ExternalLink,
+    Heart,
+    ArrowUp,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { ResourceCardSkeleton, Skeleton } from '../../components/ui/Skeleton';
-import { ResourceCard } from '../../components/cards/ResourceCard';
-import { cn, formatRelativeTime } from '../../lib/utils';
-import { getFeaturedResources, mockResources } from '../../data/mockData';
+import { Skeleton } from '../../components/ui/Skeleton';
+import { cn } from '../../lib/utils';
 import { usePageLoading } from '../../hooks';
+import { usePointsStore } from '../../stores/pointsStore';
+import { useLevelStore } from '../../stores/levelStore';
+import { useBadgeStore } from '../../stores/badgeStore';
 
 interface HomePageProps {
     onNavigate?: (section: string) => void;
     userName?: string;
 }
 
-const entryPoints = [
-    {
-        id: 'grab-and-go',
-        title: 'Grab & Go',
-        description: 'Quick links, tools, FAQs',
-        icon: Zap,
-        color: 'bg-amber-500',
-        hoverColor: 'hover:bg-amber-50',
-        borderColor: 'hover:border-amber-200',
-        iconBg: 'bg-amber-100',
-        iconColor: 'text-amber-600',
-    },
-    {
-        id: 'library',
-        title: 'Library',
-        description: 'Learn product craft, domain, playbooks',
-        icon: BookOpen,
-        color: 'bg-purple-500',
-        hoverColor: 'hover:bg-purple-50',
-        borderColor: 'hover:border-purple-200',
-        iconBg: 'bg-purple-100',
-        iconColor: 'text-purple-600',
-    },
-    {
-        id: 'community',
-        title: 'Community',
-        description: 'Find people, ask questions',
-        icon: Users,
-        color: 'bg-cyan-500',
-        hoverColor: 'hover:bg-cyan-50',
-        borderColor: 'hover:border-cyan-200',
-        iconBg: 'bg-cyan-100',
-        iconColor: 'text-cyan-600',
-    },
-];
-
-// Get recently updated resources from mockData
-const getRecentlyUpdated = () => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    return mockResources
-        .filter(r => !r.isArchived && new Date(r.updatedAt) >= thirtyDaysAgo)
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 4);
-};
+// ═══════════════════════════════════════════════════════════════════════════
+// HOME PAGE — Clean, Meaningful, No Noise
+// Cards-based layout that informs and guides action
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const HomePage: React.FC<HomePageProps> = ({
     onNavigate,
-    userName = 'there',
+    userName = 'Natasha',
 }) => {
-    const isLoading = usePageLoading(400);
-    const featuredResources = getFeaturedResources().slice(0, 4);
-    const recentResources = getRecentlyUpdated();
+    const isLoading = usePageLoading(200);
     const firstName = userName.split(' ')[0];
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-    // Loading state skeleton
+    // Store data
+    const { totalPoints } = usePointsStore();
+    const { currentLevel } = useLevelStore();
+    const { earnedBadges } = useBadgeStore();
+    const currentStreak = 5; // Mock
+
     if (isLoading) {
         return (
-            <div className="space-y-8 animate-fade-in">
-                {/* Welcome Skeleton */}
-                <section>
-                    <div className="space-y-2 mb-6">
-                        <Skeleton width="60%" height={32} />
-                        <Skeleton width="40%" height={20} />
-                    </div>
-                </section>
-
-                {/* Entry Points Skeleton */}
-                <section>
-                    <Skeleton width={120} height={24} className="mb-4" />
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="p-6 rounded-xl border border-gray-100 bg-white">
-                                <div className="flex items-start gap-4">
-                                    <Skeleton variant="rect" width={48} height={48} />
-                                    <div className="flex-1 space-y-2">
-                                        <Skeleton width="60%" height={20} />
-                                        <Skeleton width="80%" height={16} />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Featured Resources Skeleton */}
-                <section>
-                    <Skeleton width={180} height={24} className="mb-4" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <ResourceCardSkeleton />
-                        <ResourceCardSkeleton />
-                        <ResourceCardSkeleton />
-                        <ResourceCardSkeleton />
-                    </div>
-                </section>
+            <div className="max-w-5xl mx-auto py-8 space-y-8 animate-fade-in">
+                <Skeleton width="40%" height={40} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Skeleton height={250} className="lg:col-span-2" />
+                    <Skeleton height={250} />
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Welcome Section */}
-            <section>
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            Welcome back, {firstName}!
-                            <span className="animate-float inline-block">☀️</span>
-                        </h1>
-                        <p className="text-gray-600 mt-1">
-                            What would you like to explore today?
-                        </p>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span>Tip: Press <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">/</kbd> to search</span>
-                    </div>
-                </div>
-            </section>
+        <div className="max-w-5xl mx-auto py-8 lg:py-10 space-y-10 animate-fade-in">
 
-            {/* Entry Points Grid */}
-            <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Coffee className="w-5 h-5 text-cafe-500" />
-                    Your Café
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {entryPoints.map((item, idx) => {
-                        const Icon = item.icon;
-                        return (
-                            <Card
-                                key={item.id}
-                                isHoverable
-                                isClickable
-                                onClick={() => onNavigate?.(item.id)}
-                                className={cn(
-                                    'p-6 group transition-all duration-300 hover-lift',
-                                    item.hoverColor,
-                                    item.borderColor,
-                                    'animate-slide-up',
-                                    `stagger-${idx + 1}`
-                                )}
-                                style={{ animationFillMode: 'both' }}
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className={cn('p-3 rounded-xl transition-transform group-hover:scale-110', item.iconBg)}>
-                                        <Icon className={cn('w-6 h-6', item.iconColor)} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-900 text-lg">
-                                            {item.title}
-                                        </h3>
-                                        <p className="text-gray-600 text-sm mt-1">
-                                            {item.description}
-                                        </p>
-                                    </div>
-                                    <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all" />
-                                </div>
-                            </Card>
-                        );
-                    })}
-                </div>
-            </section>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO — Clean Greeting */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <header className="text-center space-y-2 pb-6 border-b border-gray-100">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                    {greeting}, {firstName} 👋
+                </h1>
+                <p className="text-gray-500">
+                    Your product hub for knowledge, connections, and intelligence
+                </p>
+            </header>
 
-            {/* What's New - Dynamic from mockData */}
-            {recentResources.length > 0 && (
-                <section className="animate-fade-in">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 animate-float">
-                                <Sparkles className="w-4 h-4 text-white" />
-                            </div>
-                            What's New
-                            <Badge size="sm" variant="success">{recentResources.length} updates</Badge>
-                        </h2>
-                        <button
-                            onClick={() => onNavigate?.('library')}
-                            className="text-sm text-cafe-600 hover:text-cafe-700 font-medium flex items-center gap-1 press-effect"
-                        >
-                            View all <ArrowRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                    <div className="space-y-3">
-                        {recentResources.map((resource, idx) => (
-                            <a
-                                key={resource.id}
-                                href={resource.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={cn(
-                                    'group flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100',
-                                    'hover:border-cafe-200 hover:shadow-md transition-all duration-200',
-                                    'hover-lift animate-slide-up',
-                                    `stagger-${idx + 1}`
-                                )}
-                                style={{ animationFillMode: 'both' }}
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className={cn(
-                                            'text-xs font-medium px-2 py-0.5 rounded-full',
-                                            resource.category === 'grab-and-go'
-                                                ? 'bg-amber-100 text-amber-800'
-                                                : 'bg-purple-100 text-purple-800'
-                                        )}>
-                                            {resource.category === 'grab-and-go' ? '☕ Grab & Go' : '📚 Library'}
-                                        </span>
-                                        <span className="text-xs text-gray-400 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {formatRelativeTime(resource.updatedAt)}
-                                        </span>
-                                    </div>
-                                    <h4 className="font-medium text-gray-900 group-hover:text-cafe-600 transition-colors line-clamp-1">
-                                        {resource.title}
-                                    </h4>
-                                    <p className="text-sm text-gray-500 line-clamp-1 mt-0.5">
-                                        {resource.description}
-                                    </p>
-                                </div>
-                                <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-cafe-500 transition-colors flex-shrink-0 mt-1" />
-                            </a>
-                        ))}
-                    </div>
-                </section>
-            )}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* MAIN GRID — Two Columns */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            {/* Featured Resources */}
-            <section>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-cafe-500" />
-                        Featured Resources
-                    </h2>
-                    <button
-                        onClick={() => onNavigate?.('library')}
-                        className="text-sm text-cafe-600 hover:text-cafe-700 font-medium flex items-center gap-1 press-effect"
-                    >
-                        View all
-                        <ArrowRight className="w-4 h-4" />
-                    </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {featuredResources.map((resource, idx) => (
-                        <div
-                            key={resource.id}
-                            className={cn('animate-scale-in', `stagger-${idx + 1}`)}
-                            style={{ animationFillMode: 'both' }}
-                        >
-                            <ResourceCard
-                                resource={resource}
-                                variant="default"
+                {/* ─────────────────────────────────────────────────────────── */}
+                {/* LEFT COLUMN — 2/3 */}
+                {/* ─────────────────────────────────────────────────────────── */}
+                <div className="lg:col-span-2 space-y-8">
+
+                    {/* QUICK ACCESS CARDS */}
+                    <section>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <QuickCard
+                                icon={Activity}
+                                label="PULSE Dashboard"
+                                description="Market signals & competitors"
+                                onClick={() => onNavigate?.('pulse')}
+                                color="emerald"
+                            />
+                            <QuickCard
+                                icon={Users}
+                                label="Find an Expert"
+                                description="Connect with specialists"
+                                onClick={() => onNavigate?.('community')}
+                                color="cyan"
+                            />
+                            <QuickCard
+                                icon={BookOpen}
+                                label="Learning Library"
+                                description="Courses & resources"
+                                onClick={() => onNavigate?.('library')}
+                                color="purple"
+                            />
+                            <QuickCard
+                                icon={Zap}
+                                label="Grab & Go"
+                                description="Quick links & tools"
+                                onClick={() => onNavigate?.('grab-and-go')}
+                                color="amber"
                             />
                         </div>
-                    ))}
-                </div>
-            </section>
+                    </section>
 
-            {/* Quick Stats (decorative) */}
-            <section className="bg-gradient-to-br from-cafe-50 to-amber-50 rounded-2xl p-6 hover-lift">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-cafe-600">150+</p>
-                        <p className="text-sm text-gray-600 mt-1">Resources</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-cafe-600">50+</p>
-                        <p className="text-sm text-gray-600 mt-1">FAQs</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-cafe-600">30+</p>
-                        <p className="text-sm text-gray-600 mt-1">Experts</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-cafe-600">4</p>
-                        <p className="text-sm text-gray-600 mt-1">Learning Paths</p>
-                    </div>
+                    {/* TRENDING DISCUSSIONS — Community Engagement */}
+                    <section>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5 text-rose-500" />
+                                Trending Discussions
+                            </h2>
+                            <button
+                                onClick={() => onNavigate?.('community')}
+                                className="text-sm text-cafe-600 hover:text-cafe-700 font-medium flex items-center gap-1"
+                            >
+                                View All <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            <DiscussionCard
+                                title="How are we handling the 2025 CMS prior auth mandate?"
+                                author="Sarah Chen"
+                                votes={24}
+                                comments={12}
+                                tag="Regulatory"
+                                isHot
+                            />
+                            <DiscussionCard
+                                title="Best practices for payer APIs - lessons learned"
+                                author="Michael Torres"
+                                votes={18}
+                                comments={8}
+                                tag="Engineering"
+                            />
+                            <DiscussionCard
+                                title="Waystar's new AI platform: competitive threat or opportunity?"
+                                author="Jessica Park"
+                                votes={15}
+                                comments={6}
+                                tag="Strategy"
+                            />
+                        </div>
+                    </section>
+
+                    {/* THIS WEEK */}
+                    <section>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-gray-400" />
+                            This Week
+                        </h2>
+                        <Card className="p-0 divide-y divide-gray-100">
+                            <EventRow day="Tue" title="LOP: Prior Auth Deep Dive" time="2:00 PM" />
+                            <EventRow day="Thu" title="Product All-Hands" time="10:00 AM" />
+                            <EventRow day="Fri" title="CMS Deadline: FHIR R4" time="EOD" isDeadline />
+                        </Card>
+                    </section>
                 </div>
-            </section>
+
+                {/* ─────────────────────────────────────────────────────────── */}
+                {/* RIGHT COLUMN — 1/3 */}
+                {/* ─────────────────────────────────────────────────────────── */}
+                <div className="space-y-6">
+
+                    {/* PROFILE CARD */}
+                    <Card className="p-5 bg-gradient-to-br from-cafe-50 to-amber-50/50">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cafe-400 to-cafe-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-cafe-500/30">
+                                {firstName.charAt(0)}
+                            </div>
+                            <div>
+                                <p className="font-semibold text-gray-900">{userName}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-lg">{currentLevel?.icon || '☕'}</span>
+                                    <span className="text-sm text-gray-600">{currentLevel?.name || 'Café Newcomer'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 text-center">
+                            <div className="p-3 bg-white/70 rounded-lg">
+                                <p className="text-xl font-bold text-cafe-600">{totalPoints.toLocaleString()}</p>
+                                <p className="text-xs text-gray-500">Credits</p>
+                            </div>
+                            <div className="p-3 bg-white/70 rounded-lg">
+                                <p className="text-xl font-bold text-amber-600">{currentStreak}</p>
+                                <p className="text-xs text-gray-500">Streak</p>
+                            </div>
+                            <div className="p-3 bg-white/70 rounded-lg">
+                                <p className="text-xl font-bold text-purple-600">{earnedBadges.length}</p>
+                                <p className="text-xs text-gray-500">Badges</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => onNavigate?.('credits')}
+                            className="w-full mt-4 py-2.5 text-sm font-medium text-cafe-700 hover:text-cafe-800 flex items-center justify-center gap-1 bg-white/50 rounded-lg hover:bg-white/80 transition-colors"
+                        >
+                            View Rewards <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </Card>
+
+                    {/* AI INSIGHT */}
+                    <Card className="p-4 bg-gradient-to-br from-violet-50 to-purple-50/50 border-violet-100">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-violet-100">
+                                <Lightbulb className="w-4 h-4 text-violet-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-800">AI Insight</p>
+                                <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                                    Waystar's new AI platform could impact ~15% of Availity's prior auth volume. Consider reviewing competitive positioning.
+                                </p>
+                                <button
+                                    onClick={() => onNavigate?.('pulse')}
+                                    className="text-xs text-violet-600 font-medium mt-2 flex items-center gap-1 hover:text-violet-700"
+                                >
+                                    Learn more <ArrowRight className="w-3 h-3" />
+                                </button>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* PULSE TEASER */}
+                    <Card
+                        isClickable
+                        isHoverable
+                        onClick={() => onNavigate?.('pulse')}
+                        className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50/50 border-emerald-100"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-emerald-100">
+                                    <Activity className="w-4 h-4 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-800">PULSE Intelligence</p>
+                                    <p className="text-xs text-gray-500">14 signals • 3 critical</p>
+                                </div>
+                            </div>
+                            <Badge size="sm" variant="success" className="animate-pulse">Live</Badge>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FOOTER — Keyboard Shortcuts */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <footer className="text-center py-6 border-t border-gray-100">
+                <p className="text-xs text-gray-400">
+                    <kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono mr-1">⌘K</kbd>
+                    Command palette •
+                    <kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono mx-1">N</kbd>
+                    Notifications
+                </p>
+            </footer>
         </div>
     );
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface QuickCardProps {
+    icon: React.ElementType;
+    label: string;
+    description: string;
+    onClick?: () => void;
+    color: 'emerald' | 'cyan' | 'purple' | 'amber';
+}
+
+const QuickCard: React.FC<QuickCardProps> = ({ icon: Icon, label, description, onClick, color }) => {
+    const styles = {
+        emerald: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100',
+        cyan: 'bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100',
+        purple: 'bg-purple-50 text-purple-600 group-hover:bg-purple-100',
+        amber: 'bg-amber-50 text-amber-600 group-hover:bg-amber-100',
+    };
+
+    return (
+        <button
+            onClick={onClick}
+            className="group p-4 rounded-xl border border-gray-100 bg-white hover:border-gray-200 hover:shadow-md transition-all text-left"
+        >
+            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors", styles[color])}>
+                <Icon className="w-5 h-5" />
+            </div>
+            <p className="font-medium text-gray-900 group-hover:text-gray-800">{label}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+        </button>
+    );
+};
+
+interface DiscussionCardProps {
+    title: string;
+    author: string;
+    votes: number;
+    comments: number;
+    tag: string;
+    isHot?: boolean;
+}
+
+const DiscussionCard: React.FC<DiscussionCardProps> = ({ title, author, votes, comments, tag, isHot }) => (
+    <Card className="p-4 hover:shadow-md transition-all group cursor-pointer">
+        <div className="flex gap-4">
+            {/* Vote Section */}
+            <div className="flex flex-col items-center gap-1 pt-1">
+                <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-emerald-500 transition-colors">
+                    <ArrowUp className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-semibold text-gray-700">{votes}</span>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                    <Badge size="sm" variant={isHot ? 'danger' : 'default'}>{tag}</Badge>
+                    {isHot && <span className="text-xs text-rose-500 font-medium">🔥 Hot</span>}
+                </div>
+                <p className="font-medium text-gray-900 group-hover:text-cafe-700 transition-colors line-clamp-2">
+                    {title}
+                </p>
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                    <span>{author}</span>
+                    <span className="flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        {comments} replies
+                    </span>
+                </div>
+            </div>
+        </div>
+    </Card>
+);
+
+interface EventRowProps {
+    day: string;
+    title: string;
+    time: string;
+    isDeadline?: boolean;
+}
+
+const EventRow: React.FC<EventRowProps> = ({ day, title, time, isDeadline }) => (
+    <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+        <div className={cn(
+            "w-12 h-12 rounded-lg flex items-center justify-center text-sm font-bold",
+            isDeadline ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+        )}>
+            {day}
+        </div>
+        <div className="flex-1 min-w-0">
+            <p className="font-medium text-gray-800 truncate">{title}</p>
+            <p className="text-xs text-gray-400">{time}</p>
+        </div>
+        {isDeadline && <Badge size="sm" variant="danger">Deadline</Badge>}
+    </div>
+);
