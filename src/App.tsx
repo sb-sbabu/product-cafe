@@ -21,9 +21,10 @@ import { usePulseInit } from './hooks/usePulseInit';
 import { PulseDashboard } from './components/pulse/PulseDashboard';
 import { Sidebar } from './components/layout/Sidebar';
 import { LOPHubPage, LOPSessionDetail, LOPArchivePage, LOPLearningPath, LOPAnalyticsPage } from './features/lop';
+import { ToastHomePage } from './features/toast/components';
 import { cn } from './lib/utils';
 
-type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics';
+type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'toast';
 
 // Hook for responsive detection
 function useIsMobile() {
@@ -174,6 +175,8 @@ function AppContent() {
         return <LOPLearningPath slug={lopParams.slug || ''} onNavigate={handleNavigate} onBack={() => handleNavigate('lop')} />;
       case 'lop-analytics':
         return <LOPAnalyticsPage onBack={() => handleNavigate('lop')} />;
+      case 'toast':
+        return <ToastHomePage />;
       default:
         return <HomePage onNavigate={handleNavigate} userName={user?.firstName || 'there'} />;
     }
