@@ -6,3 +6,4 @@ export {
     useEscapeKey
 } from './useKeyboard';
 export { usePageLoading } from './usePageLoading';
+export { usePulseInit } from './usePulseInit';

@@ -161,7 +161,7 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                 'h-screen flex flex-col shrink-0',
                 'bg-white/95 backdrop-blur-xl',
                 'border-l border-gray-200/80',
-                'shadow-2xl transition-all duration-300 ease-out will-change-[width]',
+                'shadow-2xl dock-panel-transition',
                 showExpanded ? 'w-[380px]' : 'w-[70px]',
                 className
             )}

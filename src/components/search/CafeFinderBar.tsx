@@ -303,7 +303,7 @@ export const CafeFinderBar: React.FC<CafeFinderBarProps> = ({
                                     Try searching for
                                 </div>
                                 <div className="px-3 py-2 flex flex-wrap gap-2">
-                                    {['Jira access', 'COB', 'PRD template', 'Sarah Chen'].map((suggestion) => (
+                                    {['PULSE', 'Competitors', 'CMS regulations', 'Healthcare news', 'Jira access', 'Sarah Chen'].map((suggestion) => (
                                         <button
                                             key={suggestion}
                                             onClick={() => handleRecentClick(suggestion)}

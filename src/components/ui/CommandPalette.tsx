@@ -57,6 +57,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         },
         {
             type: 'action',
+            id: 'pulse',
+            title: 'PULSE Intelligence',
+            subtitle: 'Market signals & competitors',
+            icon: <ArrowRight className="w-4 h-4 text-purple-500" />,
+            action: () => { onNavigate?.('pulse'); onClose(); },
+        },
+        {
+            type: 'action',
             id: 'grab-go',
             title: 'Grab & Go',
             subtitle: 'Quick links and tools',
@@ -78,6 +86,30 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             subtitle: 'Find experts',
             icon: <Users className="w-4 h-4" />,
             action: () => { onNavigate?.('community'); onClose(); },
+        },
+        {
+            type: 'action',
+            id: 'leaderboard',
+            title: 'Leaderboard',
+            subtitle: 'Top contributors',
+            icon: <ArrowRight className="w-4 h-4 text-amber-500" />,
+            action: () => { onNavigate?.('leaderboard'); onClose(); },
+        },
+        {
+            type: 'action',
+            id: 'credits',
+            title: 'Credits',
+            subtitle: 'Your reward balance',
+            icon: <ArrowRight className="w-4 h-4 text-yellow-500" />,
+            action: () => { onNavigate?.('credits'); onClose(); },
+        },
+        {
+            type: 'action',
+            id: 'admin',
+            title: 'Admin',
+            subtitle: 'Settings & management',
+            icon: <ArrowRight className="w-4 h-4 text-gray-500" />,
+            action: () => { onNavigate?.('admin'); onClose(); },
         },
     ], [onNavigate, onClose]);
 

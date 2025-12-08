@@ -1,11 +1,12 @@
 import React from 'react';
-import { Coffee, Bell, Heart, Award } from 'lucide-react';
+import { Coffee, Heart, Award } from 'lucide-react';
 import { CafeFinderBar } from '../search/CafeFinderBar';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { usePointsStore } from '../../stores/pointsStore';
 import { useLevelStore } from '../../stores/levelStore';
 import { useBadgeStore } from '../../stores/badgeStore';
+import { NotificationHub } from '../pulse/notifications/NotificationHub';
 
 interface HeaderProps {
     onSearch?: (query: string) => void;
@@ -96,16 +97,8 @@ export const Header: React.FC<HeaderProps> = ({
                             </svg>
                         </Button>
 
-                        {/* Notifications */}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="relative"
-                            aria-label="Notifications"
-                        >
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                        </Button>
+                        {/* Notifications - Global Intelligence Hub */}
+                        <NotificationHub />
 
                         {/* User Menu */}
                         <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">

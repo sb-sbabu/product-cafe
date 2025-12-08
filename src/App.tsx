@@ -17,9 +17,10 @@ import { DockProvider, useDock } from './contexts/DockContext';
 import { GamificationProvider } from './contexts/GamificationContext';
 import { GamificationEngine } from './components/gamification/GamificationEngine';
 import { useAnalytics } from './hooks/useAnalytics';
+import { usePulseInit } from './hooks/usePulseInit';
 import { PulseDashboard } from './components/pulse/PulseDashboard';
 
-type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse';
+type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits';
 
 // Hook for responsive detection
 function useIsMobile() {
@@ -52,11 +53,14 @@ function AppContent() {
   const { trackPageView, trackSearch } = useAnalytics();
   const { toggleDock, setPageContext } = useDock();
 
+  // 🚀 PULSE: Auto-fetch live healthcare news on app load
+  usePulseInit();
+
   // Track page views and update dock context
   useEffect(() => {
     trackPageView(activePage);
-    if (activePage !== 'demo') {
-      setPageContext({ type: activePage });
+    if (activePage !== 'demo' && activePage !== 'credits') {
+      setPageContext({ type: activePage as 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'admin' | 'profile' | 'leaderboard' | 'pulse' });
     }
   }, [activePage, trackPageView, setPageContext]);
 
@@ -150,6 +154,8 @@ function AppContent() {
         return <ProfilePage />;
       case 'leaderboard':
         return <LeaderboardPage />;
+      case 'credits':
+        return <GamificationDemo />; // Beautiful credits demo page
       case 'pulse':
         return <PulseDashboard />;
       default:
@@ -166,7 +172,7 @@ function AppContent() {
         {/* Main content area - grows to fill available space */}
         <div className="flex-1 overflow-auto">
           <Layout
-            activePage={activePage}
+            activePage={activePage as string}
             onNavigate={handleNavigate}
             onSearch={handleSearch}
             isMobile={isMobile}

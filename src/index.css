@@ -142,23 +142,60 @@ h6 {
 }
 
 .animate-slide-in-right {
-    animation: var(--animate-slide-in-right);
+  animation: var(--animate-slide-in-right);
 }
 
 /* Page transition animation */
 .page-transition {
-    animation: pageEnter 0.25s ease-out;
+  animation: pageEnter 0.25s ease-out;
 }
 
 @keyframes pageEnter {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BUTTER SMOOTH PANEL TRANSITIONS (189% HCI)
+   Premium cubic-bezier easing for dock/notification panel sync
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.transition-panel-smooth {
+  transition-property: width, transform, opacity;
+  transition-duration: 400ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width, transform;
+}
+
+.transition-panel-butter {
+  transition-property: all;
+  transition-duration: 350ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Apple-style spring */
+  will-change: width, transform, opacity;
+}
+
+/* Dock panel specific */
+.dock-panel-transition {
+  transition: width 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms ease-out;
+  will-change: width, transform;
+}
+
+/* Notification panel specific */
+.notification-panel-transition {
+  transition: width 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 250ms ease-out,
+    transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: width, transform, opacity;
 }
 
 /* Line clamp utilities */
@@ -343,4 +380,169 @@ h6 {
   .mobile-text-sm {
     font-size: 0.875rem;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* NOTIFICATION HUB — Premium Animations */
+/* Phase 7.50: World-class micro-interactions */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Panel slide-in from right */
+@keyframes slideInPanel {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-slide-in-panel {
+  animation: slideInPanel 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Signal item staggered entrance */
+@keyframes signalEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-signal-enter {
+  animation: signalEnter 0.3s ease-out both;
+}
+
+/* Haptic-style button press */
+@keyframes hapticPress {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.92);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.haptic-press:active {
+  animation: hapticPress 0.15s ease-out;
+}
+
+/* Badge pulse animation (urgent) */
+@keyframes urgentPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-urgent-pulse {
+  animation: urgentPulse 2s ease-in-out infinite;
+}
+
+/* Smooth budget bar fill */
+@keyframes budgetFill {
+  from {
+    width: 0;
+  }
+}
+
+.animate-budget-fill {
+  animation: budgetFill 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Feedback flash (thumbs up/down) */
+@keyframes feedbackFlash {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-feedback-flash {
+  animation: feedbackFlash 0.3s ease-out;
+}
+
+/* Dismiss slide out */
+@keyframes dismissSlide {
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.animate-dismiss {
+  animation: dismissSlide 0.2s ease-in forwards;
+}
+
+/* Snooze menu slide down */
+@keyframes snoozeMenuEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-snooze-menu {
+  animation: snoozeMenuEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* SIS badge glow for high scores */
+@keyframes sisGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+
+  50% {
+    box-shadow: 0 0 8px 2px currentColor;
+  }
+}
+
+.animate-sis-glow {
+  animation: sisGlow 2s ease-in-out infinite;
+  opacity: 0.2;
+}
+
+/* Domain icon hover lift */
+.domain-icon-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.domain-icon-hover:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px -2px currentColor;
 }

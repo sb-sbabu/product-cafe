@@ -4,10 +4,13 @@ import { DOMAIN_CONFIG, type SignalDomain } from '../../lib/pulse/types';
 import { SignalFeed } from './SignalFeed';
 import { CompetitorPanel } from './CompetitorPanel';
 import { CompetitorRadar } from './CompetitorRadar';
+import { CompetitorProfileModal } from './CompetitorProfileModal';
 import { RegulatoryPanel } from './RegulatoryPanel';
 import { TechnologyPanel } from './TechnologyPanel';
 import { MarketPanel } from './MarketPanel';
 import { SearchPanel } from './SearchPanel';
+import type { CompetitorProfile } from '../../lib/pulse/competitorData';
+
 import { PulseErrorBoundary } from './PulseErrorBoundary';
 import {
     Activity,
@@ -81,6 +84,17 @@ export const PulseDashboard: React.FC = () => {
     const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
     const [searchResults, setSearchResults] = useState<typeof filteredSignals | null>(null);
 
+    // Modal state for competitor profile (Phase 10)
+    const [profileCompetitor, setProfileCompetitor] = useState<CompetitorProfile | null>(null);
+
+    // Handler to open competitor profile
+    const handleOpenProfile = (competitorId: string) => {
+        const competitor = competitorsWithSignals.find(c => c.id === competitorId);
+        if (competitor) {
+            setProfileCompetitor(competitor);
+        }
+    };
+
     const formatTimeAgo = (isoString: string | null) => {
         if (!isoString) return 'Never';
         const hrs = Math.floor((Date.now() - new Date(isoString).getTime()) / (1000 * 60 * 60));
@@ -152,6 +166,8 @@ export const PulseDashboard: React.FC = () => {
                                 <RefreshCw size={16} className={cn(isLoading && "animate-spin")} />
                                 {isLoading ? 'Refreshing...' : 'Refresh'}
                             </button>
+
+
                         </div>
                     </div>
 
@@ -370,7 +386,7 @@ export const PulseDashboard: React.FC = () => {
                                         <CompetitorPanel
                                             competitors={competitorsWithSignals}
                                             selectedCompetitorId={selectedCompetitorId}
-                                            onSelectCompetitor={setSelectedCompetitor}
+                                            onSelectCompetitor={handleOpenProfile}
                                             onToggleWatchlist={toggleCompetitorWatchlist}
                                         />
                                     </>
@@ -379,6 +395,15 @@ export const PulseDashboard: React.FC = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Competitor Profile Modal */}
+                {profileCompetitor && (
+                    <CompetitorProfileModal
+                        competitor={profileCompetitor}
+                        onClose={() => setProfileCompetitor(null)}
+                        onToggleWatchlist={toggleCompetitorWatchlist}
+                    />
+                )}
             </div>
         </div>
     );

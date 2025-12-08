@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { getUnreadCount as getIntelligentUnreadCount } from '../lib/pulse/notifications';
 
 /**
  * Dock Context - Side pane with 2-state management
@@ -9,6 +10,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
  * - expanded: Full 360px panel
  * 
  * The dock is ALWAYS visible - it never fully hides.
+ * NOW INTEGRATED with intelligent notification engine for real unread counts.
  */
 
 // Basic types
@@ -91,8 +93,20 @@ export function DockProvider({ children }: { children: ReactNode }) {
         dockState: persisted.dockState || 'collapsed',
         activeTab: persisted.activeTab || 'ask',
         pageContext: { type: 'home' },
-        unreadCount: 3,
+        unreadCount: 0, // Will be synced from intelligent engine
     });
+
+    // Sync unread count with intelligent notification engine
+    useEffect(() => {
+        const syncUnreadCount = () => {
+            const count = getIntelligentUnreadCount();
+            setState(prev => ({ ...prev, unreadCount: count }));
+        };
+
+        syncUnreadCount();
+        const interval = setInterval(syncUnreadCount, 10000); // Sync every 10s
+        return () => clearInterval(interval);
+    }, []);
 
     // Persist state changes
     useEffect(() => {

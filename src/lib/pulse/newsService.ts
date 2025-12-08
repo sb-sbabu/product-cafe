@@ -1,563 +1,567 @@
-import type { PulseSignal, SignalDomain, SignalType, SignalPriority, SignalEntities } from './types';
-import { API_CONFIG, TIER_1_COMPETITORS } from './types';
-
 // ═══════════════════════════════════════════════════════════════════════════
-// CAFÉ PULSE — News Service
-// Implements strict rate limiting for NewsAPI (100 calls/day)
+// CAFÉ PULSE — Live News Service
+// US Healthcare Market Intelligence with Multi-Provider Failover
 // ═══════════════════════════════════════════════════════════════════════════
 
-// API Configuration (environment variable with fallback for development)
-const NEWS_API_KEY = import.meta.env.VITE_NEWSAPI_KEY || 'c7ad7aa3a77141f88dde0a0ebd1e8483';
-const BASE_URL = 'https://newsapi.org/v2/everything';
-
-// Network configuration
-const NETWORK_CONFIG = {
-    TIMEOUT_MS: 15000,           // 15 second timeout
-    MAX_RETRIES: 2,              // Retry failed requests twice
-    RETRY_DELAY_MS: 1000,        // 1 second between retries
-} as const;
-
-// Cache keys
-const CACHE_KEY = 'cafe-pulse-signals-cache';
-const LAST_FETCH_KEY = 'cafe-pulse-last-fetch';
-const FETCH_COUNT_KEY = 'cafe-pulse-fetch-count';
-
-// Active fetch abort controller (for race condition prevention)
-let activeFetchController: AbortController | null = null;
+import type { PulseSignal, SignalDomain, SignalPriority, SignalSource, SignalEntities } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NewsAPI Response Types
+// API CONFIGURATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface NewsApiArticle {
-    source: { id: string | null; name: string };
-    author: string | null;
-    title: string;
-    description: string | null;
-    url: string;
-    urlToImage: string | null;
-    publishedAt: string;
-    content: string | null;
+interface NewsProvider {
+    name: string;
+    baseUrl: string;
+    apiKey: string;
+    requestsToday: number;
+    dailyLimit: number;
+    lastError?: Date;
+    consecutiveErrors: number;
 }
 
-interface NewsApiResponse {
-    status: string;
-    totalResults: number;
-    articles: NewsApiArticle[];
-}
+const NEWS_PROVIDERS: NewsProvider[] = [
+    {
+        name: 'NewsData',
+        baseUrl: 'https://newsdata.io/api/1/news',
+        apiKey: 'pub_7e3154d195594324b93d42c069b54eb2',
+        requestsToday: 0,
+        dailyLimit: 200,
+        consecutiveErrors: 0,
+    },
+    {
+        name: 'GNews',
+        baseUrl: 'https://gnews.io/api/v4/search',
+        apiKey: '68b5d0ea9ae621c76a4ae250e9efae1e',
+        requestsToday: 0,
+        dailyLimit: 100,
+        consecutiveErrors: 0,
+    },
+];
+
+// Current provider index for rotation
+let currentProviderIndex = 0;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Cache Management
+// US HEALTHCARE KEYWORDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function getLastFetchTime(): number | null {
-    const stored = localStorage.getItem(LAST_FETCH_KEY);
-    return stored ? parseInt(stored, 10) : null;
-}
+const HEALTHCARE_COMPANIES = [
+    'UnitedHealth', 'UnitedHealthcare', 'CVS Health', 'CVS', 'Cigna',
+    'Humana', 'Anthem', 'Elevance', 'Kaiser Permanente', 'Kaiser',
+    'HCA Healthcare', 'HCA', 'Tenet Healthcare', 'Centene', 'Molina',
+    'WellCare', 'Aetna', 'Blue Cross', 'Blue Shield', 'BCBS',
+    'Optum', 'Express Scripts', 'Walgreens', 'McKesson',
+    'AmerisourceBergen', 'Cardinal Health', 'Pfizer', 'Johnson & Johnson',
+    'Merck', 'AbbVie', 'Bristol-Myers', 'Eli Lilly', 'Amgen', 'Gilead',
+    'Moderna', 'Regeneron', 'Biogen', 'Vertex', 'Illumina',
+];
 
-function getCacheAge(): number {
-    const lastFetch = getLastFetchTime();
-    if (!lastFetch) return Infinity;
-    return Date.now() - lastFetch;
-}
+const HEALTHCARE_REGULATORY = [
+    'FDA', 'CMS', 'HHS', 'CDC', 'NIH', 'HIPAA', 'Medicare', 'Medicaid',
+    'drug approval', 'clinical trial', 'drug recall', 'EUA',
+    'emergency use authorization', 'ACA', 'Affordable Care Act',
+    'healthcare policy', 'pharmaceutical regulation',
+    '340B', 'PBM', 'pharmacy benefit', 'prior authorization',
+];
 
-function isCacheValid(): boolean {
-    return getCacheAge() < API_CONFIG.CACHE_DURATION_MS;
-}
+const HEALTHCARE_TECHNOLOGY = [
+    'EHR', 'electronic health record', 'Epic Systems', 'Cerner', 'Oracle Health',
+    'telehealth', 'telemedicine', 'digital health', 'health tech', 'healthtech',
+    'medical device', 'MedTech', 'health AI', 'healthcare AI', 'AI diagnosis',
+    'remote patient monitoring', 'RPM', 'wearable health', 'digital therapeutics',
+];
 
-function getCachedSignals(): PulseSignal[] {
-    try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (!cached) return [];
+const HEALTHCARE_TOPICS = [
+    'drug pricing', 'hospital', 'health insurance', 'healthcare costs',
+    'pharmacy', 'claims', 'reimbursement', 'value-based care',
+    'healthcare spending', 'medical debt', 'health equity', 'patient care',
+    'nursing shortage', 'healthcare workforce', 'mental health', 'behavioral health',
+];
 
-        const parsed = JSON.parse(cached);
+// Combined search queries for APIs
+const SEARCH_QUERIES = [
+    'healthcare United States',
+    'FDA drug approval',
+    'Medicare Medicaid',
+    'health insurance USA',
+    'hospital healthcare',
+    'pharmaceutical USA',
+    'digital health',
+    'telehealth',
+];
 
-        // Validate it's an array
-        if (!Array.isArray(parsed)) {
-            console.warn('Pulse: Cache data is not an array, clearing');
-            localStorage.removeItem(CACHE_KEY);
-            return [];
-        }
+// ─────────────────────────────────────────────────────────────────────────────
+// DOMAIN CLASSIFICATION
+// ─────────────────────────────────────────────────────────────────────────────
 
-        // Basic schema validation - filter out malformed signals
-        return parsed.filter((signal: unknown): signal is PulseSignal => {
-            if (!signal || typeof signal !== 'object') return false;
-            const s = signal as Record<string, unknown>;
-            return (
-                typeof s.id === 'string' &&
-                typeof s.title === 'string' &&
-                typeof s.domain === 'string' &&
-                typeof s.priority === 'string'
-            );
-        });
-    } catch (e) {
-        console.warn('Pulse: Failed to parse cached signals, clearing', e);
-        try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
-        return [];
-    }
-}
+function classifyDomain(title: string, description: string): SignalDomain {
+    const text = `${title} ${description}`.toLowerCase();
 
-function setCachedSignals(signals: PulseSignal[]): void {
-    try {
-        const data = JSON.stringify(signals);
-        localStorage.setItem(CACHE_KEY, data);
-        localStorage.setItem(LAST_FETCH_KEY, Date.now().toString());
-    } catch (e) {
-        // Handle quota exceeded error
-        if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
-            console.warn('⚠️ Pulse: Storage quota exceeded, clearing old cache');
-            try {
-                localStorage.removeItem(CACHE_KEY);
-                localStorage.setItem(CACHE_KEY, JSON.stringify(signals.slice(0, 15))); // Keep only recent
-                localStorage.setItem(LAST_FETCH_KEY, Date.now().toString());
-            } catch {
-                console.error('Pulse: Failed to cache signals even after clearing');
+    const competitivePatterns = [
+        /acqui(re|sition|red)/i, /merger/i, /earnings/i, /revenue/i,
+        /stock/i, /shares/i, /market cap/i, /CEO/i, /leadership/i,
+        /partnership/i, /deal/i, /contract/i, /lawsuit/i,
+    ];
+    for (const company of HEALTHCARE_COMPANIES) {
+        if (text.includes(company.toLowerCase())) {
+            if (competitivePatterns.some(p => p.test(text))) {
+                return 'COMPETITIVE';
             }
-        } else {
-            console.warn('Pulse: Failed to cache signals', e);
         }
     }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Rate Limit Tracking
-// ─────────────────────────────────────────────────────────────────────────────
-
-function getTodaysFetchCount(): number {
-    try {
-        const data = localStorage.getItem(FETCH_COUNT_KEY);
-        if (!data) return 0;
-        const { date, count } = JSON.parse(data);
-        const today = new Date().toISOString().split('T')[0];
-        return date === today ? count : 0;
-    } catch {
-        return 0;
-    }
-}
-
-function incrementFetchCount(): void {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const currentCount = getTodaysFetchCount();
-        localStorage.setItem(FETCH_COUNT_KEY, JSON.stringify({ date: today, count: currentCount + 1 }));
-    } catch (e) {
-        console.warn('Pulse: Failed to increment fetch count', e);
-    }
-}
-
-export function getRateLimitStatus(): { used: number; remaining: number; nextRefreshIn: number } {
-    const used = getTodaysFetchCount();
-    const remaining = API_CONFIG.MAX_CALLS_PER_DAY - used;
-    const cacheAge = getCacheAge();
-    const nextRefreshIn = Math.max(0, API_CONFIG.CACHE_DURATION_MS - cacheAge);
-    return { used, remaining, nextRefreshIn };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Signal Scoring (from PRD §3.3)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function calculateRelevanceScore(article: NewsApiArticle, entities: SignalEntities): number {
-    let score = 0.3; // Base relevance for healthcare news
-
-    const text = `${article.title} ${article.description || ''}`.toLowerCase();
-
-    // Competitor mentions (+0.3)
-    if (entities.companies.length > 0) score += 0.3;
-
-    // Healthcare keywords (+0.2)
-    const healthcareKeywords = ['healthcare', 'health care', 'medical', 'hospital', 'payer', 'provider', 'cms', 'medicaid', 'medicare'];
-    if (healthcareKeywords.some(kw => text.includes(kw))) score += 0.2;
-
-    // Availity-specific topics (+0.2)
-    const availityTopics = ['prior auth', 'eligibility', 'claims', 'rcm', 'revenue cycle', 'fhir', 'interoperability'];
-    if (availityTopics.some(kw => text.includes(kw))) score += 0.2;
-
-    return Math.min(1, score);
-}
-
-function calculateImportanceScore(article: NewsApiArticle, entities: SignalEntities, signalType: SignalType): number {
-    let score = 0.2; // Base importance
-
-    // Signal type weight
-    const typeWeights: Partial<Record<SignalType, number>> = {
-        M_AND_A: 0.4,
-        FUNDING: 0.35,
-        FINAL_RULE: 0.35,
-        PRODUCT_LAUNCH: 0.3,
-        LEADERSHIP: 0.25,
-        PARTNERSHIP: 0.25,
-        ENFORCEMENT: 0.3,
-    };
-    score += typeWeights[signalType] || 0.1;
-
-    // Tier 1 competitor mention (+0.25)
-    const tier1Names = TIER_1_COMPETITORS.map(c => c.name.toLowerCase());
-    if (entities.companies.some(c => tier1Names.includes(c.toLowerCase()))) {
-        score += 0.25;
+    const regulatoryPatterns = [
+        /fda/i, /cms/i, /hhs/i, /approval/i, /clearance/i, /recall/i,
+        /regulation/i, /policy/i, /mandate/i, /compliance/i, /hipaa/i,
+        /medicare/i, /medicaid/i, /legislation/i, /law/i, /rule/i,
+    ];
+    if (regulatoryPatterns.some(p => p.test(text))) {
+        return 'REGULATORY';
     }
 
-    // Recency boost (articles within 24h)
-    const ageHours = (Date.now() - new Date(article.publishedAt).getTime()) / (1000 * 60 * 60);
-    if (ageHours < 24) score += 0.15;
-    else if (ageHours < 72) score += 0.05;
+    const techPatterns = [
+        /ehr/i, /electronic health/i, /telehealth/i, /telemedicine/i,
+        /digital health/i, /health tech/i, /ai\s/i, /artificial intelligence/i,
+        /machine learning/i, /wearable/i, /app/i, /platform/i, /software/i,
+    ];
+    if (techPatterns.some(p => p.test(text))) {
+        return 'TECHNOLOGY';
+    }
 
-    return Math.min(1, score);
+    const marketPatterns = [
+        /market/i, /investor/i, /funding/i, /ipo/i, /valuation/i,
+        /venture/i, /private equity/i, /growth/i, /forecast/i,
+    ];
+    if (marketPatterns.some(p => p.test(text))) {
+        return 'MARKET';
+    }
+
+    return 'NEWS';
 }
 
-function determinePriority(importanceScore: number): SignalPriority {
-    if (importanceScore >= 0.8) return 'critical';
-    if (importanceScore >= 0.6) return 'high';
-    if (importanceScore >= 0.4) return 'medium';
+function determinePriority(title: string, description: string): SignalPriority {
+    const text = `${title} ${description}`.toLowerCase();
+
+    const criticalPatterns = [
+        /recall/i, /warning/i, /emergency/i, /urgent/i, /breaking/i,
+        /fda\s+(approve|reject|halt)/i, /death/i, /outbreak/i,
+    ];
+    if (criticalPatterns.some(p => p.test(text))) {
+        return 'critical';
+    }
+
+    const highPatterns = [
+        /acqui/i, /merger/i, /billion/i, /major/i, /significant/i,
+        /announce/i, /launch/i, /partnership/i, /contract/i,
+    ];
+    if (highPatterns.some(p => p.test(text))) {
+        return 'high';
+    }
+
+    const mediumPatterns = [
+        /report/i, /study/i, /research/i, /update/i, /expand/i,
+        /grow/i, /increase/i, /decrease/i,
+    ];
+    if (mediumPatterns.some(p => p.test(text))) {
+        return 'medium';
+    }
+
     return 'low';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Entity Extraction (Basic keyword matching)
+// HEALTHCARE RELEVANCE FILTER
 // ─────────────────────────────────────────────────────────────────────────────
 
-function extractEntities(article: NewsApiArticle): SignalEntities {
-    const text = `${article.title} ${article.description || ''} ${article.content || ''}`;
-    const textLower = text.toLowerCase();
+function isHealthcareRelevant(title: string, description: string): boolean {
+    const text = `${title} ${description}`.toLowerCase();
 
-    // Extract companies
-    const companies: string[] = [];
-    const companyPatterns = [
-        'Waystar', 'Change Healthcare', 'Optum', 'UnitedHealth', 'Availity',
-        'Epic', 'Cerner', 'Oracle Health', 'athenahealth', 'R1 RCM',
-        'Inovalon', 'Trizetto', 'Experian Health', 'Rhyme', 'Edifecs',
-        'Cotiviti', 'Zelis', 'Cohere Health', 'Infinitus', 'Tennr', 'Akasa',
+    const allKeywords = [
+        ...HEALTHCARE_COMPANIES,
+        ...HEALTHCARE_REGULATORY,
+        ...HEALTHCARE_TECHNOLOGY,
+        ...HEALTHCARE_TOPICS,
     ];
-    companyPatterns.forEach(company => {
-        if (textLower.includes(company.toLowerCase())) {
+
+    return allKeywords.some(keyword =>
+        text.includes(keyword.toLowerCase())
+    );
+}
+
+function calculateRelevanceScore(title: string, description: string): number {
+    const text = `${title} ${description}`.toLowerCase();
+    let score = 0;
+
+    const allKeywords = [
+        ...HEALTHCARE_COMPANIES,
+        ...HEALTHCARE_REGULATORY,
+        ...HEALTHCARE_TECHNOLOGY,
+        ...HEALTHCARE_TOPICS,
+    ];
+
+    for (const keyword of allKeywords) {
+        if (text.includes(keyword.toLowerCase())) {
+            if (HEALTHCARE_COMPANIES.includes(keyword)) {
+                score += 0.15;
+            } else if (HEALTHCARE_REGULATORY.includes(keyword)) {
+                score += 0.12;
+            } else {
+                score += 0.08;
+            }
+        }
+    }
+
+    return Math.min(1.0, Math.max(0.3, score));
+}
+
+function extractEntities(title: string, description: string): SignalEntities {
+    const text = `${title} ${description}`;
+    const companies: string[] = [];
+    const topics: string[] = [];
+    const regulations: string[] = [];
+
+    for (const company of HEALTHCARE_COMPANIES) {
+        if (text.toLowerCase().includes(company.toLowerCase())) {
             companies.push(company);
         }
-    });
+    }
 
-    // Extract topics
-    const topics: string[] = [];
-    const topicPatterns: Record<string, string> = {
-        'prior auth': 'Prior Authorization',
-        'revenue cycle': 'RCM',
-        'claims': 'Claims Processing',
-        'eligibility': 'Eligibility',
-        'interoperability': 'Interoperability',
-        'fhir': 'FHIR',
-        'artificial intelligence': 'AI/ML',
-        ' ai ': 'AI/ML',
-        'machine learning': 'AI/ML',
-        'cms': 'CMS',
-        'hipaa': 'HIPAA',
-        'merger': 'M&A',
-        'acquisition': 'M&A',
-    };
-    Object.entries(topicPatterns).forEach(([pattern, topic]) => {
-        if (textLower.includes(pattern) && !topics.includes(topic)) {
+    for (const reg of HEALTHCARE_REGULATORY) {
+        if (text.toLowerCase().includes(reg.toLowerCase())) {
+            if (['FDA', 'CMS', 'HHS', 'CDC', 'NIH', 'HIPAA', 'ACA'].includes(reg)) {
+                regulations.push(reg);
+            } else {
+                topics.push(reg);
+            }
+        }
+    }
+
+    for (const topic of HEALTHCARE_TOPICS) {
+        if (text.toLowerCase().includes(topic.toLowerCase())) {
             topics.push(topic);
         }
-    });
+    }
 
     return {
-        companies,
+        companies: [...new Set(companies)].slice(0, 5),
         people: [],
-        topics,
+        topics: [...new Set(topics)].slice(0, 5),
         products: [],
-        regulations: [],
+        regulations: [...new Set(regulations)].slice(0, 5),
     };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Domain & Signal Type Classification
+// API FETCHERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function classifySignal(article: NewsApiArticle, entities: SignalEntities): { domain: SignalDomain; signalType: SignalType } {
-    const text = `${article.title} ${article.description || ''}`.toLowerCase();
-
-    // Domain classification
-    let domain: SignalDomain = 'NEWS';
-
-    if (entities.companies.length > 0) {
-        domain = 'COMPETITIVE';
-    } else if (text.includes('cms') || text.includes('regulation') || text.includes('rule') || text.includes('compliance')) {
-        domain = 'REGULATORY';
-    } else if (text.includes('ai') || text.includes('technology') || text.includes('fhir') || text.includes('api')) {
-        domain = 'TECHNOLOGY';
-    } else if (text.includes('funding') || text.includes('acquisition') || text.includes('merger') || text.includes('investment')) {
-        domain = 'MARKET';
-    }
-
-    // Signal type classification
-    let signalType: SignalType = 'NEWS';
-
-    if (text.includes('acqui') || text.includes('merger') || text.includes('buys') || text.includes('purchase')) {
-        signalType = 'M_AND_A';
-    } else if (text.includes('funding') || text.includes('raises') || text.includes('investment') || text.includes('series')) {
-        signalType = 'FUNDING';
-    } else if (text.includes('launch') || text.includes('announces') || text.includes('releases') || text.includes('introduces')) {
-        signalType = 'PRODUCT_LAUNCH';
-    } else if (text.includes('partner') || text.includes('collaboration') || text.includes('alliance')) {
-        signalType = 'PARTNERSHIP';
-    } else if (text.includes('ceo') || text.includes('cfo') || text.includes('appoint') || text.includes('hire') || text.includes('joins')) {
-        signalType = 'LEADERSHIP';
-    } else if (text.includes('final rule') || text.includes('finalizes')) {
-        signalType = 'FINAL_RULE';
-    } else if (text.includes('proposed rule') || text.includes('proposes')) {
-        signalType = 'PROPOSED_RULE';
-    }
-
-    return { domain, signalType };
+interface RawArticle {
+    title: string;
+    description: string;
+    content?: string;
+    url: string;
+    image?: string;
+    publishedAt: string;
+    source: { name: string; url?: string };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Article → Signal Transformation
-// ─────────────────────────────────────────────────────────────────────────────
+async function fetchFromNewsData(query: string): Promise<RawArticle[]> {
+    const provider = NEWS_PROVIDERS[0];
+    const url = `${provider.baseUrl}?apikey=${provider.apiKey}&q=${encodeURIComponent(query)}&country=us&language=en&category=health,business`;
 
-function normalizeArticle(article: NewsApiArticle): PulseSignal | null {
-    // Validate required fields
-    if (!article.url || !article.title || article.title === '[Removed]') {
-        return null;
-    }
-
-    const entities = extractEntities(article);
-    const { domain, signalType } = classifySignal(article, entities);
-    const relevanceScore = calculateRelevanceScore(article, entities);
-    const importanceScore = calculateImportanceScore(article, entities, signalType);
-    const priority = determinePriority(importanceScore);
-
-    // Safe ID generation that handles Unicode characters
-    const safeHash = (str: string) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`NewsData API error: ${response.status}`);
         }
-        return Math.abs(hash).toString(36);
-    };
 
-    // Safe URL hostname extraction
-    let hostname = 'unknown';
-    try {
-        hostname = new URL(article.url).hostname;
-    } catch {
-        // Invalid URL, use fallback
-    }
+        const data = await response.json();
+        provider.requestsToday++;
+        provider.consecutiveErrors = 0;
 
-    return {
-        id: `signal-${safeHash(article.url)}`,
-        hash: safeHash(article.title),
-        title: article.title,
-        summary: article.description || '',
-        url: article.url,
-        imageUrl: article.urlToImage || undefined,
-        publishedAt: article.publishedAt,
-        processedAt: new Date().toISOString(),
-        domain,
-        signalType,
-        priority,
-        relevanceScore,
-        importanceScore,
-        entities,
-        source: {
-            id: article.source.id || 'newsapi',
-            name: article.source.name,
-            tier: 1,
-            type: 'api',
-            favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`,
-        },
-        isRead: false,
-    };
-}
+        if (data.status !== 'success' || !data.results) {
+            return [];
+        }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Network Utilities
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Check if browser is offline */
-function isOffline(): boolean {
-    return typeof navigator !== 'undefined' && navigator.onLine === false;
-}
-
-/** Fetch with timeout wrapper */
-async function fetchWithTimeout(
-    url: string,
-    options: RequestInit = {},
-    timeoutMs: number = NETWORK_CONFIG.TIMEOUT_MS
-): Promise<Response> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        return response;
+        return data.results.map((article: {
+            title: string;
+            description: string;
+            content?: string;
+            link: string;
+            image_url?: string;
+            pubDate: string;
+            source_id: string;
+            source_url?: string;
+        }) => ({
+            title: article.title || '',
+            description: article.description || '',
+            content: article.content,
+            url: article.link,
+            image: article.image_url,
+            publishedAt: article.pubDate,
+            source: { name: article.source_id, url: article.source_url },
+        }));
     } catch (error) {
-        clearTimeout(timeoutId);
-        if (error instanceof Error && error.name === 'AbortError') {
-            throw new Error(`Request timeout after ${timeoutMs}ms`);
-        }
+        console.error('[NewsData] Fetch error:', error);
+        provider.consecutiveErrors++;
+        provider.lastError = new Date();
         throw error;
     }
 }
 
-/** Sleep utility for retry delays */
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+async function fetchFromGNews(query: string): Promise<RawArticle[]> {
+    const provider = NEWS_PROVIDERS[1];
+    const url = `${provider.baseUrl}?q=${encodeURIComponent(query)}&token=${provider.apiKey}&lang=en&country=us&max=10`;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Fetch Function
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchNewsSignals(forceRefresh = false): Promise<PulseSignal[]> {
-    // Abort any in-flight request to prevent race conditions
-    if (activeFetchController) {
-        activeFetchController.abort();
-    }
-    activeFetchController = new AbortController();
-    const currentController = activeFetchController;
-
-    // Check offline status first
-    if (isOffline()) {
-        console.warn('📴 Pulse: Browser is offline. Using cache.');
-        return getCachedSignals();
-    }
-
-    // Check cache first
-    if (!forceRefresh && isCacheValid()) {
-        if (import.meta.env.DEV) {
-            console.log('📦 Pulse: Returning cached signals (cache valid for',
-                Math.round((API_CONFIG.CACHE_DURATION_MS - getCacheAge()) / 60000), 'more minutes)');
-        }
-        return getCachedSignals();
-    }
-
-    // Check rate limit
-    const { remaining } = getRateLimitStatus();
-    if (remaining <= 0) {
-        console.warn('⚠️ Pulse: Daily API limit reached. Using cache.');
-        return getCachedSignals();
-    }
-
-    // Build optimized query
-    const query = 'healthcare technology OR health IT OR medical insurance OR prior authorization';
-
-    const params = new URLSearchParams({
-        q: query,
-        language: 'en',
-        sortBy: 'publishedAt',
-        pageSize: '30',
-        apiKey: NEWS_API_KEY,
-    });
-
-    const url = `${BASE_URL}?${params.toString()}`;
-    let lastError: Error | null = null;
-
-    // Retry loop
-    for (let attempt = 0; attempt <= NETWORK_CONFIG.MAX_RETRIES; attempt++) {
-        // Check if this request was superseded by a newer one
-        if (currentController !== activeFetchController) {
-            console.log('🔄 Pulse: Request superseded by newer fetch');
-            return getCachedSignals();
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`GNews API error: ${response.status}`);
         }
 
-        try {
-            if (attempt > 0) {
-                if (import.meta.env.DEV) {
-                    console.log(`🔄 Pulse: Retry attempt ${attempt}/${NETWORK_CONFIG.MAX_RETRIES}`);
-                }
-                await sleep(NETWORK_CONFIG.RETRY_DELAY_MS * attempt); // Exponential backoff
-            }
+        const data = await response.json();
+        provider.requestsToday++;
+        provider.consecutiveErrors = 0;
 
-            if (import.meta.env.DEV && attempt === 0) {
-                console.log('🔄 Pulse: Fetching fresh news from NewsAPI...');
-            }
-
-            const response = await fetchWithTimeout(url, {
-                signal: currentController.signal,
-            });
-
-            if (!response.ok) {
-                if (response.status === 429) {
-                    console.warn('⚠️ Pulse: Rate limit exceeded by NewsAPI. Using cache.');
-                    return getCachedSignals();
-                }
-                throw new Error(`NewsAPI Error: ${response.status} ${response.statusText}`);
-            }
-
-            const data: NewsApiResponse = await response.json();
-
-            if (data.status !== 'ok') {
-                throw new Error('NewsAPI returned error status');
-            }
-
-            // Normalize and filter - with defensive error handling
-            const signals = data.articles
-                .filter(article => article.url && article.title && article.title !== '[Removed]')
-                .map(article => {
-                    try {
-                        return normalizeArticle(article);
-                    } catch (e) {
-                        if (import.meta.env.DEV) {
-                            console.warn('Pulse: Failed to normalize article', article.url, e);
-                        }
-                        return null;
-                    }
-                })
-                .filter((s): s is PulseSignal => s !== null && s.relevanceScore >= 0.3)
-                .sort((a, b) => b.importanceScore - a.importanceScore)
-                .slice(0, 100); // Cap at 100 signals max
-
-            if (signals.length === 0 && import.meta.env.DEV) {
-                console.info('📭 Pulse: No relevant signals found in API response');
-            }
-
-            // Update cache
-            setCachedSignals(signals);
-            incrementFetchCount();
-
-            if (import.meta.env.DEV) {
-                console.log(`✅ Pulse: Fetched ${signals.length} signals (${remaining - 1} API calls remaining today)`);
-            }
-
-            return signals;
-
-        } catch (error) {
-            lastError = error instanceof Error ? error : new Error(String(error));
-
-            // Don't retry on abort
-            if (error instanceof Error && error.name === 'AbortError') {
-                return getCachedSignals();
-            }
-
-            // Don't retry if offline
-            if (isOffline()) {
-                console.warn('📴 Pulse: Network went offline. Using cache.');
-                return getCachedSignals();
-            }
+        if (!data.articles) {
+            return [];
         }
-    }
 
-    // All retries failed
-    console.error('❌ Pulse: All fetch attempts failed', lastError);
-    return getCachedSignals();
+        return data.articles.map((article: {
+            title: string;
+            description: string;
+            content?: string;
+            url: string;
+            image?: string;
+            publishedAt: string;
+            source: { name: string; url?: string };
+        }) => ({
+            title: article.title || '',
+            description: article.description || '',
+            content: article.content,
+            url: article.url,
+            image: article.image,
+            publishedAt: article.publishedAt,
+            source: article.source,
+        }));
+    } catch (error) {
+        console.error('[GNews] Fetch error:', error);
+        provider.consecutiveErrors++;
+        provider.lastError = new Date();
+        throw error;
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Utility Exports
+// INTELLIGENT ROTATION & FAILOVER
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function getLastFetchTimestamp(): string | null {
-    const lastFetch = getLastFetchTime();
-    return lastFetch ? new Date(lastFetch).toISOString() : null;
+function getNextProvider(): NewsProvider | null {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    for (const provider of NEWS_PROVIDERS) {
+        if (provider.lastError && provider.lastError < startOfDay) {
+            provider.requestsToday = 0;
+            provider.consecutiveErrors = 0;
+        }
+    }
+
+    for (let i = 0; i < NEWS_PROVIDERS.length; i++) {
+        const index = (currentProviderIndex + i) % NEWS_PROVIDERS.length;
+        const provider = NEWS_PROVIDERS[index];
+
+        if (provider.requestsToday >= provider.dailyLimit) {
+            continue;
+        }
+
+        if (provider.consecutiveErrors >= 3 && provider.lastError) {
+            const cooldownMs = 5 * 60 * 1000;
+            if (now.getTime() - provider.lastError.getTime() < cooldownMs) {
+                continue;
+            }
+        }
+
+        currentProviderIndex = (index + 1) % NEWS_PROVIDERS.length;
+        return provider;
+    }
+
+    return null;
+}
+
+async function fetchWithFailover(query: string): Promise<RawArticle[]> {
+    const triedProviders = new Set<string>();
+
+    while (triedProviders.size < NEWS_PROVIDERS.length) {
+        const provider = getNextProvider();
+
+        if (!provider) {
+            console.warn('[NewsService] All providers exhausted or in cooldown');
+            break;
+        }
+
+        if (triedProviders.has(provider.name)) {
+            break;
+        }
+        triedProviders.add(provider.name);
+
+        try {
+            console.log(`[NewsService] Fetching from ${provider.name}...`);
+
+            if (provider.name === 'NewsData') {
+                return await fetchFromNewsData(query);
+            } else if (provider.name === 'GNews') {
+                return await fetchFromGNews(query);
+            }
+        } catch {
+            console.warn(`[NewsService] ${provider.name} failed, trying next provider...`);
+        }
+    }
+
+    return [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TRANSFORM TO PULSE SIGNALS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createSignalSource(sourceName: string, sourceUrl?: string): SignalSource {
+    return {
+        id: `src-${sourceName.toLowerCase().replace(/\s+/g, '-')}`,
+        name: sourceName,
+        tier: 2,
+        type: 'api',
+        url: sourceUrl,
+    };
+}
+
+function articleToPulseSignal(article: RawArticle, index: number): PulseSignal {
+    const domain = classifyDomain(article.title, article.description);
+    const priority = determinePriority(article.title, article.description);
+    const relevanceScore = calculateRelevanceScore(article.title, article.description);
+    const entities = extractEntities(article.title, article.description);
+    const now = new Date().toISOString();
+
+    return {
+        id: `news-${Date.now()}-${index}`,
+        title: article.title,
+        summary: article.description || article.content?.substring(0, 200) || '',
+        url: article.url,
+        imageUrl: article.image,
+        domain,
+        signalType: 'NEWS',
+        priority,
+        relevanceScore,
+        importanceScore: relevanceScore * (priority === 'critical' ? 1.0 : priority === 'high' ? 0.8 : priority === 'medium' ? 0.6 : 0.4),
+        source: createSignalSource(article.source.name, article.source.url),
+        publishedAt: article.publishedAt || now,
+        processedAt: now,
+        entities,
+        isRead: false,
+        isBookmarked: false,
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CACHE & STATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+let cachedSignals: PulseSignal[] = [];
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+let lastFetchTimestamp: Date | null = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUBLIC API (matches usePulseStore expectations)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function fetchNewsSignals(force = false): Promise<PulseSignal[]> {
+    // Return cached if fresh and not forced
+    if (!force && cachedSignals.length > 0 && Date.now() - cacheTimestamp < CACHE_TTL) {
+        console.log('[NewsService] Returning cached signals');
+        return cachedSignals;
+    }
+
+    console.log('[NewsService] Fetching fresh healthcare news...');
+    const allArticles: RawArticle[] = [];
+
+    // Fetch from multiple queries for broader coverage
+    const queriesToUse = SEARCH_QUERIES.slice(0, 2); // Limit to conserve API calls
+
+    for (const query of queriesToUse) {
+        try {
+            const articles = await fetchWithFailover(query);
+            allArticles.push(...articles);
+        } catch (error) {
+            console.error('[NewsService] Query failed:', query, error);
+        }
+    }
+
+    // Filter for healthcare relevance
+    const healthcareArticles = allArticles.filter(article =>
+        isHealthcareRelevant(article.title, article.description)
+    );
+
+    console.log(`[NewsService] Found ${healthcareArticles.length} healthcare-relevant articles from ${allArticles.length} total`);
+
+    // Remove duplicates by URL
+    const uniqueArticles = healthcareArticles.filter((article, index, self) =>
+        index === self.findIndex(a => a.url === article.url)
+    );
+
+    // Transform to PulseSignals
+    const signals = uniqueArticles.map((article, index) =>
+        articleToPulseSignal(article, index)
+    );
+
+    // Sort by priority then recency
+    signals.sort((a, b) => {
+        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
+
+    // Cache results
+    cachedSignals = signals.slice(0, 20);
+    cacheTimestamp = Date.now();
+    lastFetchTimestamp = new Date();
+
+    return cachedSignals;
+}
+
+export function getLastFetchTimestamp(): Date | null {
+    return lastFetchTimestamp;
 }
 
 export function canRefresh(): boolean {
-    return !isCacheValid() || getTodaysFetchCount() < API_CONFIG.SAFE_CALLS_PER_DAY;
+    if (!lastFetchTimestamp) return true;
+    return Date.now() - lastFetchTimestamp.getTime() >= CACHE_TTL;
 }
 
-/** Check if currently online */
-export function isOnline(): boolean {
-    return !isOffline();
+export function getRateLimitStatus(): { used: number; remaining: number } {
+    const totalUsed = NEWS_PROVIDERS.reduce((sum, p) => sum + p.requestsToday, 0);
+    const totalLimit = NEWS_PROVIDERS.reduce((sum, p) => sum + p.dailyLimit, 0);
+    return {
+        used: totalUsed,
+        remaining: totalLimit - totalUsed,
+    };
 }
+
+export function getProviderStats(): { name: string; requestsToday: number; dailyLimit: number; status: string }[] {
+    return NEWS_PROVIDERS.map(p => ({
+        name: p.name,
+        requestsToday: p.requestsToday,
+        dailyLimit: p.dailyLimit,
+        status: p.consecutiveErrors >= 3 ? 'cooldown' : p.requestsToday >= p.dailyLimit ? 'exhausted' : 'active',
+    }));
+}
+
+export function clearNewsCache(): void {
+    cachedSignals = [];
+    cacheTimestamp = 0;
+    console.log('[NewsService] Cache cleared');
+}
+
+// Export for testing
+export { isHealthcareRelevant, classifyDomain, determinePriority };
