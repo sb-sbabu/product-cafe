@@ -168,7 +168,9 @@ export type SearchResultType =
     | 'faq'
     | 'resource'
     | 'discussion'
-    | 'lop_session';
+    | 'lop_session'
+    | 'pulse_signal'
+    | 'competitor';
 
 /**
  * Score breakdown for transparency
@@ -286,6 +288,35 @@ export interface LOPSessionResult extends BaseSearchResult {
 }
 
 /**
+ * Pulse Signal search result
+ */
+export interface PulseSignalResult extends BaseSearchResult {
+    type: 'pulse_signal';
+    title: string;
+    summary: string;
+    domain: string;
+    priority: 'critical' | 'high' | 'medium' | 'low';
+    source: string;
+    publishedAt: string;
+    companies: string[];
+    isRead: boolean;
+}
+
+/**
+ * Competitor search result
+ */
+export interface CompetitorResult extends BaseSearchResult {
+    type: 'competitor';
+    name: string;
+    category: string;
+    tier: 1 | 2 | 3;
+    description: string;
+    signalCount: number;
+    watchlisted: boolean;
+    markets: string[];
+}
+
+/**
  * Union type of all possible search results
  */
 export type SearchResult =
@@ -294,7 +325,9 @@ export type SearchResult =
     | FAQResult
     | ResourceResult
     | DiscussionResult
-    | LOPSessionResult;
+    | LOPSessionResult
+    | PulseSignalResult
+    | CompetitorResult;
 
 // ============================================
 // ANSWER TYPES

@@ -89,6 +89,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         },
         {
             type: 'action',
+            id: 'lop',
+            title: 'LOP',
+            subtitle: 'For The Love Of Product',
+            icon: <ArrowRight className="w-4 h-4 text-rose-500" />,
+            action: () => { onNavigate?.('lop'); onClose(); },
+        },
+        {
+            type: 'action',
             id: 'leaderboard',
             title: 'Leaderboard',
             subtitle: 'Top contributors',

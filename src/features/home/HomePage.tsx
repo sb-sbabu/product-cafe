@@ -10,8 +10,9 @@ import {
     Zap,
     MessageSquare,
     TrendingUp,
-    Heart,
     ArrowUp,
+    Mic,
+    BarChart3,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -87,13 +88,27 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {/* QUICK ACCESS CARDS */}
                     <section>
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h2>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                             <QuickCard
                                 icon={Activity}
                                 label="PULSE Dashboard"
                                 description="Market signals & competitors"
                                 onClick={() => onNavigate?.('pulse')}
                                 color="emerald"
+                            />
+                            <QuickCard
+                                icon={Mic}
+                                label="LOP Sessions"
+                                description="For The Love of Product"
+                                onClick={() => onNavigate?.('lop')}
+                                color="rose"
+                            />
+                            <QuickCard
+                                icon={BarChart3}
+                                label="LOP Analytics"
+                                description="Engagement insights"
+                                onClick={() => onNavigate?.('lop-analytics')}
+                                color="violet"
                             />
                             <QuickCard
                                 icon={Users}
@@ -115,6 +130,48 @@ export const HomePage: React.FC<HomePageProps> = ({
                                 description="Quick links & tools"
                                 onClick={() => onNavigate?.('grab-and-go')}
                                 color="amber"
+                            />
+                        </div>
+                    </section>
+
+                    {/* USEFUL TOOLS — Healthcare-Focused Utility Cards */}
+                    <section>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Useful Tools</h2>
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                            <UtilityCard
+                                icon="🏥"
+                                title="Healthcare Intel"
+                                subtitle="CMS & Payer News"
+                                onClick={() => onNavigate?.('pulse')}
+                                color="from-blue-50 to-cyan-50 border-blue-100"
+                            />
+                            <UtilityCard
+                                icon="📋"
+                                title="Payer Directory"
+                                subtitle="Top 50 Payers"
+                                onClick={() => onNavigate?.('library')}
+                                color="from-emerald-50 to-teal-50 border-emerald-100"
+                            />
+                            <UtilityCard
+                                icon="⚖️"
+                                title="Regulatory Updates"
+                                subtitle="HIPAA, CMS Rules"
+                                onClick={() => onNavigate?.('library')}
+                                color="from-amber-50 to-orange-50 border-amber-100"
+                            />
+                            <UtilityCard
+                                icon="📊"
+                                title="Team Metrics"
+                                subtitle="Sprint & OKRs"
+                                onClick={() => onNavigate?.('admin')}
+                                color="from-purple-50 to-violet-50 border-purple-100"
+                            />
+                            <UtilityCard
+                                icon="🔗"
+                                title="Integration Docs"
+                                subtitle="APIs & Guides"
+                                onClick={() => onNavigate?.('library')}
+                                color="from-rose-50 to-pink-50 border-rose-100"
                             />
                         </div>
                     </section>
@@ -284,7 +341,7 @@ interface QuickCardProps {
     label: string;
     description: string;
     onClick?: () => void;
-    color: 'emerald' | 'cyan' | 'purple' | 'amber';
+    color: 'emerald' | 'cyan' | 'purple' | 'amber' | 'rose' | 'violet';
 }
 
 const QuickCard: React.FC<QuickCardProps> = ({ icon: Icon, label, description, onClick, color }) => {
@@ -293,6 +350,8 @@ const QuickCard: React.FC<QuickCardProps> = ({ icon: Icon, label, description, o
         cyan: 'bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100',
         purple: 'bg-purple-50 text-purple-600 group-hover:bg-purple-100',
         amber: 'bg-amber-50 text-amber-600 group-hover:bg-amber-100',
+        rose: 'bg-rose-50 text-rose-600 group-hover:bg-rose-100',
+        violet: 'bg-violet-50 text-violet-600 group-hover:bg-violet-100',
     };
 
     return (
@@ -371,4 +430,30 @@ const EventRow: React.FC<EventRowProps> = ({ day, title, time, isDeadline }) => 
         </div>
         {isDeadline && <Badge size="sm" variant="danger">Deadline</Badge>}
     </div>
+);
+
+interface UtilityCardProps {
+    icon: string;
+    title: string;
+    subtitle: string;
+    onClick?: () => void;
+    color: string;
+}
+
+const UtilityCard: React.FC<UtilityCardProps> = ({ icon, title, subtitle, onClick, color }) => (
+    <button
+        onClick={onClick}
+        className={cn(
+            "p-3 rounded-xl border bg-gradient-to-br text-left transition-all hover:shadow-md hover:scale-[1.02] group",
+            color
+        )}
+    >
+        <div className="flex items-center gap-3">
+            <span className="text-xl">{icon}</span>
+            <div className="min-w-0">
+                <p className="font-medium text-gray-900 text-sm truncate">{title}</p>
+                <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+            </div>
+        </div>
+    </button>
 );

@@ -203,12 +203,15 @@ h6 {
   will-change: width, transform, opacity;
 }
 
-/* Dock panel specific */
+/* Dock panel specific - Butter smooth GPU-accelerated transitions */
 .dock-panel-transition {
   transition: width 350ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 350ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 200ms ease-out;
-  will-change: width, transform;
+  will-change: width;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Notification panel specific */

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    Home,
+    Coffee,
     Zap,
     BookOpen,
     Users,
@@ -10,6 +10,7 @@ import {
     Settings,
     ChevronLeft,
     ChevronRight,
+    Mic,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -32,10 +33,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { id: 'home', label: 'Home', icon: Home, color: 'text-cafe-600', gradient: 'from-cafe-500 to-cafe-600' },
+    { id: 'home', label: 'Home', icon: Coffee, color: 'text-cafe-600', gradient: 'from-cafe-500 to-cafe-600' },
     { id: 'grab-and-go', label: 'Grab & Go', icon: Zap, color: 'text-amber-500', gradient: 'from-amber-400 to-orange-500' },
     { id: 'library', label: 'Library', icon: BookOpen, color: 'text-purple-500', gradient: 'from-purple-500 to-violet-600' },
     { id: 'community', label: 'Community', icon: Users, color: 'text-cyan-500', gradient: 'from-cyan-400 to-blue-500' },
+    { id: 'lop', label: 'LOP', icon: Mic, color: 'text-rose-500', gradient: 'from-rose-400 to-pink-500' },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, color: 'text-amber-500', gradient: 'from-yellow-400 to-amber-500' },
     { id: 'credits', label: 'Credits', icon: Sparkles, color: 'text-pink-500', gradient: 'from-pink-400 to-rose-500' },
     { id: 'pulse', label: 'PULSE', icon: Activity, color: 'text-emerald-500', gradient: 'from-emerald-400 to-teal-500' },

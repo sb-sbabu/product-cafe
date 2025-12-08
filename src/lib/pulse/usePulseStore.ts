@@ -84,7 +84,7 @@ const generateDemoSignals = (): PulseSignal[] => {
         priority: d.priority,
         relevanceScore: d.priority === 'critical' ? 0.95 : d.priority === 'high' ? 0.8 : 0.6,
         importanceScore: d.priority === 'critical' ? 0.9 : d.priority === 'high' ? 0.7 : 0.5,
-        source: { id: 'demo', name: 'Demo', tier: 1, type: 'feed' as const },
+        source: { id: 'demo', name: 'Demo', tier: 1, type: 'api' as const },
         publishedAt: new Date(now - i * 3600000).toISOString(),
         processedAt: new Date(now - i * 3600000).toISOString(),
         entities: { companies: d.companies || [], people: [], topics: [], products: [], regulations: [] },
@@ -354,8 +354,8 @@ export const usePulseStore = create<PulseStore>()(
         }),
         {
             name: 'cafe-pulse-store',
+            // Don't persist signals - always use demo/fresh data
             partialize: (state) => ({
-                signals: state.signals,
                 activeDomain: state.activeDomain,
                 filter: state.filter,
                 // Persist only watchlist state for competitors (not signal counts)
@@ -363,14 +363,24 @@ export const usePulseStore = create<PulseStore>()(
                     .filter(c => c.watchlisted)
                     .map(c => c.id),
             }),
-            // Merge watchlist on hydration
+            // Merge watchlist on hydration - ALWAYS preserve demo signals
             merge: (persisted, current) => {
                 const persistedState = persisted as Partial<PulseState & { competitorWatchlist?: string[] }>;
                 const watchlistedIds = new Set(persistedState.competitorWatchlist || []);
 
+                // ALWAYS use demo signals from initialState (current) since we don't persist signals
+                // This guarantees demo data is always available
+                const signals = current.signals.length > 0 ? current.signals : generateDemoSignals();
+
                 return {
+                    // Start with current (which has demo signals from initialState)
                     ...current,
-                    ...persistedState,
+                    // Apply only non-signal persisted state (activeDomain, filter)
+                    activeDomain: persistedState.activeDomain ?? current.activeDomain,
+                    filter: persistedState.filter ?? current.filter,
+                    // ALWAYS use demo signals, never overwrite with empty/undefined
+                    signals,
+                    stats: calculateStats(signals),
                     // Restore watchlist state to competitors
                     competitors: current.competitors.map(c => ({
                         ...c,

@@ -158,10 +158,10 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     return (
         <div
             className={cn(
-                'fixed top-0 right-0 h-screen flex flex-col z-30',
+                'fixed top-0 right-0 h-screen flex flex-col z-50',
                 'bg-white/95 backdrop-blur-xl',
                 'border-l border-gray-200/80',
-                'shadow-2xl dock-panel-transition',
+                'shadow-2xl dock-panel-transition transform-gpu',
                 showExpanded ? 'w-[380px]' : 'w-[70px]',
                 className
             )}

@@ -8,7 +8,7 @@ import { useDock } from '../../contexts/DockContext';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activePage: 'home' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'person' | 'faq' | 'resource' | 'search' | 'demo' | 'leaderboard' | 'profile' | 'admin' | 'pulse';
+    activePage: 'home' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'person' | 'faq' | 'resource' | 'search' | 'demo' | 'leaderboard' | 'profile' | 'admin' | 'pulse' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'credits';
     onNavigate?: (itemId: string) => void;
     onSearch?: (query: string) => void;
     isMobile?: boolean;
@@ -22,7 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({
     isMobile,
 }) => {
     const { isChatOpen, openChat, closeChat } = useUIStore();
-    const { dockWidth, isExpanded } = useDock();
+    const { dockWidth } = useDock();
 
     // BUG 2b FIX: Draggable state for Café Assistant button
     const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
@@ -55,14 +55,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
             {/* Tab Navigation - REMOVED: Sidebar now handles navigation */}
 
-            {/* Main Content - Squeeze Layout: shrinks ONLY when dock expands */}
-            <main
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6 transition-all duration-300 ease-out will-change-[margin] transform-gpu"
-                style={{
-                    // BUG 1 FIX: Only shift layout when expanded. Collapsed state stays centered.
-                    marginRight: !isMobile && isExpanded ? '380px' : undefined,
-                }}
-            >
+            {/* Main Content - CENTERED Layout: Use mx-auto for true center. Dock overlays when expanded. */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6">
                 {children}
             </main>
 

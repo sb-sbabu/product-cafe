@@ -78,16 +78,16 @@ const HEALTHCARE_TOPICS = [
     'nursing shortage', 'healthcare workforce', 'mental health', 'behavioral health',
 ];
 
-// Combined search queries for APIs
+// Combined search queries for APIs - RCM & AI/ML focused
 const SEARCH_QUERIES = [
-    'healthcare United States',
-    'FDA drug approval',
-    'Medicare Medicaid',
-    'health insurance USA',
-    'hospital healthcare',
-    'pharmaceutical USA',
-    'digital health',
-    'telehealth',
+    'healthcare revenue cycle management',
+    'healthcare AI automation',
+    'RCM technology healthcare',
+    'prior authorization automation',
+    'healthcare claims processing',
+    'eligibility verification healthcare',
+    'healthcare technology acquisition',
+    'digital health AI',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

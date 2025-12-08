@@ -20,9 +20,10 @@ import { useAnalytics } from './hooks/useAnalytics';
 import { usePulseInit } from './hooks/usePulseInit';
 import { PulseDashboard } from './components/pulse/PulseDashboard';
 import { Sidebar } from './components/layout/Sidebar';
+import { LOPHubPage, LOPSessionDetail, LOPArchivePage, LOPLearningPath, LOPAnalyticsPage } from './features/lop';
 import { cn } from './lib/utils';
 
-type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits';
+type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics';
 
 // Hook for responsive detection
 function useIsMobile() {
@@ -45,10 +46,12 @@ function AppContent() {
     if (path === '/leaderboard') return 'leaderboard';
     if (path === '/admin') return 'admin';
     if (path === '/pulse') return 'pulse';
+    if (path === '/lop') return 'lop';
     return 'home';
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [lopParams, setLopParams] = useState<{ slug?: string }>({});
   const isMobile = useIsMobile();
   const { showToast } = useToast();
   const { user } = useAuth();
@@ -66,8 +69,9 @@ function AppContent() {
     }
   }, [activePage, trackPageView, setPageContext]);
 
-  const handleNavigate = useCallback((pageId: string) => {
+  const handleNavigate = useCallback((pageId: string, params?: Record<string, string>) => {
     setActivePage(pageId as ActivePage);
+    if (params?.slug) setLopParams({ slug: params.slug });
   }, []);
 
   const handleSearch = useCallback((query: string) => {
@@ -160,6 +164,16 @@ function AppContent() {
         return <GamificationDemo />; // Beautiful credits demo page
       case 'pulse':
         return <PulseDashboard />;
+      case 'lop':
+        return <LOPHubPage onNavigate={handleNavigate} />;
+      case 'lop-session':
+        return <LOPSessionDetail slug={lopParams.slug || ''} onNavigate={handleNavigate} onBack={() => handleNavigate('lop')} />;
+      case 'lop-archive':
+        return <LOPArchivePage onNavigate={handleNavigate} onBack={() => handleNavigate('lop')} />;
+      case 'lop-path':
+        return <LOPLearningPath slug={lopParams.slug || ''} onNavigate={handleNavigate} onBack={() => handleNavigate('lop')} />;
+      case 'lop-analytics':
+        return <LOPAnalyticsPage onBack={() => handleNavigate('lop')} />;
       default:
         return <HomePage onNavigate={handleNavigate} userName={user?.firstName || 'there'} />;
     }
@@ -177,7 +191,7 @@ function AppContent() {
         {/* Main content area - grows to fill available space, with margin for fixed dock */}
         <div className={cn("flex-1 overflow-auto", !isMobile && "mr-[70px]")}>
           <Layout
-            activePage={activePage as string}
+            activePage={activePage}
             onNavigate={handleNavigate}
             onSearch={handleSearch}
             isMobile={isMobile}

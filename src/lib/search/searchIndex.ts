@@ -11,14 +11,19 @@ import type {
     ResourceResult,
     DiscussionResult,
     LOPSessionResult,
+    PulseSignalResult,
+    CompetitorResult,
     Entity,
 } from './types';
 
 // Import mock data
 import { mockPeople, mockResources, mockFAQs, mockLopSessions } from '../../data/mockData';
 import { mockDiscussions } from '../../data/discussions';
+import { LOP_SESSIONS } from '../lop/data';
 import type { Person, Resource, FAQ, LopSession } from '../../types';
 import type { Discussion } from '../../data/discussions';
+import { ALL_COMPETITORS, type CompetitorProfile } from '../pulse/competitorData';
+import type { PulseSignal } from '../pulse/types';
 
 // ============================================
 // INDEX CONFIGURATION
@@ -91,6 +96,33 @@ const LOP_FUSE_OPTIONS: IFuseOptions<LopSession> = {
     minMatchCharLength: 2,
 };
 
+const PULSE_FUSE_OPTIONS: IFuseOptions<PulseSignal> = {
+    keys: [
+        { name: 'title', weight: 4 },
+        { name: 'summary', weight: 3 },
+        { name: 'entities.companies', weight: 2.5 },
+        { name: 'entities.topics', weight: 2 },
+        { name: 'domain', weight: 1 },
+    ],
+    threshold: 0.35,
+    includeScore: true,
+    includeMatches: true,
+    minMatchCharLength: 2,
+};
+
+const COMPETITOR_FUSE_OPTIONS: IFuseOptions<CompetitorProfile> = {
+    keys: [
+        { name: 'name', weight: 4 },
+        { name: 'category', weight: 2 },
+        { name: 'description', weight: 2 },
+        { name: 'markets', weight: 1.5 },
+    ],
+    threshold: 0.3,
+    includeScore: true,
+    includeMatches: true,
+    minMatchCharLength: 2,
+};
+
 // ============================================
 // SEARCH INDEX CLASS
 // ============================================
@@ -126,8 +158,26 @@ class SearchIndex {
         // Discussions index
         this.discussionsIndex = new Fuse(mockDiscussions, DISCUSSIONS_FUSE_OPTIONS);
 
-        // LOP index
-        this.lopIndex = new Fuse(mockLopSessions, LOP_FUSE_OPTIONS);
+        // LOP index - combine mockLopSessions with LOP_SESSIONS from lib/lop/data.ts
+        // Convert LOP_SESSIONS to LopSession format for unified search
+        const lopSessionsConverted: LopSession[] = LOP_SESSIONS.map(s => ({
+            id: s.id,
+            title: s.title,
+            description: s.description,
+            date: s.sessionDate,
+            speakerIds: [s.speaker.id],
+            recordingUrl: s.videoUrl || '',
+            slidesUrl: s.slidesUrl || '',
+            tags: s.topics,
+            attendeeCount: s.viewCount,
+            rating: 0,
+        }));
+        // Combine and dedupe by id
+        const combinedLop = [
+            ...mockLopSessions,
+            ...lopSessionsConverted.filter(s => !mockLopSessions.some(m => m.id === s.id)),
+        ];
+        this.lopIndex = new Fuse(combinedLop, LOP_FUSE_OPTIONS);
 
         this.initialized = true;
 
@@ -447,23 +497,80 @@ class SearchIndex {
     }
 
     /**
-     * Search all indexes
+     * Search Pulse signals (market intelligence)
      */
-    searchAll(query: string, entities: Entity[] = [], limitPerType = 5): {
+    searchPulseSignals(query: string, signals: PulseSignal[], limit = 5): PulseSignalResult[] {
+        if (signals.length === 0) return [];
+
+        const pulseIndex = new Fuse(signals, PULSE_FUSE_OPTIONS);
+        const results = pulseIndex.search(query, { limit });
+
+        return results.map(result => {
+            const signal = result.item;
+            return {
+                id: signal.id,
+                type: 'pulse_signal' as const,
+                score: 1 - (result.score || 0),
+                matchedTerms: result.matches?.map(m => m.value || '').filter(Boolean) || [],
+                title: signal.title,
+                summary: signal.summary,
+                domain: signal.domain,
+                priority: signal.priority,
+                source: signal.source.name,
+                publishedAt: signal.publishedAt,
+                companies: signal.entities.companies,
+                isRead: signal.isRead,
+            };
+        });
+    }
+
+    /**
+     * Search competitors
+     */
+    searchCompetitors(query: string, limit = 5): CompetitorResult[] {
+        const competitorIndex = new Fuse(ALL_COMPETITORS, COMPETITOR_FUSE_OPTIONS);
+        const results = competitorIndex.search(query, { limit });
+
+        return results.map(result => {
+            const competitor = result.item;
+            return {
+                id: competitor.id,
+                type: 'competitor' as const,
+                score: 1 - (result.score || 0),
+                matchedTerms: result.matches?.map(m => m.value || '').filter(Boolean) || [],
+                name: competitor.name,
+                category: competitor.category,
+                tier: competitor.tier,
+                description: competitor.description || `${competitor.category} competitor`,
+                signalCount: competitor.signalCount || 0,
+                watchlisted: competitor.watchlisted,
+                markets: [],
+            };
+        });
+    }
+
+    /**
+     * Search all indexes (full-app search)
+     */
+    searchAll(query: string, entities: Entity[] = [], limitPerType = 5, pulseSignals: PulseSignal[] = []): {
         people: PersonResult[];
         tools: ToolResult[];
         faqs: FAQResult[];
         resources: ResourceResult[];
         discussions: DiscussionResult[];
         lopSessions: LOPSessionResult[];
+        pulseSignals: PulseSignalResult[];
+        competitors: CompetitorResult[];
     } {
         return {
             people: this.searchPeople(query, entities, limitPerType),
-            tools: this.searchTools(query, limitPerType), // Tools logic is mostly name-based
+            tools: this.searchTools(query, limitPerType),
             faqs: this.searchFAQs(query, limitPerType),
             resources: this.searchResources(query, entities, limitPerType),
             discussions: this.searchDiscussions(query, limitPerType),
             lopSessions: this.searchLopSessions(query, entities, limitPerType),
+            pulseSignals: this.searchPulseSignals(query, pulseSignals, limitPerType),
+            competitors: this.searchCompetitors(query, limitPerType),
         };
     }
 }
@@ -478,7 +585,7 @@ export const searchIndex = new SearchIndex();
 // RESULT TYPE
 // ============================================
 
-export type AnySearchResult = PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult | LOPSessionResult;
+export type AnySearchResult = PersonResult | ToolResult | FAQResult | ResourceResult | DiscussionResult | LOPSessionResult | PulseSignalResult | CompetitorResult;
 
 // ============================================
 // HELPER FUNCTIONS
@@ -493,7 +600,10 @@ export function countResults(results: ReturnType<typeof searchIndex.searchAll>):
         results.tools.length +
         results.faqs.length +
         results.resources.length +
-        results.discussions.length
+        results.discussions.length +
+        results.lopSessions.length +
+        results.pulseSignals.length +
+        results.competitors.length
     );
 }
 
@@ -507,6 +617,9 @@ export function flattenResults(results: ReturnType<typeof searchIndex.searchAll>
         ...results.faqs,
         ...results.resources,
         ...results.discussions,
+        ...results.lopSessions,
+        ...results.pulseSignals,
+        ...results.competitors,
     ];
 
     return all.sort((a, b) => b.score - a.score);
