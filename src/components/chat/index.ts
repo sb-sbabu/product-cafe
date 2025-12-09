@@ -26,3 +26,15 @@ export type {
     StatsData,
     ListItem
 } from './BaristaCards';
+
+// BARISTA Data Connectors
+export {
+    getUserStats,
+    getLeaderboard,
+    getDocumentFromSearch,
+    getPersonFromSearch,
+    getListFromSearch,
+    getAllUsers,
+    getCurrentUserName
+} from './BaristaDataConnector';
+export type { LeaderboardEntry } from './BaristaDataConnector';

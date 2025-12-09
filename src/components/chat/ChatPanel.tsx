@@ -26,6 +26,14 @@ import {
     type StatsData,
     type ListItem
 } from './BaristaCards';
+import {
+    getUserStats,
+    getLeaderboard,
+    getDocumentFromSearch,
+    getPersonFromSearch,
+    getListFromSearch,
+    type LeaderboardEntry
+} from './BaristaDataConnector';
 
 /**
  * ChatPanel - Café BARISTA Intelligent Conversational Assistant
@@ -75,27 +83,20 @@ const MAX_MESSAGES = 100; // Prevent memory issues
 const RESPONSE_DELAY_MS = 150; // Fast but perceptible
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MOCK DATA FOR DEMO
+// FALLBACK DATA (used when real data unavailable)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MOCK_STATS: StatsData = {
-    balance: 2450,
-    monthlyEarned: 350,
-    monthlySpent: 150,
+const FALLBACK_STATS: StatsData = {
+    balance: 0,
+    monthlyEarned: 0,
+    monthlySpent: 0,
     recentActivity: [
-        { id: '1', description: 'Received Toast from Sarah Chen', amount: 100, date: 'Dec 5' },
-        { id: '2', description: 'Contributed playbook to Library', amount: 50, date: 'Dec 3' },
-        { id: '3', description: 'Redeemed: Starbucks gift card', amount: -150, date: 'Dec 2' },
-        { id: '4', description: 'Monthly activity bonus', amount: 200, date: 'Dec 1' },
+        { id: '1', description: 'No recent activity', amount: 0, date: 'N/A' },
     ]
 };
 
-const MOCK_LEADERBOARD = [
-    { rank: 1, name: 'Sarah Chen', team: 'Product Leadership', points: 4250 },
-    { rank: 2, name: 'Mike Johnson', team: 'Claims Platform', points: 3890 },
-    { rank: 3, name: 'Lisa Wong', team: 'Product Operations', points: 3450 },
-    { rank: 4, name: 'You', team: 'Your Team', points: 2450, isCurrentUser: true },
-    { rank: 5, name: 'David Martinez', team: 'Data Platform', points: 2100 },
+const FALLBACK_LEADERBOARD: LeaderboardEntry[] = [
+    { rank: 1, name: 'Loading...', team: 'Team', points: 0 },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -115,14 +116,19 @@ const determineResponseType = (query: string, results: SearchResponse): { type: 
         return { type: 'text' };
     }
 
-    // Stats/Points queries
-    if (lowerQuery.includes('love point') || lowerQuery.includes('my point') || lowerQuery.includes('balance')) {
-        return { type: 'stats', data: MOCK_STATS };
+    // Stats/Points queries - USE REAL DATA
+    if (lowerQuery.includes('love point') || lowerQuery.includes('my point') || lowerQuery.includes('balance') || lowerQuery.includes('how many')) {
+        const realStats = getUserStats();
+        return { type: 'stats', data: realStats || FALLBACK_STATS };
     }
 
-    // Leaderboard queries
-    if (lowerQuery.includes('leaderboard') || lowerQuery.includes('ranking') || lowerQuery.includes('who is leading')) {
-        return { type: 'leaderboard', data: MOCK_LEADERBOARD };
+    // Leaderboard queries - USE REAL DATA
+    if (lowerQuery.includes('leaderboard') || lowerQuery.includes('ranking') || lowerQuery.includes('who is leading') || lowerQuery.includes('top')) {
+        const realLeaderboard = getLeaderboard('MOST_RECOGNIZED', 5);
+        return {
+            type: 'leaderboard',
+            data: realLeaderboard.length > 0 ? realLeaderboard : FALLBACK_LEADERBOARD
+        };
     }
 
     // Definition queries
@@ -132,7 +138,7 @@ const determineResponseType = (query: string, results: SearchResponse): { type: 
             type: 'definition',
             data: {
                 term: term.toUpperCase(),
-                definition: `${term.charAt(0).toUpperCase() + term.slice(1)} is a key concept in our domain.This is a placeholder definition that would be populated from the knowledge base.`,
+                definition: `${term.charAt(0).toUpperCase() + term.slice(1)} is a key concept in our domain. This is a placeholder definition that would be populated from the knowledge base.`,
                 keyPoints: [
                     'First key point about this concept',
                     'Second important aspect to understand',
@@ -144,64 +150,27 @@ const determineResponseType = (query: string, results: SearchResponse): { type: 
         };
     }
 
-    // Person queries
+    // Person queries - USE REAL DATA
     if (results.results.people.length > 0 && (lowerQuery.includes('who') || lowerQuery.includes('expert') || lowerQuery.includes('find'))) {
-        const person = results.results.people[0];
-        return {
-            type: 'person',
-            data: {
-                id: person.id,
-                name: person.name,
-                title: person.title,
-                team: person.team,
-                location: person.location || 'Remote',
-                tenure: '3+ years',
-                expertise: person.expertiseAreas?.slice(0, 5) || ['Product Management'],
-            } as PersonData
-        };
+        const personData = getPersonFromSearch(results);
+        if (personData) {
+            return { type: 'person', data: personData };
+        }
     }
 
-    // Document queries
+    // Document queries - USE REAL DATA
     if (results.results.resources.length > 0) {
-        const resource = results.results.resources[0];
-        return {
-            type: 'document',
-            data: {
-                id: resource.id,
-                title: resource.title,
-                type: 'pptx',
-                version: '3.2',
-                updatedAt: 'Dec 2024',
-                author: 'Sarah Chen',
-                authorTeam: 'Product Team',
-                path: 'Library > Grab & Go > Playbooks',
-                description: resource.description || 'No description available',
-                views: 1247,
-                rating: 4.8,
-            } as DocumentData
-        };
+        const documentData = getDocumentFromSearch(results);
+        if (documentData) {
+            return { type: 'document', data: documentData };
+        }
     }
 
-    // List results
+    // List results - USE REAL DATA
     if (results.totalCount > 0) {
-        const items: ListItem[] = [];
-        results.results.resources.slice(0, 5).forEach(r => {
-            items.push({
-                id: r.id,
-                title: r.title,
-                subtitle: r.description?.slice(0, 50) + '...' || 'Resource',
-                date: 'Dec 2024',
-            });
-        });
-        results.results.faqs.slice(0, 3).forEach(f => {
-            items.push({
-                id: f.id,
-                title: f.question,
-                subtitle: f.answerSummary.slice(0, 50) + '...',
-            });
-        });
-        if (items.length > 0) {
-            return { type: 'list', data: items };
+        const listItems = getListFromSearch(results);
+        if (listItems.length > 0) {
+            return { type: 'list', data: listItems };
         }
     }
 
@@ -417,7 +386,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             case 'stats':
                 return <StatsCard data={message.cardData as StatsData} userName="Your" />;
             case 'leaderboard':
-                return <LeaderboardCard entries={message.cardData as typeof MOCK_LEADERBOARD} />;
+                return <LeaderboardCard entries={message.cardData as LeaderboardEntry[]} />;
             case 'document':
                 return <DocumentCard data={message.cardData as DocumentData} />;
             case 'person':
