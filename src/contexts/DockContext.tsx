@@ -18,7 +18,7 @@ export type DockTab = 'ask' | 'discuss' | 'activity' | 'directory';
 export type DockState = 'closed' | 'collapsed' | 'expanded';
 
 export interface PageContext {
-    type: 'home' | 'resource' | 'faq' | 'person' | 'search' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse';
+    type: 'home' | 'resource' | 'faq' | 'person' | 'search' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'toast' | 'toast-x' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'credits';
     resourceId?: string;
     faqId?: string;
     personId?: string;

@@ -1,0 +1,370 @@
+/**
+ * Toast X - Demo Data
+ * Sample users and recognitions for development
+ * Reuses structure from original but with Toast X types
+ */
+
+import type { ToastUser, Recognition, CompanyValue } from '../types';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEMO USERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const createEmptyValuesCounts = (): Record<CompanyValue, number> => ({
+    DO_IT_DIFFERENTLY: 0,
+    HEALTHCARE_IS_PERSONAL: 0,
+    BE_ALL_IN: 0,
+    OWN_THE_OUTCOME: 0,
+    DO_THE_RIGHT_THING: 0,
+    EXPLORE_FEARLESSLY: 0,
+});
+
+export const DEMO_USERS: readonly ToastUser[] = [
+    {
+        id: 'user-1',
+        name: 'Sarah Chen',
+        email: 'sarah.chen@availity.com',
+        avatar: '👩‍💻',
+        title: 'Senior Software Engineer',
+        team: 'Platform Engineering',
+        department: 'Engineering',
+        credits: 450,
+        creditsThisMonth: 125,
+        recognitionsGiven: 23,
+        recognitionsReceived: 45,
+        expertAreas: [
+            { id: 'api-design', name: 'API Design', score: 85 },
+            { id: 'react', name: 'React', score: 120 },
+            { id: 'typescript', name: 'TypeScript', score: 95 },
+        ],
+        earnedBadges: [
+            { badge: 'TOAST_DEBUT', earnedAt: '2024-01-15' },
+            { badge: 'FIRST_TOAST', earnedAt: '2024-01-10' },
+            { badge: 'RISING_STAR', earnedAt: '2024-03-20' },
+            { badge: 'GRATEFUL_DOZEN', earnedAt: '2024-04-01' },
+        ],
+        earnedAwards: [
+            { award: 'BRIDGE_BUILDER', recognitionId: 'rec-1', earnedAt: '2024-06-15' },
+        ],
+        valuesCounts: { ...createEmptyValuesCounts(), BE_ALL_IN: 12, OWN_THE_OUTCOME: 8 },
+        dailyQuickToasts: 1,
+        dailyStandingOvations: 0,
+        lastRecognitionReset: new Date().toISOString().split('T')[0],
+        recentRecipients: [],
+        joinedAt: '2022-03-15',
+        lastActiveAt: new Date().toISOString(),
+    },
+    {
+        id: 'user-2',
+        name: 'Raj Patel',
+        email: 'raj.patel@availity.com',
+        avatar: '👨‍💼',
+        title: 'Product Manager',
+        team: 'Claims Product',
+        department: 'Product',
+        credits: 380,
+        creditsThisMonth: 95,
+        recognitionsGiven: 45,
+        recognitionsReceived: 32,
+        expertAreas: [
+            { id: 'product-strategy', name: 'Product Strategy', score: 150 },
+            { id: 'stakeholder-mgmt', name: 'Stakeholder Management', score: 110 },
+        ],
+        earnedBadges: [
+            { badge: 'TOAST_DEBUT', earnedAt: '2023-06-10' },
+            { badge: 'FIRST_TOAST', earnedAt: '2023-06-05' },
+            { badge: 'GRATEFUL_DOZEN', earnedAt: '2023-09-15' },
+            { badge: 'TOAST_TREE', earnedAt: '2024-02-20' },
+        ],
+        earnedAwards: [],
+        valuesCounts: { ...createEmptyValuesCounts(), EXPLORE_FEARLESSLY: 10, DO_IT_DIFFERENTLY: 7 },
+        dailyQuickToasts: 0,
+        dailyStandingOvations: 0,
+        lastRecognitionReset: new Date().toISOString().split('T')[0],
+        recentRecipients: [],
+        joinedAt: '2021-08-01',
+        lastActiveAt: new Date().toISOString(),
+    },
+    {
+        id: 'user-3',
+        name: 'Jennifer Martinez',
+        email: 'jennifer.martinez@availity.com',
+        avatar: '👩‍🔬',
+        title: 'UX Designer',
+        team: 'Design Systems',
+        department: 'Design',
+        credits: 520,
+        creditsThisMonth: 180,
+        recognitionsGiven: 67,
+        recognitionsReceived: 38,
+        expertAreas: [
+            { id: 'accessibility', name: 'Accessibility', score: 180 },
+            { id: 'design-systems', name: 'Design Systems', score: 145 },
+            { id: 'user-research', name: 'User Research', score: 90 },
+        ],
+        earnedBadges: [
+            { badge: 'TOAST_DEBUT', earnedAt: '2023-01-20' },
+            { badge: 'FIRST_TOAST', earnedAt: '2023-01-15' },
+            { badge: 'GRATEFUL_DOZEN', earnedAt: '2023-04-10' },
+            { badge: 'TOAST_TREE', earnedAt: '2024-01-05' },
+            { badge: 'RISING_STAR', earnedAt: '2023-06-20' },
+            { badge: 'STAR_QUALITY', earnedAt: '2024-03-15' },
+        ],
+        earnedAwards: [
+            { award: 'GRATITUDE_GURU', recognitionId: 'rec-2', earnedAt: '2024-04-01' },
+        ],
+        valuesCounts: { ...createEmptyValuesCounts(), HEALTHCARE_IS_PERSONAL: 15, BE_ALL_IN: 10 },
+        dailyQuickToasts: 2,
+        dailyStandingOvations: 1,
+        lastRecognitionReset: new Date().toISOString().split('T')[0],
+        recentRecipients: [
+            { userId: 'user-1', lastRecognizedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), creditsFromThisMonth: 30 },
+        ],
+        joinedAt: '2022-06-01',
+        lastActiveAt: new Date().toISOString(),
+    },
+    {
+        id: 'user-4',
+        name: 'Mike Torres',
+        email: 'mike.torres@availity.com',
+        avatar: '👨‍🔧',
+        title: 'Claims Team Lead',
+        team: 'Claims Processing',
+        department: 'Operations',
+        credits: 290,
+        creditsThisMonth: 65,
+        recognitionsGiven: 18,
+        recognitionsReceived: 22,
+        expertAreas: [
+            { id: 'claims-processing', name: 'Claims Processing', score: 200 },
+            { id: 'team-leadership', name: 'Team Leadership', score: 85 },
+        ],
+        earnedBadges: [
+            { badge: 'TOAST_DEBUT', earnedAt: '2023-09-01' },
+            { badge: 'FIRST_TOAST', earnedAt: '2023-08-15' },
+            { badge: 'GRATEFUL_DOZEN', earnedAt: '2024-02-28' },
+        ],
+        earnedAwards: [],
+        valuesCounts: { ...createEmptyValuesCounts(), OWN_THE_OUTCOME: 12, DO_THE_RIGHT_THING: 5 },
+        dailyQuickToasts: 0,
+        dailyStandingOvations: 0,
+        lastRecognitionReset: new Date().toISOString().split('T')[0],
+        recentRecipients: [],
+        joinedAt: '2020-03-15',
+        lastActiveAt: new Date().toISOString(),
+    },
+    {
+        id: 'user-5',
+        name: 'Lisa Wong',
+        email: 'lisa.wong@availity.com',
+        avatar: '👩‍💼',
+        title: 'Director, Engineering',
+        team: 'Engineering Leadership',
+        department: 'Engineering',
+        managerId: undefined,
+        credits: 680,
+        creditsThisMonth: 210,
+        recognitionsGiven: 89,
+        recognitionsReceived: 56,
+        expertAreas: [
+            { id: 'engineering-leadership', name: 'Engineering Leadership', score: 250 },
+            { id: 'mentorship', name: 'Mentorship', score: 180 },
+            { id: 'technical-strategy', name: 'Technical Strategy', score: 160 },
+        ],
+        earnedBadges: [
+            { badge: 'TOAST_DEBUT', earnedAt: '2022-05-01' },
+            { badge: 'FIRST_TOAST', earnedAt: '2022-04-20' },
+            { badge: 'GRATEFUL_DOZEN', earnedAt: '2022-08-15' },
+            { badge: 'TOAST_TREE', earnedAt: '2023-06-01' },
+            { badge: 'RISING_STAR', earnedAt: '2022-10-10' },
+            { badge: 'STAR_QUALITY', earnedAt: '2023-03-15' },
+            { badge: 'CONSTELLATION', earnedAt: '2024-01-20' },
+        ],
+        earnedAwards: [
+            { award: 'MENTOR_STAR', recognitionId: 'rec-3', earnedAt: '2023-12-15' },
+            { award: 'GRATITUDE_GURU', recognitionId: 'rec-4', earnedAt: '2024-03-01' },
+        ],
+        valuesCounts: { ...createEmptyValuesCounts(), BE_ALL_IN: 20, EXPLORE_FEARLESSLY: 15, DO_THE_RIGHT_THING: 12 },
+        dailyQuickToasts: 1,
+        dailyStandingOvations: 0,
+        lastRecognitionReset: new Date().toISOString().split('T')[0],
+        recentRecipients: [],
+        joinedAt: '2019-01-10',
+        lastActiveAt: new Date().toISOString(),
+    },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEMO RECOGNITIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const now = new Date();
+const hoursAgo = (hours: number) => new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
+const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+
+export const DEMO_RECOGNITIONS: readonly Recognition[] = [
+    {
+        id: 'rec-demo-1',
+        type: 'STANDING_OVATION',
+        giverId: 'user-3',
+        giverName: 'Jennifer Martinez',
+        giverAvatar: '👩‍🔬',
+        giverTitle: 'UX Designer',
+        recipientIds: ['user-1', 'user-2'],
+        recipients: [
+            { id: 'user-1', name: 'Sarah Chen', avatar: '👩‍💻', title: 'Senior Software Engineer', team: 'Platform Engineering' },
+            { id: 'user-2', name: 'Raj Patel', avatar: '👨‍💼', title: 'Product Manager', team: 'Claims Product' },
+        ],
+        value: 'BE_ALL_IN',
+        expertAreas: ['collaboration', 'crisis-management'],
+        message: "When the Claims team was drowning during the Q3 migration, Sarah and Raj didn't wait for permission. They assembled a strike team from Engineering, worked through the entire weekend, and helped us deliver on time. This is what 'One Team, One Mission' means in action.",
+        impact: 'Migration completed on schedule, avoiding $500K penalty clause. Customer relationship strengthened. Team morale boosted seeing leadership in action.',
+        imageId: 'puzzle-complete',
+        award: 'BRIDGE_BUILDER',
+        createdAt: hoursAgo(2),
+        reactions: [
+            { type: 'love', userId: 'user-4', userName: 'Mike Torres', createdAt: hoursAgo(1.5) },
+            { type: 'applause', userId: 'user-5', userName: 'Lisa Wong', createdAt: hoursAgo(1) },
+            { type: 'fire', userId: 'user-4', userName: 'Mike Torres', createdAt: hoursAgo(0.5) },
+        ],
+        comments: [
+            {
+                id: 'comment-1',
+                userId: 'user-4',
+                userName: 'Mike Torres',
+                userAvatar: '👨‍🔧',
+                userTitle: 'Claims Team Lead',
+                content: 'This is what One Availity means! Sarah and Raj, you two literally saved our quarter. The Claims team owes you coffee forever. ☕❤️',
+                createdAt: hoursAgo(1.5),
+                reactions: [{ type: 'love', userId: 'user-3', userName: 'Jennifer Martinez', createdAt: hoursAgo(1) }],
+                mentions: [],
+            },
+            {
+                id: 'comment-2',
+                userId: 'user-5',
+                userName: 'Lisa Wong',
+                userAvatar: '👩‍💼',
+                userTitle: 'Director, Engineering',
+                content: '@Jennifer Martinez thanks for recognizing this! This is exactly the behavior we want to see more of.',
+                createdAt: hoursAgo(0.75),
+                reactions: [],
+                mentions: ['user-3'],
+            },
+        ],
+        reposts: 5,
+        bookmarks: 12,
+        isPrivate: false,
+        notifyManagers: true,
+        nominatedForMonthly: true,
+        chainDepth: 0,
+    },
+    {
+        id: 'rec-demo-2',
+        type: 'QUICK_TOAST',
+        giverId: 'user-4',
+        giverName: 'Mike Torres',
+        giverAvatar: '👨‍🔧',
+        giverTitle: 'Claims Team Lead',
+        recipientIds: ['user-3'],
+        recipients: [
+            { id: 'user-3', name: 'Jennifer Martinez', avatar: '👩‍🔬', title: 'UX Designer', team: 'Design Systems' },
+        ],
+        value: 'EXPLORE_FEARLESSLY',
+        expertAreas: ['accessibility'],
+        message: 'Your deep dive into the new CMS accessibility requirements saved our team hours of research. Thanks for sharing your learnings in that documentation!',
+        imageId: 'virtual-high-five',
+        createdAt: hoursAgo(6),
+        reactions: [
+            { type: 'star', userId: 'user-1', userName: 'Sarah Chen', createdAt: hoursAgo(5) },
+            { type: 'brilliant', userId: 'user-2', userName: 'Raj Patel', createdAt: hoursAgo(4) },
+        ],
+        comments: [],
+        reposts: 1,
+        bookmarks: 3,
+        isPrivate: false,
+        notifyManagers: false,
+        nominatedForMonthly: false,
+        chainDepth: 0,
+    },
+    {
+        id: 'rec-demo-3',
+        type: 'QUICK_TOAST',
+        giverId: 'user-5',
+        giverName: 'Lisa Wong',
+        giverAvatar: '👩‍💼',
+        giverTitle: 'Director, Engineering',
+        recipientIds: ['user-4'],
+        recipients: [
+            { id: 'user-4', name: 'Mike Torres', avatar: '👨‍🔧', title: 'Claims Team Lead', team: 'Claims Processing' },
+        ],
+        value: 'OWN_THE_OUTCOME',
+        expertAreas: ['team-leadership', 'claims-processing'],
+        message: 'Mike, the way you handled the escalation call with Cigna was masterful. You owned the problem, calmed the customer, and delivered a solution same-day. True ownership.',
+        imageId: 'ownership-crown',
+        createdAt: daysAgo(1),
+        reactions: [
+            { type: 'strong', userId: 'user-1', userName: 'Sarah Chen', createdAt: daysAgo(0.9) },
+            { type: 'applause', userId: 'user-2', userName: 'Raj Patel', createdAt: daysAgo(0.8) },
+            { type: 'love', userId: 'user-3', userName: 'Jennifer Martinez', createdAt: daysAgo(0.7) },
+        ],
+        comments: [
+            {
+                id: 'comment-3',
+                userId: 'user-2',
+                userName: 'Raj Patel',
+                userAvatar: '👨‍💼',
+                userTitle: 'Product Manager',
+                content: 'The customer actually sent a thank-you note to our VP! This is huge, Mike. 🙌',
+                createdAt: daysAgo(0.8),
+                reactions: [],
+                mentions: [],
+            },
+        ],
+        reposts: 2,
+        bookmarks: 5,
+        isPrivate: false,
+        notifyManagers: true,
+        nominatedForMonthly: false,
+        chainDepth: 0,
+    },
+    {
+        id: 'rec-demo-4',
+        type: 'STANDING_OVATION',
+        giverId: 'user-1',
+        giverName: 'Sarah Chen',
+        giverAvatar: '👩‍💻',
+        giverTitle: 'Senior Software Engineer',
+        recipientIds: ['user-5'],
+        recipients: [
+            { id: 'user-5', name: 'Lisa Wong', avatar: '👩‍💼', title: 'Director, Engineering', team: 'Engineering Leadership' },
+        ],
+        value: 'HEALTHCARE_IS_PERSONAL',
+        expertAreas: ['mentorship', 'engineering-leadership'],
+        message: "Lisa, thank you for the 1:1 session where you helped me navigate my career path. You didn't just give advice — you listened, asked questions, and helped me see options I hadn't considered. Your mentorship is making me a better engineer AND a better person.",
+        impact: 'Helped me create a clear 18-month growth plan and connected me with senior engineers in areas I want to explore.',
+        imageId: 'mentor-magic',
+        award: 'MENTOR_STAR',
+        createdAt: daysAgo(2),
+        reactions: [
+            { type: 'love', userId: 'user-2', userName: 'Raj Patel', createdAt: daysAgo(1.9) },
+            { type: 'star', userId: 'user-3', userName: 'Jennifer Martinez', createdAt: daysAgo(1.8) },
+            { type: 'magic', userId: 'user-4', userName: 'Mike Torres', createdAt: daysAgo(1.7) },
+        ],
+        comments: [],
+        reposts: 8,
+        bookmarks: 15,
+        isPrivate: false,
+        notifyManagers: false,
+        nominatedForMonthly: true,
+        chainDepth: 0,
+    },
+];
+
+/**
+ * Get users as a Map for efficient lookup
+ */
+export const getUsersMap = (): Map<string, ToastUser> => {
+    const map = new Map<string, ToastUser>();
+    DEMO_USERS.forEach(user => map.set(user.id, user));
+    return map;
+};

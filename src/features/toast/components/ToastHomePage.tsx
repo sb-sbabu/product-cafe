@@ -12,27 +12,70 @@ import { useToastStore } from '../toastStore';
 import { ToastFeed } from './ToastFeed';
 import { QuickToastModal } from './QuickToastModal';
 import { StandingOvationWizard } from './StandingOvationWizard';
-import { TeamToastModal } from './TeamToastModal';
 import { COMPANY_VALUES, BADGES } from '../data';
 
 export const ToastHomePage: React.FC = () => {
-    const {
-        getCurrentUser,
-        getLeaderboard,
-        getStats,
-        checkDailyLimits
-    } = useToastStore();
+    // ═══════════════════════════════════════════════════════════════════
+    // ZUSTAND SELECTORS - Use individual selectors, NOT method calls!
+    // Method calls like getCurrentUser() cause infinite re-renders
+    // ═══════════════════════════════════════════════════════════════════
+    const recognitions = useToastStore(state => state.recognitions);
+    const users = useToastStore(state => state.users);
+    const currentUserId = useToastStore(state => state.currentUserId);
 
-    const currentUser = getCurrentUser();
-    const stats = getStats();
-    const leaderboard = getLeaderboard('MOST_RECOGNIZED', 'THIS_MONTH', 5);
-    const quickToastLimit = checkDailyLimits('QUICK_TOAST');
-    const standingOvationLimit = checkDailyLimits('STANDING_OVATION');
+    // Derive values with useMemo - stable references
+    const currentUser = useMemo(() => users.get(currentUserId), [users, currentUserId]);
+
+    const stats = useMemo(() => {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+
+        const thisMonth = recognitions.filter(r => new Date(r.createdAt) >= startOfMonth).length;
+        const thisWeek = recognitions.filter(r => new Date(r.createdAt) >= startOfWeek).length;
+
+        const byValue: Record<string, number> = {};
+        recognitions.forEach(r => {
+            byValue[r.value] = (byValue[r.value] || 0) + 1;
+        });
+
+        return { total: recognitions.length, thisWeek, thisMonth, byValue };
+    }, [recognitions]);
+
+    const leaderboard = useMemo(() => {
+        const userArray = Array.from(users.values());
+        return userArray
+            .map(user => ({
+                rank: 0,
+                userId: user.id,
+                userName: user.name,
+                userAvatar: user.avatar,
+                userTitle: user.title,
+                userTeam: user.team,
+                score: user.recognitionsReceived,
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5)
+            .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    }, [users]);
+
+    // Daily limits - computed from currentUser
+    const quickToastLimit = useMemo(() => {
+        if (!currentUser) return { allowed: false, remaining: 0 };
+        const remaining = 10 - (currentUser.dailyQuickToasts || 0);
+        return { allowed: remaining > 0, remaining: Math.max(0, remaining) };
+    }, [currentUser]);
+
+    const standingOvationLimit = useMemo(() => {
+        if (!currentUser) return { allowed: false, remaining: 0 };
+        const remaining = 2 - (currentUser.dailyStandingOvations || 0);
+        return { allowed: remaining > 0, remaining: Math.max(0, remaining) };
+    }, [currentUser]);
 
     // Modal states
     const [showQuickToast, setShowQuickToast] = useState(false);
     const [showStandingOvation, setShowStandingOvation] = useState(false);
-    const [showTeamToast, setShowTeamToast] = useState(false);
 
     // Top values this month
     const topValues = useMemo(() => {
@@ -175,7 +218,7 @@ export const ToastHomePage: React.FC = () => {
 
                     {/* Team Toast */}
                     <button
-                        onClick={() => setShowTeamToast(true)}
+                        onClick={() => setShowStandingOvation(true)}
                         className="group relative p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 hover:border-blue-300 hover:shadow-md transition-all text-left"
                     >
                         <div className="flex items-start gap-4">
@@ -334,10 +377,6 @@ export const ToastHomePage: React.FC = () => {
             <StandingOvationWizard
                 isOpen={showStandingOvation}
                 onClose={() => setShowStandingOvation(false)}
-            />
-            <TeamToastModal
-                isOpen={showTeamToast}
-                onClose={() => setShowTeamToast(false)}
             />
         </div>
     );

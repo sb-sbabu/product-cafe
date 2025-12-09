@@ -15,8 +15,14 @@ interface ToastFeedProps {
 }
 
 export const ToastFeed: React.FC<ToastFeedProps> = ({ onCreateToast }) => {
-    const { recognitions, feedFilter, setFeedFilter, getCurrentUser } = useToastStore();
-    const currentUser = getCurrentUser();
+    // Use selectors instead of method calls for stability
+    const recognitions = useToastStore(state => state.recognitions);
+    const feedFilter = useToastStore(state => state.feedFilter);
+    const setFeedFilter = useToastStore(state => state.setFeedFilter);
+    const users = useToastStore(state => state.users);
+    const currentUserId = useToastStore(state => state.currentUserId);
+
+    const currentUser = useMemo(() => users.get(currentUserId), [users, currentUserId]);
 
     // Filter recognitions
     const filteredRecognitions = useMemo(() => {

@@ -40,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
     { id: 'community', label: 'Community', icon: Users, color: 'text-cyan-500', gradient: 'from-cyan-400 to-blue-500' },
     { id: 'lop', label: 'LOP', icon: Mic, color: 'text-rose-500', gradient: 'from-rose-400 to-pink-500' },
     { id: 'toast', label: 'TOAST', icon: Award, color: 'text-amber-500', gradient: 'from-amber-400 to-orange-500' },
+    { id: 'toast-x', label: 'Toast X', icon: Award, color: 'text-rose-500', gradient: 'from-rose-400 to-pink-500' },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, color: 'text-amber-500', gradient: 'from-yellow-400 to-amber-500' },
     { id: 'credits', label: 'Credits', icon: Sparkles, color: 'text-pink-500', gradient: 'from-pink-400 to-rose-500' },
     { id: 'pulse', label: 'PULSE', icon: Activity, color: 'text-emerald-500', gradient: 'from-emerald-400 to-teal-500' },
