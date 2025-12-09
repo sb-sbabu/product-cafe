@@ -25,7 +25,7 @@ import { ToastHomePage } from './features/toast/components';
 import { ToastXHomePage } from './features/toast-x/components';
 import { cn } from './lib/utils';
 
-type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'toast' | 'toast-x';
+type ActivePage = 'home' | 'grab-and-go' | 'library' | 'community' | 'search' | 'my-cafe' | 'demo' | 'admin' | 'profile' | 'leaderboard' | 'pulse' | 'credits' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'toast' | 'toast_hidden';
 
 // Hook for responsive detection
 function useIsMobile() {
@@ -177,9 +177,9 @@ function AppContent() {
       case 'lop-analytics':
         return <LOPAnalyticsPage onBack={() => handleNavigate('lop')} />;
       case 'toast':
-        return <ToastHomePage />;
-      case 'toast-x':
         return <ToastXHomePage />;
+      case 'toast_hidden':
+        return <ToastHomePage />;
       default:
         return <HomePage onNavigate={handleNavigate} userName={user?.firstName || 'there'} />;
     }

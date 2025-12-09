@@ -8,7 +8,7 @@ import { useDock } from '../../contexts/DockContext';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activePage: 'home' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'person' | 'faq' | 'resource' | 'search' | 'demo' | 'leaderboard' | 'profile' | 'admin' | 'pulse' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'credits' | 'toast';
+    activePage: 'home' | 'library' | 'community' | 'grab-and-go' | 'my-cafe' | 'person' | 'faq' | 'resource' | 'search' | 'demo' | 'leaderboard' | 'profile' | 'admin' | 'pulse' | 'lop' | 'lop-session' | 'lop-archive' | 'lop-path' | 'lop-analytics' | 'credits' | 'toast' | 'toast_hidden';
     onNavigate?: (itemId: string) => void;
     onSearch?: (query: string) => void;
     isMobile?: boolean;

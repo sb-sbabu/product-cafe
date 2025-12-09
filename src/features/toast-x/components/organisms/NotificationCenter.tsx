@@ -27,21 +27,21 @@ interface DisplayNotification extends Omit<ToastNotification, 'priority'> {
 const getNotificationIcon = (type: ToastNotificationType) => {
     switch (type) {
         case 'RECOGNIZED':
-            return <Gift className="w-5 h-5 text-amber-400" />;
+            return <Gift className="w-5 h-5 text-amber-500" />;
         case 'REACTION':
-            return <Heart className="w-5 h-5 text-rose-400" />;
+            return <Heart className="w-5 h-5 text-rose-500" />;
         case 'COMMENT':
-            return <MessageCircle className="w-5 h-5 text-blue-400" />;
+            return <MessageCircle className="w-5 h-5 text-blue-500" />;
         case 'BADGE_EARNED':
-            return <Trophy className="w-5 h-5 text-purple-400" />;
+            return <Trophy className="w-5 h-5 text-purple-500" />;
         case 'AWARD_EARNED':
-            return <Award className="w-5 h-5 text-emerald-400" />;
+            return <Award className="w-5 h-5 text-emerald-500" />;
         case 'LEADERBOARD_RANK':
-            return <TrendingUp className="w-5 h-5 text-cyan-400" />;
+            return <TrendingUp className="w-5 h-5 text-cyan-500" />;
         case 'GRATITUDE_CHAIN':
-            return <Sparkles className="w-5 h-5 text-pink-400" />;
+            return <Sparkles className="w-5 h-5 text-pink-500" />;
         default:
-            return <Bell className="w-5 h-5 text-white/40" />;
+            return <Bell className="w-5 h-5 text-gray-400" />;
     }
 };
 
@@ -49,13 +49,13 @@ const getNotificationIcon = (type: ToastNotificationType) => {
 const getPriorityColor = (priority: NotificationPriority) => {
     switch (priority) {
         case 'high':
-            return 'from-rose-500/20 to-pink-500/20 border-rose-500/30';
+            return 'from-rose-50 to-pink-50 border-rose-200';
         case 'medium':
-            return 'from-blue-500/10 to-cyan-500/10 border-white/10';
+            return 'from-blue-50 to-cyan-50 border-gray-100';
         case 'low':
-            return 'from-white/5 to-white/5 border-white/5';
+            return 'from-white to-white border-gray-100';
         default:
-            return 'from-white/5 to-white/5 border-white/5';
+            return 'from-white to-white border-gray-100';
     }
 };
 
@@ -203,28 +203,28 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
             />
 
             {/* Dropdown panel */}
-            <div className="absolute top-16 right-6 w-[420px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-white/10 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="absolute top-16 right-6 w-[420px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200 z-50">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <Bell className="w-5 h-5 text-amber-400" />
+                            <Bell className="w-5 h-5 text-amber-500" />
                             {unreadCount > 0 && (
                                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
                                     {unreadCount}
                                 </span>
                             )}
                         </div>
-                        <h3 className="font-semibold text-white">Notifications</h3>
+                        <h3 className="font-bold text-gray-900">Notifications</h3>
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Filter buttons */}
-                        <div className="flex bg-white/5 rounded-lg p-0.5">
+                        <div className="flex bg-gray-100 rounded-lg p-0.5">
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'all'
-                                        ? 'bg-white/10 text-white'
-                                        : 'text-white/50 hover:text-white'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 All
@@ -232,8 +232,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                             <button
                                 onClick={() => setFilter('unread')}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'unread'
-                                        ? 'bg-white/10 text-white'
-                                        : 'text-white/50 hover:text-white'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 Unread
@@ -243,13 +243,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                         {/* Sound toggle */}
                         <button
                             onClick={() => setSoundEnabled(!soundEnabled)}
-                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
                             title={soundEnabled ? 'Mute notifications' : 'Unmute notifications'}
                         >
                             {soundEnabled ? (
-                                <Volume2 className="w-4 h-4 text-white/50" />
+                                <Volume2 className="w-4 h-4" />
                             ) : (
-                                <VolumeX className="w-4 h-4 text-white/50" />
+                                <VolumeX className="w-4 h-4" />
                             )}
                         </button>
 
@@ -257,19 +257,19 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllAsRead}
-                                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
                                 title="Mark all as read"
                             >
-                                <CheckCheck className="w-4 h-4 text-white/50" />
+                                <CheckCheck className="w-4 h-4" />
                             </button>
                         )}
 
                         {/* Close */}
                         <button
                             onClick={onClose}
-                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
                         >
-                            <X className="w-4 h-4 text-white/50" />
+                            <X className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -280,7 +280,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                         displayedNotifications.map((notification, idx) => (
                             <div
                                 key={notification.id}
-                                className={`flex items-start gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition-all cursor-pointer group ${!notification.read ? `bg-gradient-to-r ${getPriorityColor(notification.priority)}` : ''
+                                className={`flex items-start gap-3 p-4 border-b border-gray-50 hover:bg-gray-50 transition-all cursor-pointer group ${!notification.read ? `bg-gradient-to-r ${getPriorityColor(notification.priority)}` : 'bg-white'
                                     }`}
                                 onClick={() => markAsRead(notification.id)}
                                 style={{ animationDelay: `${idx * 50}ms` }}
@@ -289,24 +289,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                                 <div className="shrink-0 mt-0.5 relative">
                                     {getNotificationIcon(notification.type)}
                                     {notification.priority === 'high' && !notification.read && (
-                                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-ping border border-white" />
                                     )}
                                 </div>
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium ${!notification.read ? 'text-white' : 'text-white/70'}`}>
+                                    <p className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-600'}`}>
                                         {notification.title}
                                     </p>
-                                    <p className={`text-sm mt-0.5 ${!notification.read ? 'text-white/80' : 'text-white/50'}`}>
+                                    <p className={`text-sm mt-0.5 ${!notification.read ? 'text-gray-700' : 'text-gray-500'}`}>
                                         {notification.message}
                                     </p>
                                     <div className="flex items-center gap-3 mt-2">
-                                        <span className="text-xs text-white/40">
+                                        <span className="text-xs text-gray-400">
                                             {formatTimeAgo(notification.createdAt)}
                                         </span>
                                         {notification.actionUrl && (
-                                            <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
                                                 View <ChevronRight className="w-3 h-3" />
                                             </button>
                                         )}
@@ -317,7 +317,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                                 <div className="shrink-0 flex items-center gap-2">
                                     {/* Unread indicator */}
                                     {!notification.read && (
-                                        <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
                                     )}
 
                                     {/* Delete button */}
@@ -326,20 +326,22 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                                             e.stopPropagation();
                                             deleteNotification(notification.id);
                                         }}
-                                        className="p-1 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="p-1 rounded hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-all text-gray-400 hover:text-gray-600"
                                     >
-                                        <X className="w-3 h-3 text-white/40" />
+                                        <X className="w-3 h-3" />
                                     </button>
                                 </div>
                             </div>
                         ))
                     ) : (
                         <div className="text-center py-16">
-                            <Bell className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                            <p className="text-white/50 font-medium">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Bell className="w-8 h-8 text-gray-300" />
+                            </div>
+                            <p className="text-gray-900 font-medium">
                                 {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
                             </p>
-                            <p className="text-white/30 text-sm mt-1">
+                            <p className="text-gray-500 text-sm mt-1">
                                 {filter === 'unread' ? 'You\'re all caught up!' : 'When you receive recognitions, they\'ll appear here'}
                             </p>
                         </div>
@@ -347,13 +349,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = memo(({
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 border-t border-white/10 bg-white/5 flex items-center justify-between">
-                    <button className="text-sm text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1">
+                <div className="p-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                    <button className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
                         <Settings className="w-4 h-4" />
                         Notification Settings
                     </button>
                     {displayedNotifications.length > 0 && (
-                        <button className="text-sm text-white/50 hover:text-white font-medium">
+                        <button className="text-sm text-gray-500 hover:text-gray-900 font-medium">
                             View All
                         </button>
                     )}

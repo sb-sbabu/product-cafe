@@ -52,8 +52,10 @@ export const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         }
     }, [initialQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const [activeSource, setActiveSource] = useState<string>('all');
+
     // Perform search
-    const results = useMemo(() => {
+    const rawResults = useMemo(() => {
         if (!query.trim()) return null;
 
         const resources = searchResources(query);
@@ -64,13 +66,59 @@ export const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
             resources,
             faqs,
             people,
-            totalCount: resources.length + faqs.length + people.length,
         };
     }, [query]);
+
+    // Extract available sources from results
+    const sources = useMemo(() => {
+        if (!rawResults) return [];
+        const sourceSet = new Set<string>();
+
+        rawResults.resources.forEach(r => sourceSet.add(r.category));
+
+        // Map other types to generic sources if needed, or leave them as is
+        if (rawResults.faqs.length > 0) sourceSet.add('faqs');
+        if (rawResults.people.length > 0) sourceSet.add('people');
+
+        return Array.from(sourceSet).sort();
+    }, [rawResults]);
+
+    // Apply Filters
+    const results = useMemo(() => {
+        if (!rawResults) return null;
+
+        let filteredResources = rawResults.resources;
+        let filteredFaqs = rawResults.faqs;
+        let filteredPeople = rawResults.people;
+
+        if (activeSource !== 'all') {
+            if (activeSource === 'people') {
+                filteredResources = [];
+                filteredFaqs = [];
+            } else if (activeSource === 'faqs') {
+                filteredResources = [];
+                filteredPeople = [];
+            } else {
+                // Filter resources by category
+                filteredResources = filteredResources.filter(r => r.category === activeSource);
+                // Hide others if filter is specific to a resource category
+                filteredFaqs = [];
+                filteredPeople = [];
+            }
+        }
+
+        return {
+            resources: filteredResources,
+            faqs: filteredFaqs,
+            people: filteredPeople,
+            totalCount: filteredResources.length + filteredFaqs.length + filteredPeople.length,
+        };
+    }, [rawResults, activeSource]);
 
     const handleRecentSearch = (searchQuery: string) => {
         setIsLoading(true);
         setQuery(searchQuery);
+        setActiveSource('all');
         addRecentSearch(searchQuery);
         setTimeout(() => setIsLoading(false), 300);
     };
@@ -83,6 +131,15 @@ export const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
             case 'people': return results.people.length;
             case 'all': return results.totalCount;
         }
+    };
+
+    const sourceLabels: Record<string, string> = {
+        'grab-and-go': 'Grab & Go',
+        'library': 'Library',
+        'community': 'Community',
+        'tools': 'Tools',
+        'faqs': 'FAQs',
+        'people': 'People',
     };
 
     const renderResults = () => {
@@ -242,25 +299,55 @@ export const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
 
             {/* Results Header with Tabs */}
             {results && results.totalCount > 0 && (
-                <section className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-600">
-                            Found <strong>{results.totalCount}</strong> results
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {tabs.map((tab) => (
-                            <Pill
-                                key={tab.id}
-                                variant={activeTab === tab.id ? 'primary' : 'default'}
-                                onClick={() => setActiveTab(tab.id)}
-                                isActive={activeTab === tab.id}
+                <div className="space-y-4 pb-4 border-b border-gray-100">
+                    <section className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-gray-600">
+                                Found <strong>{results.totalCount}</strong> results
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {tabs.map((tab) => (
+                                <Pill
+                                    key={tab.id}
+                                    variant={activeTab === tab.id ? 'primary' : 'default'}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    isActive={activeTab === tab.id}
+                                >
+                                    {tab.label} ({getTabCount(tab.id)})
+                                </Pill>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Source Filters - Only show if we have varied sources */}
+                    {sources.length > 0 && (
+                        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Filter by Source:</span>
+                            <button
+                                onClick={() => setActiveSource('all')}
+                                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap ${activeSource === 'all'
+                                        ? 'bg-gray-900 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
                             >
-                                {tab.label} ({getTabCount(tab.id)})
-                            </Pill>
-                        ))}
-                    </div>
-                </section>
+                                All Sources
+                            </button>
+                            {sources.map(source => (
+                                <button
+                                    key={source}
+                                    onClick={() => setActiveSource(source)}
+                                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors whitespace-nowrap ${activeSource === source
+                                            ? 'bg-gray-900 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    {sourceLabels[source] || source.charAt(0).toUpperCase() + source.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Results */}

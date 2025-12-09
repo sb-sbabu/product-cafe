@@ -127,7 +127,7 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header with animated gradient */}
                 <div className="relative h-36 bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 overflow-hidden">
                     {/* Animated background pattern */}
@@ -139,7 +139,7 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                     {/* Close button */}
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-sm"
+                        className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-sm group"
                     >
                         <X className="w-5 h-5 text-white" />
                     </button>
@@ -154,11 +154,11 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
 
                     {/* Avatar */}
                     <div className="absolute -bottom-10 left-6">
-                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center ring-4 ring-slate-900 shadow-xl">
+                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center ring-4 ring-white shadow-xl">
                             <span className="text-4xl font-bold text-white">{user.name?.charAt(0) || '?'}</span>
                         </div>
                         {/* Level indicator */}
-                        <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center ring-2 ring-slate-900 shadow-lg">
+                        <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center ring-2 ring-white shadow-lg">
                             <span className="text-xs font-bold text-white">{Math.floor((user.credits || 0) / 100)}</span>
                         </div>
                     </div>
@@ -175,43 +175,43 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
 
                 {/* User info */}
                 <div className="pt-14 px-6 pb-4">
-                    <h2 className="text-2xl font-bold text-white">{user.name}</h2>
-                    <p className="text-white/60">{user.title} • {user.team}</p>
+                    <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                    <p className="text-gray-500">{user.title} • {user.team}</p>
                 </div>
 
                 {/* Animated Stats Grid */}
                 <div className="grid grid-cols-4 gap-3 px-6 pb-6">
-                    <div className="text-center p-4 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/20 group hover:scale-105 transition-transform">
-                        <Trophy className="w-6 h-6 text-amber-400 mx-auto mb-2 group-hover:animate-bounce" />
-                        <p className="text-2xl font-bold text-white">{user.recognitionsReceived || 0}</p>
-                        <p className="text-xs text-white/50">Received</p>
+                    <div className="text-center p-4 bg-amber-50 rounded-xl border border-amber-100 group hover:scale-105 transition-transform">
+                        <Trophy className="w-6 h-6 text-amber-500 mx-auto mb-2 group-hover:animate-bounce" />
+                        <p className="text-2xl font-bold text-amber-900">{user.recognitionsReceived || 0}</p>
+                        <p className="text-xs text-amber-700">Received</p>
                     </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-rose-500/20 to-pink-500/20 rounded-xl border border-rose-500/20 group hover:scale-105 transition-transform">
-                        <Heart className="w-6 h-6 text-rose-400 mx-auto mb-2 group-hover:animate-pulse" />
-                        <p className="text-2xl font-bold text-white">{user.recognitionsGiven || 0}</p>
-                        <p className="text-xs text-white/50">Given</p>
+                    <div className="text-center p-4 bg-rose-50 rounded-xl border border-rose-100 group hover:scale-105 transition-transform">
+                        <Heart className="w-6 h-6 text-rose-500 mx-auto mb-2 group-hover:animate-pulse" />
+                        <p className="text-2xl font-bold text-rose-900">{user.recognitionsGiven || 0}</p>
+                        <p className="text-xs text-rose-700">Given</p>
                     </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-xl border border-purple-500/20 group hover:scale-105 transition-transform">
-                        <Medal className="w-6 h-6 text-purple-400 mx-auto mb-2 group-hover:rotate-12 transition-transform" />
-                        <p className="text-2xl font-bold text-white">{badgeCount}</p>
-                        <p className="text-xs text-white/50">Badges</p>
+                    <div className="text-center p-4 bg-purple-50 rounded-xl border border-purple-100 group hover:scale-105 transition-transform">
+                        <Medal className="w-6 h-6 text-purple-500 mx-auto mb-2 group-hover:rotate-12 transition-transform" />
+                        <p className="text-2xl font-bold text-purple-900">{badgeCount}</p>
+                        <p className="text-xs text-purple-700">Badges</p>
                     </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl border border-blue-500/20 group hover:scale-105 transition-transform">
-                        <Award className="w-6 h-6 text-blue-400 mx-auto mb-2 group-hover:rotate-12 transition-transform" />
-                        <p className="text-2xl font-bold text-white">{awardCount}</p>
-                        <p className="text-xs text-white/50">Awards</p>
+                    <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-100 group hover:scale-105 transition-transform">
+                        <Award className="w-6 h-6 text-blue-500 mx-auto mb-2 group-hover:rotate-12 transition-transform" />
+                        <p className="text-2xl font-bold text-blue-900">{awardCount}</p>
+                        <p className="text-xs text-blue-700">Awards</p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 px-6 pb-4 border-b border-white/10">
+                <div className="flex gap-2 px-6 pb-4 border-b border-gray-100">
                     {(['overview', 'badges', 'history'] as ProfileTab[]).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === tab
-                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
-                                    : 'text-white/50 hover:text-white hover:bg-white/5'
+                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
+                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                                 }`}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -226,8 +226,8 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                         <div className="space-y-6">
                             {/* Top values */}
                             <div>
-                                <h3 className="text-sm font-medium text-white/70 mb-3 flex items-center gap-2">
-                                    <Star className="w-4 h-4 text-amber-400" />
+                                <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-amber-500" />
                                     Top Values Recognized For
                                 </h3>
                                 {topValues.length > 0 ? (
@@ -235,25 +235,25 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         {topValues.map(({ value, count, data }) => (
                                             <div
                                                 key={value}
-                                                className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                                                className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors"
                                             >
                                                 <span className="text-3xl">{data.icon}</span>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-white truncate">{data.shortName}</p>
-                                                    <p className="text-xs text-white/50">{count} times</p>
+                                                    <p className="text-sm font-semibold text-gray-900 truncate">{data.shortName}</p>
+                                                    <p className="text-xs text-gray-500">{count} times</p>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-white/40 text-center py-6">No recognitions yet</p>
+                                    <p className="text-sm text-gray-400 text-center py-6">No recognitions yet</p>
                                 )}
                             </div>
 
                             {/* Expert areas with animated bars */}
                             <div>
-                                <h3 className="text-sm font-medium text-white/70 mb-3 flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-purple-400" />
+                                <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-purple-500" />
                                     Expert Areas
                                 </h3>
                                 {user.expertAreas && user.expertAreas.length > 0 ? (
@@ -261,12 +261,12 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         {user.expertAreas.slice(0, 5).map((area, idx) => (
                                             <div key={area.id} className="group">
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-sm text-white/80">{area.name}</span>
-                                                    <span className="text-xs font-medium text-purple-400">{area.score} pts</span>
+                                                    <span className="text-sm text-gray-700">{area.name}</span>
+                                                    <span className="text-xs font-medium text-purple-600">{area.score} pts</span>
                                                 </div>
-                                                <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                                                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                                     <div
-                                                        className="h-full bg-gradient-to-r from-purple-400 to-pink-500 rounded-full transition-all duration-1000 ease-out"
+                                                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out"
                                                         style={{
                                                             width: `${Math.min(100, (area.score / 200) * 100)}%`,
                                                             animationDelay: `${idx * 100}ms`
@@ -277,7 +277,7 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-white/40 text-center py-6">No expert areas yet</p>
+                                    <p className="text-sm text-gray-400 text-center py-6">No expert areas yet</p>
                                 )}
                             </div>
 
@@ -285,13 +285,13 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                             {badgeProgress.length > 0 && (
                                 <div>
                                     <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-sm font-medium text-white/70 flex items-center gap-2">
-                                            <Medal className="w-4 h-4 text-amber-400" />
+                                        <h3 className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                                            <Medal className="w-4 h-4 text-amber-500" />
                                             Upcoming Badges
                                         </h3>
                                         <button
                                             onClick={() => setActiveTab('badges')}
-                                            className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                                            className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1"
                                         >
                                             View all <ChevronRight className="w-3 h-3" />
                                         </button>
@@ -300,16 +300,16 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         {badgeProgress.map(({ key, badge, percentage }) => (
                                             <div
                                                 key={key}
-                                                className="text-center p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors relative overflow-hidden"
+                                                className="text-center p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors relative overflow-hidden"
                                             >
                                                 {/* Progress overlay */}
                                                 <div
-                                                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-amber-500/20 to-transparent transition-all"
+                                                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-emerald-500/10 to-transparent transition-all"
                                                     style={{ height: `${percentage}%` }}
                                                 />
                                                 <span className="text-2xl block mb-1 relative">{badge.icon}</span>
-                                                <p className="text-xs font-medium text-white/80 truncate relative">{badge.name}</p>
-                                                <p className="text-xs text-amber-400 relative">{percentage}%</p>
+                                                <p className="text-xs font-medium text-gray-700 truncate relative">{badge.name}</p>
+                                                <p className="text-xs text-emerald-600 relative">{percentage}%</p>
                                             </div>
                                         ))}
                                     </div>
@@ -323,8 +323,8 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                         <div className="space-y-6">
                             {/* Earned badges */}
                             <div>
-                                <h3 className="text-sm font-medium text-white/70 mb-3 flex items-center gap-2">
-                                    <Trophy className="w-4 h-4 text-amber-400" />
+                                <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                                    <Trophy className="w-4 h-4 text-amber-500" />
                                     Earned Badges ({badgeCount})
                                 </h3>
                                 {user.earnedBadges && user.earnedBadges.length > 0 ? (
@@ -335,11 +335,11 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                             return (
                                                 <div
                                                     key={earned.badge}
-                                                    className="text-center p-4 bg-gradient-to-br from-amber-500/10 to-yellow-500/10 rounded-xl border border-amber-500/20 hover:scale-105 transition-transform group"
+                                                    className="text-center p-4 bg-amber-50 rounded-xl border border-amber-100 hover:scale-105 transition-transform group"
                                                 >
                                                     <span className="text-3xl block mb-2 group-hover:animate-bounce">{badge.icon}</span>
-                                                    <p className="text-sm font-semibold text-white">{badge.name}</p>
-                                                    <p className="text-xs text-white/50 mt-1">
+                                                    <p className="text-sm font-semibold text-gray-900">{badge.name}</p>
+                                                    <p className="text-xs text-amber-600 mt-1">
                                                         {new Date(earned.earnedAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
@@ -347,14 +347,14 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         })}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-white/40 text-center py-8">No badges earned yet. Keep toasting! 🍞</p>
+                                    <p className="text-sm text-gray-400 text-center py-8">No badges earned yet. Keep toasting! 🍞</p>
                                 )}
                             </div>
 
                             {/* Earned awards */}
                             <div>
-                                <h3 className="text-sm font-medium text-white/70 mb-3 flex items-center gap-2">
-                                    <Award className="w-4 h-4 text-purple-400" />
+                                <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                                    <Award className="w-4 h-4 text-purple-500" />
                                     Earned Awards ({awardCount})
                                 </h3>
                                 {user.earnedAwards && user.earnedAwards.length > 0 ? (
@@ -365,14 +365,14 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                             return (
                                                 <div
                                                     key={`${earned.award}-${earned.recognitionId}`}
-                                                    className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-colors"
+                                                    className="flex items-center gap-4 p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-200 transition-colors"
                                                 >
                                                     <span className="text-3xl">{award.icon}</span>
                                                     <div className="flex-1">
-                                                        <p className="font-semibold text-white">{award.name}</p>
-                                                        <p className="text-xs text-white/60">{award.description}</p>
+                                                        <p className="font-semibold text-gray-900">{award.name}</p>
+                                                        <p className="text-xs text-gray-600">{award.description}</p>
                                                     </div>
-                                                    <span className="text-xs text-white/40">
+                                                    <span className="text-xs text-gray-400">
                                                         {new Date(earned.earnedAt).toLocaleDateString()}
                                                     </span>
                                                 </div>
@@ -380,7 +380,7 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         })}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-white/40 text-center py-8">No awards yet</p>
+                                    <p className="text-sm text-gray-400 text-center py-8">No awards yet</p>
                                 )}
                             </div>
                         </div>
@@ -391,8 +391,8 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                         <div className="space-y-6">
                             {/* Received */}
                             <div>
-                                <h3 className="text-sm font-medium text-white/70 mb-3 flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                                <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                                    <TrendingUp className="w-4 h-4 text-emerald-500" />
                                     Recently Received
                                 </h3>
                                 {receivedRecognitions.length > 0 ? (
@@ -400,30 +400,30 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         {receivedRecognitions.slice(0, 5).map(rec => (
                                             <div
                                                 key={rec.id}
-                                                className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors"
                                             >
                                                 <span className="text-xl">{COMPANY_VALUES[rec.value]?.icon}</span>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-white">
+                                                    <p className="text-sm text-gray-900">
                                                         From <span className="font-semibold">{rec.giverName}</span>
                                                     </p>
-                                                    <p className="text-xs text-white/50 truncate">{rec.message?.slice(0, 50)}...</p>
+                                                    <p className="text-xs text-gray-500 truncate">{rec.message?.slice(0, 50)}...</p>
                                                 </div>
-                                                <span className="text-xs text-white/40 shrink-0">
+                                                <span className="text-xs text-gray-400 shrink-0">
                                                     {formatTimeAgo(rec.createdAt)}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-white/40 text-center py-4">No recognitions received yet</p>
+                                    <p className="text-sm text-gray-400 text-center py-4">No recognitions received yet</p>
                                 )}
                             </div>
 
                             {/* Given */}
                             <div>
-                                <h3 className="text-sm font-medium text-white/70 mb-3 flex items-center gap-2">
-                                    <Gift className="w-4 h-4 text-rose-400" />
+                                <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                                    <Gift className="w-4 h-4 text-rose-500" />
                                     Recently Given
                                 </h3>
                                 {givenRecognitions.length > 0 ? (
@@ -431,24 +431,24 @@ export const ToastXProfile: React.FC<ToastXProfileProps> = memo(({
                                         {givenRecognitions.slice(0, 5).map(rec => (
                                             <div
                                                 key={rec.id}
-                                                className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors"
                                             >
                                                 <span className="text-xl">{COMPANY_VALUES[rec.value]?.icon}</span>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-white">
+                                                    <p className="text-sm text-gray-900">
                                                         To <span className="font-semibold">{rec.recipients?.[0]?.name}</span>
                                                         {(rec.recipients?.length || 0) > 1 && ` +${(rec.recipients?.length || 1) - 1}`}
                                                     </p>
-                                                    <p className="text-xs text-white/50 truncate">{rec.message?.slice(0, 50)}...</p>
+                                                    <p className="text-xs text-gray-500 truncate">{rec.message?.slice(0, 50)}...</p>
                                                 </div>
-                                                <span className="text-xs text-white/40 shrink-0">
+                                                <span className="text-xs text-gray-400 shrink-0">
                                                     {formatTimeAgo(rec.createdAt)}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-white/40 text-center py-4">No recognitions given yet</p>
+                                    <p className="text-sm text-gray-400 text-center py-4">No recognitions given yet</p>
                                 )}
                             </div>
                         </div>

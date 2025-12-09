@@ -62,15 +62,19 @@ const RecognitionCard: React.FC<RecognitionCardProps> = memo(({ recognition, com
     const addReaction = useToastXStore(state => state.addReaction);
     const removeReaction = useToastXStore(state => state.removeReaction);
     const addComment = useToastXStore(state => state.addComment);
+
+    const users = useToastXStore(state => state.users);
     const currentUserId = useToastXStore(state => state.currentUserId);
+    const currentUser = users.get(currentUserId);
 
     const [showFullMessage, setShowFullMessage] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [showReactionPicker, setShowReactionPicker] = useState(false);
+    const [showExpertAreas, setShowExpertAreas] = useState(false);
     const [newComment, setNewComment] = useState('');
 
-    const valueData = COMPANY_VALUES[recognition.value];
-    const awardData = recognition.award ? AWARDS[recognition.award] : null;
+    const valueData = COMPANY_VALUES[recognition.value as CompanyValue];
+    const awardData = recognition.award ? AWARDS[recognition.award as import('../../types').AwardType] : null;
     const typeInfo = TYPE_CONFIG[recognition.type];
 
     // Group reactions by type
@@ -99,19 +103,33 @@ const RecognitionCard: React.FC<RecognitionCardProps> = memo(({ recognition, com
     // Handle reaction toggle
     const handleReaction = useCallback((type: ReactionType) => {
         if (userReactions.includes(type)) {
-            removeReaction(recognition.id, type);
+            removeReaction(recognition.id, currentUserId, type);
         } else {
-            addReaction(recognition.id, type);
+            addReaction(recognition.id, {
+                type,
+                userId: currentUserId,
+                userName: currentUser?.name || 'Unknown',
+                createdAt: new Date().toISOString()
+            });
         }
         setShowReactionPicker(false);
-    }, [userReactions, recognition.id, addReaction, removeReaction]);
+    }, [userReactions, recognition.id, addReaction, removeReaction, currentUserId, currentUser]);
 
+    // Handle comment submit
     // Handle comment submit
     const handleCommentSubmit = useCallback(() => {
         if (!newComment.trim()) return;
-        addComment(recognition.id, newComment.trim());
+        addComment(recognition.id, {
+            id: crypto.randomUUID(),
+            userId: currentUserId,
+            userName: currentUser?.name || 'Unknown',
+            content: newComment.trim(),
+            createdAt: new Date().toISOString(),
+            reactions: [],
+            mentions: []
+        });
         setNewComment('');
-    }, [newComment, recognition.id, addComment]);
+    }, [newComment, recognition.id, addComment, currentUserId, currentUser]);
 
     // Format time ago
     const timeAgo = useMemo(() => {
@@ -183,12 +201,29 @@ const RecognitionCard: React.FC<RecognitionCardProps> = memo(({ recognition, com
                     <span className="text-lg">{valueData.icon}</span>
                     <span className="text-sm font-semibold" style={{ color: valueData.color }}>{valueData.shortName}</span>
                     {recognition.expertAreas.length > 0 && (
-                        <span className="ml-auto flex items-center gap-1 text-xs text-gray-500">
-                            <Sparkles className="w-3 h-3" />
-                            +{recognition.expertAreas.length * 10} expert pts
-                        </span>
+                        <div className="ml-auto flex flex-col items-end">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowExpertAreas(!showExpertAreas);
+                                }}
+                                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 transition-colors font-medium"
+                            >
+                                <Sparkles className="w-3 h-3" />
+                                +{recognition.expertAreas.length * 10} expert pts
+                            </button>
+                        </div>
                     )}
                 </div>
+                {showExpertAreas && recognition.expertAreas.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                        {recognition.expertAreas.map(area => (
+                            <span key={area} className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-xs border border-purple-100">
+                                {area}
+                            </span>
+                        ))}
+                    </div>
+                )}
 
                 {/* Message */}
                 <p className={`text-gray-700 text-sm leading-relaxed ${!showFullMessage && recognition.message.length > 200 ? 'line-clamp-3' : ''}`}>
@@ -672,6 +707,8 @@ export const ToastXHomePage: React.FC = memo(() => {
         [stats.byValue]
     );
 
+    const unreadCount = useToastXStore(state => state.notifications.filter(n => !n.read).length);
+
     const [showQuickToast, setShowQuickToast] = useState(false);
     const [showStandingOvation, setShowStandingOvation] = useState(false);
     const [showTeamToast, setShowTeamToast] = useState(false);
@@ -685,19 +722,19 @@ export const ToastXHomePage: React.FC = memo(() => {
             {/* Admin Mode Banner */}
             {ADMIN_MODE && (
                 <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-xl px-4 py-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-emerald-400">🔓 Admin Mode: Unlimited toasts enabled for testing</span>
+                    <span className="text-sm font-medium text-emerald-700">🔓 Admin Mode: Unlimited toasts enabled for testing</span>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setShowProfile(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                        <button onClick={() => setShowProfile(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-emerald-100/50 hover:bg-emerald-100 text-emerald-800 transition-colors flex items-center gap-1 border border-emerald-200/50">
                             <User className="w-3 h-3" /> Profile
                         </button>
-                        <button onClick={() => setShowAnalytics(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                        <button onClick={() => setShowAnalytics(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-emerald-100/50 hover:bg-emerald-100 text-emerald-800 transition-colors flex items-center gap-1 border border-emerald-200/50">
                             <BarChart3 className="w-3 h-3" /> Analytics
                         </button>
-                        <button onClick={() => setShowNotifications(true)} className="relative px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                        <button onClick={() => setShowNotifications(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-emerald-100/50 hover:bg-emerald-100 text-emerald-800 transition-colors flex items-center gap-1 border border-emerald-200/50">
                             <Bell className="w-3 h-3" /> Notifications
-                            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 text-[8px] font-bold text-white flex items-center justify-center">3</span>
+                            {unreadCount > 0 && <span className="bg-emerald-600 text-white text-[10px] px-1 rounded-full">{unreadCount}</span>}
                         </button>
-                        <button onClick={() => setShowGratitudeChain(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                        <button onClick={() => setShowGratitudeChain(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-emerald-100/50 hover:bg-emerald-100 text-emerald-800 transition-colors flex items-center gap-1 border border-emerald-200/50">
                             <Link2 className="w-3 h-3" /> Gratitude Chain
                         </button>
                     </div>
@@ -962,10 +999,10 @@ export const ToastXHomePage: React.FC = memo(() => {
             <ToastXProfile isOpen={showProfile} onClose={() => setShowProfile(false)} />
             {showAnalytics && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAnalytics(false)} />
-                    <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-white/10 p-6">
-                        <button onClick={() => setShowAnalytics(false)} className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors z-10">
-                            <X className="w-5 h-5 text-white" />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAnalytics(false)} />
+                    <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+                        <button onClick={() => setShowAnalytics(false)} className="absolute top-4 right-4 p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors z-10 text-gray-500 hover:text-gray-900">
+                            <X className="w-5 h-5" />
                         </button>
                         <AnalyticsDashboard />
                     </div>
