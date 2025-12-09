@@ -1,189 +1,252 @@
-import React from 'react';
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * GRAB & GO — Intelligent Quick-Action Hub
+ * 10x Redesign: Personalized, context-aware, instant utility
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+import React, { useState } from 'react';
 import {
-    Wrench,
-    HelpCircle,
-    Link2,
-    MapPin,
-    ArrowRight,
-    Star,
+    Zap,
+    Search,
+    ChevronDown,
+    ChevronUp,
+    Grid3X3,
+    Settings,
 } from 'lucide-react';
-import { Card } from '../../components/ui/Card';
-import { ResourceCardSkeleton, FAQCardSkeleton, Skeleton } from '../../components/ui/Skeleton';
-import { ResourceCard } from '../../components/cards/ResourceCard';
-import { FAQCard } from '../../components/cards/FAQCard';
 import { cn } from '../../lib/utils';
-import { getResourcesByCategory, mockFAQs } from '../../data/mockData';
-import { usePageLoading } from '../../hooks';
+import { Card } from '../../components/ui/Card';
+
+// Components
+import { QuickActionCard } from './components/QuickActionCard';
+import { SmartSuggestionRail } from './components/SmartSuggestionRail';
+import { PinnedFavorites } from './components/PinnedFavorites';
+import { RecentHistory } from './components/RecentHistory';
+import { StatusDashboard } from './components/StatusDashboard';
+
+// Data & Engine
+import { getDefaultActions, searchActions, QUICK_ACTIONS, CATEGORY_LABELS, type QuickActionCategory } from './actions/quickActions';
+import { getGreeting, getContextualMessage } from './engine/smartSuggestionEngine';
+import { useGrabAndGoStore } from './store/grabAndGoStore';
 
 interface GrabAndGoPageProps {
     onNavigate?: (section: string) => void;
 }
 
-const subCategories = [
-    {
-        id: 'tools',
-        title: 'Tools & Access',
-        description: 'Request access, find tools, integration guides',
-        icon: Wrench,
-        color: 'bg-blue-100',
-        iconColor: 'text-blue-600',
-    },
-    {
-        id: 'faqs',
-        title: 'FAQs',
-        description: 'How do I...? Top questions answered',
-        icon: HelpCircle,
-        color: 'bg-green-100',
-        iconColor: 'text-green-600',
-    },
-    {
-        id: 'links',
-        title: 'Quick Links',
-        description: 'Most-used links across all systems',
-        icon: Link2,
-        color: 'bg-purple-100',
-        iconColor: 'text-purple-600',
-    },
-    {
-        id: 'spaces',
-        title: 'Key Spaces',
-        description: 'Teams channels, SharePoint sites',
-        icon: MapPin,
-        color: 'bg-orange-100',
-        iconColor: 'text-orange-600',
-    },
-];
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════
 
-export const GrabAndGoPage: React.FC<GrabAndGoPageProps> = () => {
-    const isLoading = usePageLoading(350);
-    const resources = getResourcesByCategory('grab-and-go');
-    const topFAQs = mockFAQs.filter(f => f.category === 'access' || f.category === 'tools').slice(0, 5);
+export const GrabAndGoPage: React.FC<GrabAndGoPageProps> = ({ onNavigate }) => {
+    const [showAllActions, setShowAllActions] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<QuickActionCategory | 'all'>('all');
 
-    // Loading state skeleton
-    if (isLoading) {
-        return (
-            <div className="space-y-8 animate-fade-in">
-                {/* Header Skeleton */}
-                <section>
-                    <div className="flex items-center gap-3 mb-2">
-                        <Skeleton variant="circle" width={40} height={40} />
-                        <Skeleton width={150} height={32} />
-                    </div>
-                    <Skeleton width="60%" height={20} />
-                </section>
+    const defaultActions = getDefaultActions();
+    const greeting = getGreeting();
+    const contextMessage = getContextualMessage();
 
-                {/* Sub-categories Skeleton */}
-                <section>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="p-5 rounded-xl border border-gray-100 bg-white">
-                                <Skeleton variant="rect" width={48} height={48} className="mb-4" />
-                                <Skeleton width="70%" height={20} className="mb-2" />
-                                <Skeleton width="90%" height={16} />
-                            </div>
-                        ))}
-                    </div>
-                </section>
+    // Filter actions for browse section
+    const filteredActions = React.useMemo(() => {
+        let actions = QUICK_ACTIONS;
 
-                {/* Top Requests Skeleton */}
-                <section>
-                    <Skeleton width={200} height={24} className="mb-4" />
-                    <div className="space-y-2">
-                        <ResourceCardSkeleton />
-                        <ResourceCardSkeleton />
-                        <ResourceCardSkeleton />
-                    </div>
-                </section>
+        if (searchQuery) {
+            actions = searchActions(searchQuery);
+        }
 
-                {/* FAQs Skeleton */}
-                <section>
-                    <Skeleton width={150} height={24} className="mb-4" />
-                    <div className="space-y-3">
-                        <FAQCardSkeleton />
-                        <FAQCardSkeleton />
-                        <FAQCardSkeleton />
-                    </div>
-                </section>
-            </div>
-        );
-    }
+        if (selectedCategory !== 'all') {
+            actions = actions.filter(a => a.category === selectedCategory);
+        }
+
+        return actions;
+    }, [searchQuery, selectedCategory]);
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Header */}
+        <div className="max-w-5xl mx-auto py-6 lg:py-8 space-y-8 animate-fade-in">
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO — Greeting & Quick Actions Grid */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
             <section>
+                {/* Header */}
                 <div className="flex items-center gap-3 mb-2">
-                    <span className="text-3xl">☕</span>
-                    <h1 className="text-2xl font-bold text-gray-900">Grab & Go</h1>
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                        <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {greeting}! ☕
+                        </h1>
+                        <p className="text-gray-500 text-sm">
+                            {contextMessage}
+                        </p>
+                    </div>
                 </div>
-                <p className="text-gray-600">
-                    Quick access to tools, links, and answers. Get what you need and go!
-                </p>
-            </section>
 
-            {/* Sub-categories Grid */}
-            <section>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {subCategories.map((cat) => {
-                        const Icon = cat.icon;
-                        return (
-                            <Card
-                                key={cat.id}
-                                isHoverable
-                                isClickable
-                                className="p-5 group"
-                            >
-                                <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-4', cat.color)}>
-                                    <Icon className={cn('w-6 h-6', cat.iconColor)} />
-                                </div>
-                                <h3 className="font-semibold text-gray-900">{cat.title}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{cat.description}</p>
-                                <div className="mt-3 flex items-center text-sm text-cafe-600 font-medium group-hover:gap-2 transition-all">
-                                    Explore <ArrowRight className="w-4 h-4 ml-1" />
-                                </div>
-                            </Card>
-                        );
-                    })}
+                {/* Quick Actions Grid */}
+                <div className="mt-6">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                        {defaultActions.map((action) => (
+                            <QuickActionCard
+                                key={action.id}
+                                action={action}
+                                size="lg"
+                                showPin
+                            />
+                        ))}
+                    </div>
                 </div>
             </section>
 
-            {/* Top Requests */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* SMART SUGGESTIONS — AI-Powered Rail */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
             <section>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <Star className="w-5 h-5 text-amber-500" />
-                        Top Requests Right Now
-                    </h2>
-                </div>
-                <div className="space-y-2">
-                    {resources.slice(0, 5).map((resource) => (
-                        <ResourceCard
-                            key={resource.id}
-                            resource={resource}
-                            variant="list"
-                        />
-                    ))}
-                </div>
+                <SmartSuggestionRail maxItems={6} />
             </section>
 
-            {/* Popular FAQs */}
-            <section>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <HelpCircle className="w-5 h-5 text-green-500" />
-                        Popular FAQs
-                    </h2>
-                    <button className="text-sm text-cafe-600 hover:text-cafe-700 font-medium flex items-center gap-1">
-                        View all FAQs
-                        <ArrowRight className="w-4 h-4" />
-                    </button>
-                </div>
-                <div className="space-y-3">
-                    {topFAQs.map((faq) => (
-                        <FAQCard key={faq.id} faq={faq} />
-                    ))}
-                </div>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* TWO-COLUMN: Pinned + Recent */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section className="grid md:grid-cols-2 gap-6">
+                <PinnedFavorites onAddPin={() => setShowAllActions(true)} />
+                <RecentHistory maxItems={5} />
             </section>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* STATUS DASHBOARD */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section>
+                <StatusDashboard />
+            </section>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* DISCOVER — Browse All Actions (Collapsed by Default) */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section>
+                <button
+                    onClick={() => setShowAllActions(!showAllActions)}
+                    className={cn(
+                        'w-full flex items-center justify-between p-4 rounded-xl',
+                        'bg-gray-50 hover:bg-gray-100 border border-gray-200',
+                        'transition-colors'
+                    )}
+                >
+                    <div className="flex items-center gap-3">
+                        <Grid3X3 className="w-5 h-5 text-gray-400" />
+                        <span className="font-medium text-gray-700">
+                            Discover All Actions
+                        </span>
+                        <span className="text-xs text-gray-400">
+                            {QUICK_ACTIONS.length} available
+                        </span>
+                    </div>
+                    {showAllActions ? (
+                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
+                </button>
+
+                {/* Expanded Browse Section */}
+                {showAllActions && (
+                    <Card className="mt-3 p-4 animate-fade-in">
+                        {/* Search & Filter */}
+                        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                            {/* Search */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search actions..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className={cn(
+                                        'w-full pl-10 pr-4 py-2 rounded-lg',
+                                        'border border-gray-200 focus:border-cafe-500 focus:ring-1 focus:ring-cafe-500',
+                                        'text-sm placeholder:text-gray-400',
+                                        'transition-colors outline-none'
+                                    )}
+                                />
+                            </div>
+
+                            {/* Category Filter */}
+                            <div className="flex gap-1 overflow-x-auto pb-1">
+                                <CategoryPill
+                                    label="All"
+                                    isActive={selectedCategory === 'all'}
+                                    onClick={() => setSelectedCategory('all')}
+                                />
+                                {(Object.keys(CATEGORY_LABELS) as QuickActionCategory[]).map(cat => (
+                                    <CategoryPill
+                                        key={cat}
+                                        label={CATEGORY_LABELS[cat]}
+                                        isActive={selectedCategory === cat}
+                                        onClick={() => setSelectedCategory(cat)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Actions Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                            {filteredActions.map((action) => (
+                                <QuickActionCard
+                                    key={action.id}
+                                    action={action}
+                                    size="md"
+                                    showPin
+                                />
+                            ))}
+                        </div>
+
+                        {filteredActions.length === 0 && (
+                            <div className="text-center py-8 text-gray-400">
+                                No actions found for "{searchQuery}"
+                            </div>
+                        )}
+                    </Card>
+                )}
+            </section>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FOOTER — Settings Link */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <footer className="flex justify-center pt-4">
+                <button
+                    className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                    <Settings className="w-3 h-3" />
+                    Customize your Grab & Go
+                </button>
+            </footer>
         </div>
     );
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface CategoryPillProps {
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+const CategoryPill: React.FC<CategoryPillProps> = ({ label, isActive, onClick }) => (
+    <button
+        onClick={onClick}
+        className={cn(
+            'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap',
+            'transition-colors',
+            isActive
+                ? 'bg-cafe-500 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        )}
+    >
+        {label}
+    </button>
+);
+
+export default GrabAndGoPage;
