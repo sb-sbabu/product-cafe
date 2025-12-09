@@ -13,8 +13,8 @@ import { getUnreadCount as getIntelligentUnreadCount } from '../lib/pulse/notifi
  * NOW INTEGRATED with intelligent notification engine for real unread counts.
  */
 
-// Basic types
-export type DockTab = 'ask' | 'discuss' | 'activity' | 'directory';
+// Basic types - 'ask' and 'activity' deprecated, moved to Daily Brew
+export type DockTab = 'discuss' | 'directory';
 export type DockState = 'closed' | 'collapsed' | 'expanded';
 
 export interface PageContext {
@@ -31,6 +31,9 @@ interface DockContextState {
     activeTab: DockTab;
     pageContext: PageContext;
     unreadCount: number;
+
+    // Daily Brew panel state (mutual exclusion with dock)
+    brewPanelOpen: boolean;
 }
 
 interface DockContextType extends DockContextState {
@@ -46,6 +49,11 @@ interface DockContextType extends DockContextState {
     setActiveTab: (tab: DockTab) => void;
     setPageContext: (context: PageContext) => void;
     setUnreadCount: (count: number) => void;
+
+    // Daily Brew panel controls (same size as dock, mutually exclusive)
+    openBrewPanel: () => void;
+    closeBrewPanel: () => void;
+    toggleBrewPanel: () => void;
 
     // Computed states
     isOpen: boolean;
@@ -64,15 +72,20 @@ function loadPersistedState(): Partial<DockContextState> {
         const stored = localStorage.getItem(DOCK_STATE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
+            // Migrate old 'ask' or 'activity' tabs to 'discuss'
+            let activeTab = parsed.activeTab || 'discuss';
+            if (activeTab === 'ask' || activeTab === 'activity') {
+                activeTab = 'discuss';
+            }
             return {
                 dockState: parsed.dockState || 'collapsed',
-                activeTab: parsed.activeTab || 'ask',
+                activeTab,
             };
         }
     } catch {
         // Ignore parse errors
     }
-    return { dockState: 'collapsed', activeTab: 'ask' };
+    return { dockState: 'collapsed', activeTab: 'discuss' };
 }
 
 function persistState(state: Partial<DockContextState>) {
@@ -91,9 +104,10 @@ export function DockProvider({ children }: { children: ReactNode }) {
 
     const [state, setState] = useState<DockContextState>({
         dockState: persisted.dockState || 'collapsed',
-        activeTab: persisted.activeTab || 'ask',
+        activeTab: persisted.activeTab || 'discuss',
         pageContext: { type: 'home' },
         unreadCount: 0, // Will be synced from intelligent engine
+        brewPanelOpen: false, // Daily Brew panel starts closed
     });
 
     // Sync unread count with intelligent notification engine
@@ -113,9 +127,9 @@ export function DockProvider({ children }: { children: ReactNode }) {
         persistState({ dockState: state.dockState, activeTab: state.activeTab });
     }, [state.dockState, state.activeTab]);
 
-    // Open dock (to expanded state)
+    // Open dock (to expanded state) — CLOSES brew panel
     const openDock = useCallback(() => {
-        setState(prev => ({ ...prev, dockState: 'expanded' }));
+        setState(prev => ({ ...prev, dockState: 'expanded', brewPanelOpen: false }));
     }, []);
 
     // Close dock = collapse to strip (dock is always visible)
@@ -131,9 +145,9 @@ export function DockProvider({ children }: { children: ReactNode }) {
         }));
     }, []);
 
-    // Expand from collapsed
+    // Expand from collapsed — CLOSES brew panel (mutual exclusion)
     const expandDock = useCallback(() => {
-        setState(prev => ({ ...prev, dockState: 'expanded' }));
+        setState(prev => ({ ...prev, dockState: 'expanded', brewPanelOpen: false }));
     }, []);
 
     // Collapse to strip
@@ -150,7 +164,34 @@ export function DockProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const setActiveTab = useCallback((tab: DockTab) => {
-        setState(prev => ({ ...prev, activeTab: tab, dockState: 'expanded' }));
+        setState(prev => ({ ...prev, activeTab: tab, dockState: 'expanded', brewPanelOpen: false }));
+    }, []);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DAILY BREW PANEL CONTROLS — Mutual exclusion with CafeDock
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Open brew panel — COLLAPSES dock
+    const openBrewPanel = useCallback(() => {
+        setState(prev => ({ ...prev, brewPanelOpen: true, dockState: 'collapsed' }));
+    }, []);
+
+    // Close brew panel — dock stays in its current state
+    const closeBrewPanel = useCallback(() => {
+        setState(prev => ({ ...prev, brewPanelOpen: false }));
+    }, []);
+
+    // Toggle brew panel
+    const toggleBrewPanel = useCallback(() => {
+        setState(prev => {
+            if (prev.brewPanelOpen) {
+                // Closing brew panel
+                return { ...prev, brewPanelOpen: false };
+            } else {
+                // Opening brew panel — collapse dock
+                return { ...prev, brewPanelOpen: true, dockState: 'collapsed' };
+            }
+        });
     }, []);
 
     const setPageContext = useCallback((context: PageContext) => {
@@ -179,6 +220,9 @@ export function DockProvider({ children }: { children: ReactNode }) {
             setActiveTab,
             setPageContext,
             setUnreadCount,
+            openBrewPanel,
+            closeBrewPanel,
+            toggleBrewPanel,
             isOpen,
             isExpanded,
             isCollapsed,

@@ -49,8 +49,16 @@ import type { PulseSignal } from '../../../lib/pulse/types';
 // ═══════════════════════════════════════════════════════════════════════════
 // NOTIFICATION HUB — Fixed Sidebar Panel (189% HCI)
 // Premium dock-style design matching CafeDock
+//
+// ⚠️ DEPRECATED: This component is being replaced by "The Daily Brew - ThePress"
+// as part of the Unified Notification consolidation (Phase 4.5).
+// See: daily_brew_prd_v2.md
+// New component: src/components/daily-brew/ThePress.tsx
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * @deprecated Use ThePress from daily-brew instead. This component will be removed.
+ */
 interface NotificationHubProps {
     className?: string;
     onOpenSettings?: () => void;

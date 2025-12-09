@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
                     {/* Animated Coffee Icon */}
                     <div className="relative">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cafe-400 to-cafe-600 flex items-center justify-center shadow-lg shadow-cafe-500/30 group-hover:shadow-cafe-500/50 transition-shadow">
-                            <span className="text-white text-lg">☕</span>
+                            <Coffee className="w-5 h-5 text-white" />
                         </div>
                         {/* Pulse indicator */}
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />

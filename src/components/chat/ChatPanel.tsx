@@ -4,7 +4,7 @@ import {
     Sparkles, ThumbsUp, ThumbsDown, Check
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { cafeFinder, type SearchResponse } from '../../lib/search';
+// Note: cafeFinder is used via BaristaDataConnector for comprehensive search
 import type { QuickReply } from '../../types';
 import {
     CategoryTiles,
@@ -27,13 +27,13 @@ import {
     type ListItem
 } from './BaristaCards';
 import {
-    getUserStats,
-    getLeaderboard,
-    getDocumentFromSearch,
-    getPersonFromSearch,
-    getListFromSearch,
-    type LeaderboardEntry
+    generateResponse,
+    type LeaderboardEntry,
+    type ResponseType,
 } from './BaristaDataConnector';
+import { classifyIntent, generateQuickReplies } from './BaristaIntentEngine';
+import { queryGemini, isAIAvailable, setApiKey } from './BaristaAIProvider';
+import { resolveFollowUp, updateContext } from './BaristaContextManager';
 
 /**
  * ChatPanel - Café BARISTA Intelligent Conversational Assistant
@@ -83,98 +83,33 @@ const MAX_MESSAGES = 100; // Prevent memory issues
 const RESPONSE_DELAY_MS = 150; // Fast but perceptible
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FALLBACK DATA (used when real data unavailable)
+// RESPONSE TYPE MAPPING
 // ═══════════════════════════════════════════════════════════════════════════
 
-const FALLBACK_STATS: StatsData = {
-    balance: 0,
-    monthlyEarned: 0,
-    monthlySpent: 0,
-    recentActivity: [
-        { id: '1', description: 'No recent activity', amount: 0, date: 'N/A' },
-    ]
-};
-
-const FALLBACK_LEADERBOARD: LeaderboardEntry[] = [
-    { rank: 1, name: 'Loading...', team: 'Team', points: 0 },
-];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// RESPONSE CARD DETERMINATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-const determineResponseType = (query: string, results: SearchResponse): { type: ResponseCardType; data?: unknown } => {
-    // Guard against null/undefined query
-    if (!query || typeof query !== 'string') {
-        return { type: 'text' };
-    }
-
-    const lowerQuery = query.toLowerCase().trim();
-
-    // Guard against empty query
-    if (lowerQuery.length === 0) {
-        return { type: 'text' };
-    }
-
-    // Stats/Points queries - USE REAL DATA
-    if (lowerQuery.includes('love point') || lowerQuery.includes('my point') || lowerQuery.includes('balance') || lowerQuery.includes('how many')) {
-        const realStats = getUserStats();
-        return { type: 'stats', data: realStats || FALLBACK_STATS };
-    }
-
-    // Leaderboard queries - USE REAL DATA
-    if (lowerQuery.includes('leaderboard') || lowerQuery.includes('ranking') || lowerQuery.includes('who is leading') || lowerQuery.includes('top')) {
-        const realLeaderboard = getLeaderboard('MOST_RECOGNIZED', 5);
-        return {
-            type: 'leaderboard',
-            data: realLeaderboard.length > 0 ? realLeaderboard : FALLBACK_LEADERBOARD
-        };
-    }
-
-    // Definition queries
-    if (lowerQuery.startsWith('what is') || lowerQuery.startsWith('define') || lowerQuery.startsWith('explain')) {
-        const term = lowerQuery.replace(/^(what is|define|explain)\s+/, '').trim();
-        return {
-            type: 'definition',
-            data: {
-                term: term.toUpperCase(),
-                definition: `${term.charAt(0).toUpperCase() + term.slice(1)} is a key concept in our domain. This is a placeholder definition that would be populated from the knowledge base.`,
-                keyPoints: [
-                    'First key point about this concept',
-                    'Second important aspect to understand',
-                    'Third relevant detail'
-                ],
-                context: 'This concept is particularly relevant in the context of our product and workflows.',
-                relatedTopics: ['Related Topic 1', 'Related Topic 2', 'Related Topic 3']
-            }
-        };
-    }
-
-    // Person queries - USE REAL DATA
-    if (results.results.people.length > 0 && (lowerQuery.includes('who') || lowerQuery.includes('expert') || lowerQuery.includes('find'))) {
-        const personData = getPersonFromSearch(results);
-        if (personData) {
-            return { type: 'person', data: personData };
-        }
-    }
-
-    // Document queries - USE REAL DATA
-    if (results.results.resources.length > 0) {
-        const documentData = getDocumentFromSearch(results);
-        if (documentData) {
-            return { type: 'document', data: documentData };
-        }
-    }
-
-    // List results - USE REAL DATA
-    if (results.totalCount > 0) {
-        const listItems = getListFromSearch(results);
-        if (listItems.length > 0) {
-            return { type: 'list', data: listItems };
-        }
-    }
-
-    return { type: 'text' };
+/**
+ * Maps ResponseType from BaristaDataConnector to the existing ResponseCardType
+ * This bridges the new intent engine with the existing card rendering system
+ */
+const mapResponseTypeToCardType = (responseType: ResponseType): ResponseCardType => {
+    const typeMap: Record<ResponseType, ResponseCardType> = {
+        stats: 'stats',
+        leaderboard: 'leaderboard',
+        session: 'document',       // Individual session -> document card
+        session_list: 'list',      // List of sessions -> list card
+        signal_list: 'list',       // List of signals -> list card
+        discussion_list: 'list',   // List of discussions -> list card
+        recognition_list: 'list',  // List of recognitions -> list card
+        badge_grid: 'list',        // Badge grid -> list card (rendered specially)
+        competitor_list: 'list',   // List of competitors -> list card
+        person: 'person',
+        document: 'document',
+        document_list: 'list',     // List of documents -> list card
+        action: 'text',            // Action responses are text-based
+        navigation: 'text',        // Navigation hints are text-based
+        help: 'text',              // Help messages are text-based
+        text: 'text',
+    };
+    return typeMap[responseType] || 'text';
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -204,32 +139,6 @@ const isValidInput = (input: string): boolean => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// NLG RESPONSE GENERATOR
-// ═══════════════════════════════════════════════════════════════════════════
-
-const generateBaristaResponse = (_query: string, responseType: ResponseCardType): string => {
-    const greetings = ['Great question!', 'Let me help with that!', 'Here\'s what I found:', 'Absolutely!'];
-    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-
-    switch (responseType) {
-        case 'stats':
-            return `${greeting} Here's your Love Points summary:`;
-        case 'leaderboard':
-            return `${greeting} Here are the current leaders:`;
-        case 'definition':
-            return `${greeting} Let me explain that for you:`;
-        case 'person':
-            return `${greeting} I found an expert who can help:`;
-        case 'document':
-            return `${greeting} Here's a relevant document:`;
-        case 'list':
-            return `${greeting} Here are some results:`;
-        default:
-            return `I found some information that might help. Let me know if you need anything else!`;
-    }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -243,8 +152,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const [messages, setMessages] = useState<Message[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [aiEnabled, setAiEnabled] = useState(false);
+    const [showAISettings, setShowAISettings] = useState(false);
+    const [aiKeyInput, setAiKeyInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const isProcessingRef = useRef(false); // Guard against duplicate processing
 
     // Scroll to bottom
     useEffect(() => {
@@ -258,14 +171,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         }
     }, [isOpen]);
 
-    // Process user message with NLU/NLG
+    // Process user message with NLU/NLG (or AI when enabled)
     const processMessage = useCallback(async (rawText: string) => {
         // Input validation and sanitization
         const text = sanitizeInput(rawText);
         if (!isValidInput(text)) {
-            console.warn('[BARISTA] Invalid input rejected:', rawText?.slice(0, 50));
+            console.warn('[Barista] Invalid input rejected:', rawText?.slice(0, 50));
             return;
         }
+
+        // Guard against duplicate processing (React StrictMode)
+        if (isProcessingRef.current) {
+            console.log('[Barista] Already processing, skipping duplicate');
+            return;
+        }
+        isProcessingRef.current = true;
 
         // Reset category view
         setSelectedCategory(null);
@@ -292,28 +212,95 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         await new Promise(resolve => setTimeout(resolve, RESPONSE_DELAY_MS));
 
         try {
-            // Use cafeFinder for intelligent search
-            const searchResults = cafeFinder.search(text, {
-                currentPage: 'home',
-            });
+            let responseText: string;
+            let cardType: ResponseCardType = 'text';
+            let cardData: unknown = null;
+            let quickReplies: QuickReply[] = [];
 
-            // Determine response type and data
-            const { type, data } = determineResponseType(text, searchResults);
-            const responseText = generateBaristaResponse(text, type);
+            // AI Mode: Use Gemini API
+            if (aiEnabled && isAIAvailable()) {
+                console.log('[Barista] AI mode - querying Gemini...');
+                const aiResponse = await queryGemini(text, {
+                    currentUser: 'User',
+                    currentPage: 'barista',
+                    recentQueries: messages.slice(-3).filter(m => m.role === 'user').map(m => m.content),
+                });
 
-            // Generate follow-up quick replies
-            const quickReplies: QuickReply[] = [
-                { id: 'more', label: 'Show more', value: 'Show me more results', icon: '📊' },
-                { id: 'different', label: 'Try different', value: 'Let me try something different', icon: '🔄' },
-            ];
+                if (aiResponse.success) {
+                    responseText = aiResponse.message;
+
+                    // Generate quick replies from AI or use defaults
+                    if (aiResponse.suggestedQuickReplies) {
+                        quickReplies = aiResponse.suggestedQuickReplies.slice(0, 4).map((label, i) => ({
+                            id: `ai-qr-${i}`,
+                            label: label.slice(0, 30),
+                            value: label,
+                            icon: '💡',
+                        }));
+                    }
+
+                    // If AI detected an intent, try to get card data
+                    if (aiResponse.intent) {
+                        const intent = classifyIntent(text);
+                        if (intent.category !== 'unknown') {
+                            const response = generateResponse(intent);
+                            cardType = mapResponseTypeToCardType(response.type);
+                            cardData = response.data;
+                        }
+                    }
+                } else {
+                    // AI failed, fallback to deterministic
+                    console.log('[Barista] AI failed, using fallback:', aiResponse.error);
+                    const intent = classifyIntent(text);
+                    const response = generateResponse(intent);
+                    cardType = mapResponseTypeToCardType(response.type);
+                    responseText = response.message;
+                    cardData = response.data;
+                    quickReplies = generateQuickReplies(intent).map(qr => ({
+                        id: qr.id,
+                        label: qr.label,
+                        value: qr.value,
+                        icon: qr.icon,
+                    }));
+                }
+            } else {
+                // Deterministic Mode: Use intent engine
+                let intent = classifyIntent(text);
+                console.log('[Barista] Intent classified:', intent);
+
+                // Check for follow-up commands ("more", "another", etc.)
+                const followUp = resolveFollowUp(text, intent);
+                if (followUp.isFollowUp && followUp.modifiedIntent) {
+                    console.log('[Barista] Follow-up detected:', followUp.type);
+                    intent = followUp.modifiedIntent;
+                }
+
+                const response = generateResponse(intent);
+                console.log('[Barista] Response generated:', response.type);
+
+                // Update conversation context for future follow-ups
+                updateContext(intent, Array.isArray(response.data) ? response.data.length : 1);
+
+                cardType = mapResponseTypeToCardType(response.type);
+                responseText = response.message;
+                cardData = response.data;
+
+                const intentQuickReplies = generateQuickReplies(intent);
+                quickReplies = intentQuickReplies.map(qr => ({
+                    id: qr.id,
+                    label: qr.label,
+                    value: qr.value,
+                    icon: qr.icon,
+                }));
+            }
 
             const botMessage: Message = {
                 id: `bot-${Date.now()}`,
                 role: 'bot',
                 content: responseText,
                 timestamp: new Date().toISOString(),
-                cardType: type,
-                cardData: data,
+                cardType: cardType,
+                cardData: cardData,
                 quickReplies,
             };
 
@@ -325,7 +312,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 return newMessages;
             });
         } catch (error) {
-            console.error('[BARISTA] Error processing message:', error);
+            console.error('[Barista] Error processing message:', error);
             const errorMessage: Message = {
                 id: `bot-error-${Date.now()}`,
                 role: 'bot',
@@ -339,8 +326,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
+            isProcessingRef.current = false; // Release the processing lock
         }
-    }, []);
+    }, [aiEnabled]); // Removed 'messages' to prevent recreation on state change
 
     const handleSend = useCallback(() => {
         if (!inputValue.trim()) return;
@@ -453,28 +441,93 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={handleKeyDown}
             >
-                {/* Header - BARISTA Branding */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                            <Coffee className="w-5 h-5 text-white" />
-                        </div>
+                {/* Header - Barista Branding with AI Toggle */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0 bg-emerald-600">
+                    <div className="flex items-center gap-2">
                         <div>
-                            <h2 className="font-bold text-white tracking-wide">☕ CAFÉ BARISTA</h2>
-                            <p className="text-xs text-white/80">Brilliant Answers • Rapid Intelligence</p>
+                            <h2 className="font-bold text-white tracking-wide flex items-center gap-2">
+                                <Coffee className="w-5 h-5" /> Ask Barista
+                            </h2>
+                            <p className="text-xs text-white/80">
+                                {aiEnabled ? '✨ AI Enhanced' : 'Your Product Café Assistant'}
+                            </p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        aria-label="Close BARISTA assistant"
-                        className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* AI Toggle */}
+                        <button
+                            onClick={() => {
+                                if (!isAIAvailable() && !aiEnabled) {
+                                    setShowAISettings(true);
+                                } else {
+                                    setAiEnabled(!aiEnabled);
+                                }
+                            }}
+                            title={aiEnabled ? 'Disable AI mode' : 'Enable AI mode (requires API key)'}
+                            className={cn(
+                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300',
+                                aiEnabled
+                                    ? 'bg-violet-600 text-white shadow-md'
+                                    : 'bg-white/20 text-white/90 hover:bg-white/30'
+                            )}
+                        >
+                            <Sparkles className={cn('w-3.5 h-3.5', aiEnabled && 'animate-pulse')} />
+                            {aiEnabled ? 'AI ON' : 'AI'}
+                        </button>
+                        {/* Close Button */}
+                        <button
+                            onClick={onClose}
+                            aria-label="Close Barista assistant"
+                            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
+                {/* AI Settings Panel */}
+                {showAISettings && (
+                    <div className="px-4 py-3 bg-violet-50 border-b border-violet-200 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-violet-800">✨ Configure AI</span>
+                            <button
+                                onClick={() => setShowAISettings(false)}
+                                className="text-violet-500 hover:text-violet-700 text-xs"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                        <p className="text-xs text-violet-600">Enter your Gemini API key to enable AI-enhanced responses.</p>
+                        <div className="flex gap-2">
+                            <input
+                                type="password"
+                                value={aiKeyInput}
+                                onChange={(e) => setAiKeyInput(e.target.value)}
+                                placeholder="Gemini API Key"
+                                className="flex-1 px-3 py-2 text-sm border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                            />
+                            <button
+                                onClick={() => {
+                                    if (aiKeyInput.trim()) {
+                                        setApiKey(aiKeyInput.trim());
+                                        setAiEnabled(true);
+                                        setShowAISettings(false);
+                                        setAiKeyInput('');
+                                    }
+                                }}
+                                className="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
+                            >
+                                Save
+                            </button>
+                        </div>
+                        <p className="text-xs text-violet-500">
+                            Get your key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>
+                        </p>
+                    </div>
+                )}
+
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-gradient-to-b from-amber-50/30 to-white">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-gradient-to-b from-emerald-50/30 to-white">
                     {messages.length === 0 ? (
                         // Welcome State
                         <div className="space-y-6">
@@ -532,7 +585,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                                     <div className={cn(
                                         'max-w-[90%] rounded-2xl',
                                         message.role === 'user'
-                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 rounded-br-md'
+                                            ? 'bg-emerald-600 text-white px-4 py-3 rounded-br-md'
                                             : 'space-y-3'
                                     )}>
                                         {/* Message Content */}
@@ -625,13 +678,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="💬 Ask me anything or tap a suggestion..."
+                            placeholder="Ask me anything or tap a suggestion..."
                             aria-label="Chat message input"
                             maxLength={MAX_INPUT_LENGTH}
                             className={cn(
                                 'flex-1 px-4 py-2.5 bg-gray-100 border-0 rounded-xl',
                                 'text-gray-900 placeholder-gray-500',
-                                'focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white',
+                                'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white',
                                 'transition-all duration-200'
                             )}
                         />
@@ -642,7 +695,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                             className={cn(
                                 'p-2.5 rounded-xl transition-all duration-200',
                                 inputValue.trim() && !isTyping
-                                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             )}
                         >

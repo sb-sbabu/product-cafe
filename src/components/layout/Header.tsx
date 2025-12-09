@@ -1,12 +1,13 @@
 import React from 'react';
-import { Coffee, Heart, Award } from 'lucide-react';
+import { Coffee, Heart, Award, Bell } from 'lucide-react';
 import { CafeFinderBar } from '../search/CafeFinderBar';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { usePointsStore } from '../../stores/pointsStore';
 import { useLevelStore } from '../../stores/levelStore';
 import { useBadgeStore } from '../../stores/badgeStore';
-import { NotificationHub } from '../pulse/notifications/NotificationHub';
+import { useDock } from '../../contexts/DockContext';
+import { useBrewStore } from '../../stores/brewStore';
 
 interface HeaderProps {
     onSearch?: (query: string) => void;
@@ -22,6 +23,10 @@ export const Header: React.FC<HeaderProps> = ({
     const { totalPoints } = usePointsStore();
     const { currentLevel } = useLevelStore();
     const { earnedBadges } = useBadgeStore();
+    const { toggleBrewPanel, brewPanelOpen } = useDock();
+    const { menu } = useBrewStore();
+
+    const unreadCount = menu.filter(item => !item.isRead).length;
 
     return (
         <header
@@ -97,8 +102,30 @@ export const Header: React.FC<HeaderProps> = ({
                             </svg>
                         </Button>
 
-                        {/* Notifications - Global Intelligence Hub */}
-                        <NotificationHub />
+                        {/* The Daily Brew Trigger Button */}
+                        <button
+                            onClick={toggleBrewPanel}
+                            className={cn(
+                                "relative p-2 rounded-xl transition-all duration-200",
+                                "hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2",
+                                brewPanelOpen && "bg-rose-100"
+                            )}
+                            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                            title="The Daily Brew (n)"
+                        >
+                            <Bell className={cn(
+                                "w-5 h-5 transition-colors",
+                                unreadCount > 0 ? "text-rose-600" : "text-gray-500",
+                                brewPanelOpen && "text-rose-600"
+                            )} />
+
+                            {/* Badge */}
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm animate-pulse">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )}
+                        </button>
 
                         {/* User Menu */}
                         <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">

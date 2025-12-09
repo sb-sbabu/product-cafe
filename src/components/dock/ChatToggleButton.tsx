@@ -40,8 +40,8 @@ export const ChatToggleButton: React.FC<ChatToggleButtonProps> = ({
                 // Move left when dock is open to stay outside of dock
                 right: isOpen ? `${dockWidth + 24}px` : '24px',
             }}
-            aria-label={isOpen ? 'Close chat' : 'Open chat'}
-            title={isOpen ? 'Close chat' : 'Ask Café Assistant'}
+            aria-label={isOpen ? 'Close Barista' : 'Open Barista'}
+            title={isOpen ? 'Close Barista' : 'Ask Barista'}
         >
             {isOpen ? (
                 <X className="w-6 h-6" />

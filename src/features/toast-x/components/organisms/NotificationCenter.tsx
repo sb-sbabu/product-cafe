@@ -2,6 +2,12 @@
  * Toast X - Notification Center
  * Real-time notification dropdown with priority-based sorting and actions
  * 10x improvements: Priority sorting, action buttons, animated notifications, grouping
+ * 
+ * ⚠️ DEPRECATED: This component is being replaced by "The Daily Brew - ThePress"
+ * as part of the Unified Notification consolidation (Phase 4.5).
+ * See: daily_brew_prd_v2.md
+ * New component: src/components/daily-brew/ThePress.tsx
+ * @deprecated Use ThePress from daily-brew instead.
  */
 
 import React, { useState, useMemo, useCallback, memo } from 'react';

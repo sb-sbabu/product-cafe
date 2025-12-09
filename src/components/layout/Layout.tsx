@@ -1,7 +1,15 @@
 import React, { useState, useRef, useCallback } from 'react';
+import {
+    LayoutDashboard,
+    Menu,
+    X,
+    MessageSquare,
+    Coffee
+} from 'lucide-react';
 import { Header } from './Header';
 import { Navigation } from './Navigation';
 import { ChatPanel } from '../chat/ChatPanel';
+import { DailyBrewDock } from '../daily-brew/DailyBrewDock';
 import { cn } from '../../lib/utils';
 import { useUIStore } from '../../stores';
 import { useDock } from '../../contexts/DockContext';
@@ -70,40 +78,29 @@ export const Layout: React.FC<LayoutProps> = ({
                 />
             </div>
 
-            {/* Floating Chat Button (Desktop) - BUG 2 FIX: Position relative to dock */}
+            {/* Floating Chat Button (Desktop) - Ask Barista */}
             <button
                 onClick={openChat}
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
-                title="Ask Café Assistant"
+                title="Ask Barista"
                 className={cn(
                     `hidden md:flex fixed z-40
-           items-center gap-3 px-5 py-3 bg-emerald-500 text-white
-           rounded-full shadow-lg hover:bg-emerald-600 hover:shadow-xl
+           items-center gap-2 px-5 py-3 bg-emerald-600 text-white
+           rounded-full shadow-lg hover:bg-emerald-700 hover:shadow-xl
            transition-all duration-200 group cursor-grab active:cursor-grabbing`,
                     isChatOpen && 'hidden'
                 )}
                 style={
                     dragPosition
                         ? { left: dragPosition.x, top: dragPosition.y, right: 'auto', bottom: 'auto' }
-                        : { right: `${dockWidth + 24}px`, bottom: '24px' }  /* BUG 2 FIX: dockWidth + 24 */
+                        : { right: `${dockWidth + 24}px`, bottom: '24px' }
                 }
             >
-                <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                </svg>
-                <span className="font-medium">Ask Café Assistant</span>
+                <span className="font-medium flex items-center gap-2">
+                    <Coffee className="w-5 h-5" /> Ask Barista
+                </span>
             </button>
 
             {/* Chat Panel - BUG 2/3 FIX: Pass position info for dock awareness */}
@@ -113,6 +110,9 @@ export const Layout: React.FC<LayoutProps> = ({
                 dockWidth={dockWidth}
                 assistantPosition={dragPosition}
             />
+
+            {/* The Daily Brew - Unified Notifications Panel (same size as CafeDock, mutually exclusive) */}
+            <DailyBrewDock />
         </div>
     );
 };

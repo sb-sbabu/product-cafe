@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, Bell, ChevronLeft, ChevronRight, Coffee, Sparkles, X, Hash } from 'lucide-react';
+import { MessageCircle, ChevronLeft, ChevronRight, Coffee, Sparkles, X, Hash } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useDock, type DockTab } from '../../contexts/DockContext';
-import { AskTab } from './AskTab';
 import { DiscussTab } from './DiscussTab';
-import { ActivityTab } from './ActivityTab';
 import { TagDirectory } from './TagDirectory';
 
 /**
@@ -29,7 +27,6 @@ interface CafeDockProps {
 export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     const {
         activeTab,
-        unreadCount,
         closeDock,
         setActiveTab,
         toggleCollapse,
@@ -58,10 +55,8 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
     }, [isExpanded, toggleCollapse]);
 
     const tabs: { id: DockTab; label: string; icon: React.ReactNode; badge?: number }[] = [
-        { id: 'ask', label: 'Ask', icon: <Coffee className="w-5 h-5" /> },
         { id: 'discuss', label: 'Discuss', icon: <MessageCircle className="w-5 h-5" /> },
         { id: 'directory', label: 'Directory', icon: <Hash className="w-5 h-5" /> },
-        { id: 'activity', label: 'Activity', icon: <Bell className="w-5 h-5" />, badge: unreadCount },
     ];
 
     const handleTabClick = useCallback((tab: DockTab) => {
@@ -142,10 +137,8 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
 
                     {/* Content */}
                     <div className="flex-1 overflow-hidden min-h-0">
-                        {activeTab === 'ask' && <AskTab />}
                         {activeTab === 'discuss' && <DiscussTab />}
                         {activeTab === 'directory' && <TagDirectory onSelectTag={() => setActiveTab('discuss')} />}
-                        {activeTab === 'activity' && <ActivityTab />}
                     </div>
                 </div>
             </>
@@ -263,10 +256,8 @@ export const CafeDock: React.FC<CafeDockProps> = ({ className }) => {
                 'flex-1 overflow-hidden min-h-0 transition-opacity duration-200',
                 showExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
             )}>
-                {activeTab === 'ask' && <AskTab />}
                 {activeTab === 'discuss' && <DiscussTab />}
                 {activeTab === 'directory' && <TagDirectory onSelectTag={() => setActiveTab('discuss')} />}
-                {activeTab === 'activity' && <ActivityTab />}
             </div>
 
             {/* Collapsed hint */}
