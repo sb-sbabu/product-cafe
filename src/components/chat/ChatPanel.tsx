@@ -67,6 +67,14 @@ interface ChatPanelProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CONSTANTS & CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MAX_INPUT_LENGTH = 500;
+const MAX_MESSAGES = 100; // Prevent memory issues
+const RESPONSE_DELAY_MS = 150; // Fast but perceptible
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MOCK DATA FOR DEMO
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -95,7 +103,17 @@ const MOCK_LEADERBOARD = [
 // ═══════════════════════════════════════════════════════════════════════════
 
 const determineResponseType = (query: string, results: SearchResponse): { type: ResponseCardType; data?: unknown } => {
-    const lowerQuery = query.toLowerCase();
+    // Guard against null/undefined query
+    if (!query || typeof query !== 'string') {
+        return { type: 'text' };
+    }
+
+    const lowerQuery = query.toLowerCase().trim();
+
+    // Guard against empty query
+    if (lowerQuery.length === 0) {
+        return { type: 'text' };
+    }
 
     // Stats/Points queries
     if (lowerQuery.includes('love point') || lowerQuery.includes('my point') || lowerQuery.includes('balance')) {
@@ -191,6 +209,32 @@ const determineResponseType = (query: string, results: SearchResponse): { type: 
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
+// INPUT SANITIZATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Sanitize user input to prevent XSS and handle edge cases
+ */
+const sanitizeInput = (input: string): string => {
+    if (!input || typeof input !== 'string') return '';
+
+    return input
+        .trim()
+        .slice(0, MAX_INPUT_LENGTH)
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ''); // Remove control characters
+};
+
+/**
+ * Validate that input is safe to process
+ */
+const isValidInput = (input: string): boolean => {
+    if (!input || typeof input !== 'string') return false;
+    const trimmed = input.trim();
+    return trimmed.length > 0 && trimmed.length <= MAX_INPUT_LENGTH;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 // NLG RESPONSE GENERATOR
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -246,22 +290,37 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }, [isOpen]);
 
     // Process user message with NLU/NLG
-    const processMessage = useCallback(async (text: string) => {
+    const processMessage = useCallback(async (rawText: string) => {
+        // Input validation and sanitization
+        const text = sanitizeInput(rawText);
+        if (!isValidInput(text)) {
+            console.warn('[BARISTA] Invalid input rejected:', rawText?.slice(0, 50));
+            return;
+        }
+
         // Reset category view
         setSelectedCategory(null);
 
         // Add user message
         const userMessage: Message = {
-            id: `user-${Date.now()}`,
+            id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             role: 'user',
             content: text,
             timestamp: new Date().toISOString(),
         };
-        setMessages(prev => [...prev, userMessage]);
+
+        setMessages(prev => {
+            // Limit message history to prevent memory issues
+            const newMessages = [...prev, userMessage];
+            if (newMessages.length > MAX_MESSAGES) {
+                return newMessages.slice(-MAX_MESSAGES);
+            }
+            return newMessages;
+        });
         setIsTyping(true);
 
-        // Simulate AI thinking delay (keeping it fast per PRD)
-        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+        // Deterministic delay for natural feel
+        await new Promise(resolve => setTimeout(resolve, RESPONSE_DELAY_MS));
 
         try {
             // Use cafeFinder for intelligent search
@@ -289,15 +348,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 quickReplies,
             };
 
-            setMessages(prev => [...prev, botMessage]);
+            setMessages(prev => {
+                const newMessages = [...prev, botMessage];
+                if (newMessages.length > MAX_MESSAGES) {
+                    return newMessages.slice(-MAX_MESSAGES);
+                }
+                return newMessages;
+            });
         } catch (error) {
-            console.error('[BARISTA] Error:', error);
-            setMessages(prev => [...prev, {
-                id: `bot-${Date.now()}`,
+            console.error('[BARISTA] Error processing message:', error);
+            const errorMessage: Message = {
+                id: `bot-error-${Date.now()}`,
                 role: 'bot',
-                content: "I'm having trouble processing that right now. Please try again.",
+                content: "I'm having trouble processing that right now. Please try rephrasing your question or try again.",
                 timestamp: new Date().toISOString(),
-            }]);
+                quickReplies: [
+                    { id: 'retry', label: 'Try again', value: text, icon: '🔄' },
+                    { id: 'help', label: 'Get help', value: 'What can you help me with?', icon: '❓' },
+                ],
+            };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
         }
@@ -333,7 +403,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             e.preventDefault();
             handleSend();
         }
-    }, [handleSend]);
+        // ESC to close panel
+        if (e.key === 'Escape') {
+            onClose();
+        }
+    }, [handleSend, onClose]);
 
     // Render response card based on type
     const renderResponseCard = (message: Message) => {
@@ -398,6 +472,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
             {/* Panel */}
             <div
+                role="dialog"
+                aria-label="Café BARISTA Assistant"
+                aria-modal="true"
                 className={cn(
                     'fixed z-50 bg-white shadow-2xl flex flex-col animate-slide-in-right',
                     'inset-0',
@@ -405,6 +482,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 )}
                 style={panelStyle}
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={handleKeyDown}
             >
                 {/* Header - BARISTA Branding */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500">
@@ -419,6 +497,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     </div>
                     <button
                         onClick={onClose}
+                        aria-label="Close BARISTA assistant"
                         className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                     >
                         <X className="w-5 h-5" />
@@ -578,6 +657,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="💬 Ask me anything or tap a suggestion..."
+                            aria-label="Chat message input"
+                            maxLength={MAX_INPUT_LENGTH}
                             className={cn(
                                 'flex-1 px-4 py-2.5 bg-gray-100 border-0 rounded-xl',
                                 'text-gray-900 placeholder-gray-500',
@@ -587,10 +668,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                         />
                         <button
                             onClick={handleSend}
-                            disabled={!inputValue.trim()}
+                            disabled={!inputValue.trim() || isTyping}
+                            aria-label={isTyping ? 'Processing...' : 'Send message'}
                             className={cn(
                                 'p-2.5 rounded-xl transition-all duration-200',
-                                inputValue.trim()
+                                inputValue.trim() && !isTyping
                                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             )}
@@ -598,9 +680,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                             <Send className="w-4 h-4" />
                         </button>
                     </div>
-                    <p className="text-center text-xs text-gray-400 mt-2">
-                        100% Deterministic • &lt;100ms Response Time • 0% Hallucination
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-gray-400">
+                            100% Deterministic • &lt;100ms Response Time • 0% Hallucination
+                        </p>
+                        {inputValue.length > MAX_INPUT_LENGTH * 0.8 && (
+                            <span className={cn(
+                                'text-xs',
+                                inputValue.length >= MAX_INPUT_LENGTH ? 'text-red-500' : 'text-amber-500'
+                            )}>
+                                {inputValue.length}/{MAX_INPUT_LENGTH}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
         </>

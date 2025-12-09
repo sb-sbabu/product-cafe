@@ -100,7 +100,16 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
     onShare,
     onSave
 }) => {
-    const getFileIcon = (type: string) => {
+    // Guard against missing data
+    if (!data) {
+        return (
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 text-center">
+                <p className="text-sm text-gray-500">Document information unavailable</p>
+            </div>
+        );
+    }
+
+    const getFileIcon = (type: string | undefined) => {
         const icons: Record<string, string> = {
             'pptx': '📘',
             'pdf': '📕',
@@ -108,46 +117,61 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             'xlsx': '📊',
             'default': '📁'
         };
-        return icons[type.toLowerCase()] || icons.default;
+        return icons[(type || '').toLowerCase()] || icons.default;
     };
 
+    // Safe access with defaults
+    const title = data.title || 'Untitled Document';
+    const version = data.version || '1.0';
+    const updatedAt = data.updatedAt || 'Unknown date';
+    const description = data.description || 'No description available';
+    const author = data.author || 'Unknown author';
+    const authorTeam = data.authorTeam || 'Unknown team';
+    const path = data.path || 'Unknown path';
+    const views = typeof data.views === 'number' ? data.views : 0;
+    const rating = typeof data.rating === 'number' ? data.rating : 0;
+
     return (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div
+            className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
+            role="article"
+            aria-label={`Document: ${title}`}
+        >
             <div className="p-4">
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
-                    <div className="text-3xl">{getFileIcon(data.type)}</div>
+                    <div className="text-3xl" aria-hidden="true">{getFileIcon(data.type)}</div>
                     <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 truncate">{data.title}</h4>
+                        <h4 className="font-semibold text-gray-900 truncate">{title}</h4>
                         <p className="text-xs text-gray-500">
-                            Version {data.version || '1.0'} • Updated {data.updatedAt}
+                            Version {version} • Updated {updatedAt}
                         </p>
                     </div>
                 </div>
 
                 {/* Description */}
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {data.description}
+                    {description}
                 </p>
 
                 {/* Metadata */}
                 <div className="space-y-1.5 text-xs text-gray-500">
                     <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5" />
-                        <span>{data.author} • {data.authorTeam}</span>
+                        <User className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>{author} • {authorTeam}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5" />
-                        <span className="truncate">{data.path}</span>
+                        <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span className="truncate">{path}</span>
                     </div>
                     <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1">
-                            <Eye className="w-3.5 h-3.5" />
-                            {data.views.toLocaleString()} views
+                            <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                            {views.toLocaleString()} views
                         </span>
                         <span className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-amber-400" />
-                            {data.rating.toFixed(1)} rating
+                            <Star className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+                            {rating.toFixed(1)} rating
                         </span>
                     </div>
                 </div>

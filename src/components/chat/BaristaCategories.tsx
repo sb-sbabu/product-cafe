@@ -146,21 +146,36 @@ interface CategoryTilesProps {
 }
 
 export const CategoryTiles: React.FC<CategoryTilesProps> = ({ onCategorySelect }) => {
+    // Guard against empty categories
+    if (!BARISTA_CATEGORIES || BARISTA_CATEGORIES.length === 0) {
+        return (
+            <p className="text-sm text-gray-500 text-center py-4">
+                No categories available
+            </p>
+        );
+    }
+
     return (
-        <div className="grid grid-cols-5 gap-2">
+        <div
+            className="grid grid-cols-5 gap-2"
+            role="group"
+            aria-label="BARISTA category selection"
+        >
             {BARISTA_CATEGORIES.map((category) => (
                 <button
                     key={category.id}
                     onClick={() => onCategorySelect(category)}
+                    aria-label={`${category.label}: ${category.description}`}
                     className={cn(
                         'flex flex-col items-center justify-center p-3 rounded-xl',
                         'bg-gradient-to-br', category.gradient,
                         'text-white shadow-md hover:shadow-lg',
                         'transform hover:scale-105 active:scale-95',
-                        'transition-all duration-200'
+                        'transition-all duration-200',
+                        'focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2'
                     )}
                 >
-                    <span className="text-xl mb-1">{category.emoji}</span>
+                    <span className="text-xl mb-1" aria-hidden="true">{category.emoji}</span>
                     <span className="text-[10px] font-semibold tracking-wide">{category.label}</span>
                 </button>
             ))}
@@ -183,13 +198,29 @@ export const CategoryExpanded: React.FC<CategoryExpandedProps> = ({
     onBack,
     onSuggestionSelect
 }) => {
+    // Guard against invalid category
+    if (!category || !category.suggestions) {
+        return (
+            <div className="text-center py-4">
+                <p className="text-sm text-gray-500">Category not available</p>
+                <button
+                    onClick={onBack}
+                    className="mt-2 text-sm text-amber-600 hover:underline"
+                >
+                    Go back
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <button
                     onClick={onBack}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="Go back to categories"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
                 >
                     <ArrowLeft className="w-4 h-4 text-gray-600" />
                 </button>
@@ -259,23 +290,34 @@ interface QuickPicksProps {
 }
 
 export const QuickPicks: React.FC<QuickPicksProps> = ({ picks, onSelect }) => {
+    // Guard against empty picks
+    if (!picks || picks.length === 0) {
+        return null;
+    }
+
     return (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div
+            className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
+            role="group"
+            aria-label="Quick pick suggestions"
+        >
             {picks.map((pick) => (
                 <button
                     key={pick.id}
                     onClick={() => onSelect(pick)}
+                    aria-label={pick.label}
                     className={cn(
                         'inline-flex items-center gap-2 px-3 py-2 rounded-full',
                         'bg-white border border-gray-200 shadow-sm',
                         'text-sm font-medium text-gray-700',
                         'hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700',
-                        'transition-all duration-150 whitespace-nowrap'
+                        'transition-all duration-150 whitespace-nowrap',
+                        'focus:outline-none focus:ring-2 focus:ring-emerald-300'
                     )}
                 >
-                    <span className="text-gray-400">{pick.icon}</span>
+                    <span className="text-gray-400" aria-hidden="true">{pick.icon}</span>
                     {pick.label}
-                    <ArrowRight className="w-3 h-3 text-gray-300" />
+                    <ArrowRight className="w-3 h-3 text-gray-300" aria-hidden="true" />
                 </button>
             ))}
         </div>
