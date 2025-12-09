@@ -1,7 +1,9 @@
 /**
- * Toast X - Organisms Index
- * Re-exports organism-level components
+ * Toast X - Organism Components Index
+ * Export all organism-level components
  */
 
-export { RecognitionCard, RecognitionCardSkeleton } from './RecognitionCard';
+export { RecognitionCard } from './RecognitionCard';
 export { ToastFeed } from './ToastFeed';
+export { StandingOvationWizard } from './StandingOvationWizard';
+export { TeamToastModal } from './TeamToastModal';

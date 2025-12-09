@@ -4,8 +4,10 @@
  */
 
 // Organisms
-export { RecognitionCard, RecognitionCardSkeleton } from './organisms';
+export { RecognitionCard } from './organisms';
 export { ToastFeed } from './organisms';
+export { StandingOvationWizard } from './organisms';
+export { TeamToastModal } from './organisms';
 
 // Pages
 export { ToastXHomePage } from './pages';

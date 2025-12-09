@@ -14,6 +14,8 @@ import {
 import { useToastXStore } from '../../store';
 import { COMPANY_VALUES, AWARDS, BADGES, ANTI_GAMING_LIMITS } from '../../constants';
 import type { Recognition, CompanyValue, ReactionType } from '../../types';
+import { StandingOvationWizard } from '../organisms/StandingOvationWizard';
+import { TeamToastModal } from '../organisms/TeamToastModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // REACTION DATA
@@ -148,7 +150,7 @@ const RecognitionCard: React.FC<RecognitionCardProps> = memo(({ recognition, com
                 {/* Header: Giver → Recipients */}
                 <div className="flex items-start gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shrink-0 ring-2 ring-purple-100">
-                        <span className="text-white font-semibold">{recognition.giverName.charAt(0)}</span>
+                        <span className="text-white font-semibold">{recognition.giverName?.charAt(0) || '?'}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -262,7 +264,7 @@ const RecognitionCard: React.FC<RecognitionCardProps> = memo(({ recognition, com
                         {recognition.comments.slice(0, 3).map(comment => (
                             <div key={comment.id} className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0">
-                                    <span className="text-white text-xs font-medium">{comment.userName.charAt(0)}</span>
+                                    <span className="text-white text-xs font-medium">{comment.userName?.charAt(0) || '?'}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
@@ -317,7 +319,7 @@ const QuickToastModal: React.FC<QuickToastModalProps> = ({ isOpen, onClose }) =>
     const currentUserId = useToastXStore(state => state.currentUserId);
     const currentUser = useMemo(() => users.get(currentUserId), [users, currentUserId]);
     const dailyQuickToasts = currentUser?.dailyQuickToasts || 0;
-    const remaining = ANTI_GAMING_LIMITS.MAX_QUICK_TOASTS_PER_DAY - dailyQuickToasts;
+    const remaining = ANTI_GAMING_LIMITS.DAILY_QUICK_TOASTS - dailyQuickToasts;
 
     const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
     const [selectedValue, setSelectedValue] = useState<CompanyValue | null>(null);
@@ -402,7 +404,7 @@ const QuickToastModal: React.FC<QuickToastModalProps> = ({ isOpen, onClose }) =>
                         {selectedRecipient ? (
                             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                                    <span className="text-white font-semibold">{selectedRecipient.name.charAt(0)}</span>
+                                    <span className="text-white font-semibold">{selectedRecipient?.name?.charAt(0) || '?'}</span>
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-white font-medium">{selectedRecipient.name}</p>
@@ -431,7 +433,7 @@ const QuickToastModal: React.FC<QuickToastModalProps> = ({ isOpen, onClose }) =>
                                                 className="w-full flex items-center gap-3 p-3 hover:bg-white/10 transition-colors text-left"
                                             >
                                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                                                    <span className="text-white text-sm font-medium">{user.name.charAt(0)}</span>
+                                                    <span className="text-white text-sm font-medium">{user.name?.charAt(0) || '?'}</span>
                                                 </div>
                                                 <div>
                                                     <p className="text-white text-sm font-medium">{user.name}</p>
@@ -644,13 +646,13 @@ export const ToastXHomePage: React.FC = memo(() => {
 
     const quickToastLimit = useMemo(() => {
         if (!currentUser) return { allowed: false, remaining: 0 };
-        const remaining = ANTI_GAMING_LIMITS.MAX_QUICK_TOASTS_PER_DAY - (currentUser.dailyQuickToasts || 0);
+        const remaining = ANTI_GAMING_LIMITS.DAILY_QUICK_TOASTS - (currentUser.dailyQuickToasts || 0);
         return { allowed: remaining > 0, remaining: Math.max(0, remaining) };
     }, [currentUser]);
 
     const standingOvationLimit = useMemo(() => {
         if (!currentUser) return { allowed: false, remaining: 0 };
-        const remaining = ANTI_GAMING_LIMITS.MAX_STANDING_OVATIONS_PER_DAY - (currentUser.dailyStandingOvations || 0);
+        const remaining = ANTI_GAMING_LIMITS.DAILY_STANDING_OVATIONS - (currentUser.dailyStandingOvations || 0);
         return { allowed: remaining > 0, remaining: Math.max(0, remaining) };
     }, [currentUser]);
 
@@ -667,7 +669,8 @@ export const ToastXHomePage: React.FC = memo(() => {
     );
 
     const [showQuickToast, setShowQuickToast] = useState(false);
-    const [_showStandingOvation, setShowStandingOvation] = useState(false);
+    const [showStandingOvation, setShowStandingOvation] = useState(false);
+    const [showTeamToast, setShowTeamToast] = useState(false);
 
     return (
         <div className="max-w-7xl mx-auto py-8 lg:py-10 space-y-8 animate-fade-in">
@@ -721,7 +724,7 @@ export const ToastXHomePage: React.FC = memo(() => {
                                         <p className="text-xs text-gray-500">{currentUser.credits} credits</p>
                                     </div>
                                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center ring-4 ring-purple-100">
-                                        <span className="text-2xl font-bold text-white">{currentUser.name.charAt(0)}</span>
+                                        <span className="text-2xl font-bold text-white">{currentUser?.name?.charAt(0) || '?'}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-end gap-1">
@@ -787,7 +790,10 @@ export const ToastXHomePage: React.FC = memo(() => {
                         </div>
                     </button>
 
-                    <button className="group relative p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 hover:border-blue-300 hover:shadow-md transition-all text-left">
+                    <button
+                        onClick={() => setShowTeamToast(true)}
+                        className="group relative p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 hover:border-blue-300 hover:shadow-md transition-all text-left"
+                    >
                         <div className="flex items-start gap-4">
                             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-500 shadow-lg group-hover:scale-110 transition-transform">
                                 <Users className="w-6 h-6 text-white" />
@@ -922,6 +928,8 @@ export const ToastXHomePage: React.FC = memo(() => {
 
             {/* Modals */}
             <QuickToastModal isOpen={showQuickToast} onClose={() => setShowQuickToast(false)} />
+            <StandingOvationWizard isOpen={showStandingOvation} onClose={() => setShowStandingOvation(false)} />
+            <TeamToastModal isOpen={showTeamToast} onClose={() => setShowTeamToast(false)} />
         </div>
     );
 });
