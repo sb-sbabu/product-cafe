@@ -11,6 +11,12 @@ import type { BrewSource } from './types';
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
+export interface ScheduleWindow {
+    name: 'morning' | 'afternoon' | 'evening';
+    startHour: number; // 0-23
+    enabled: boolean;
+}
+
 export interface UserTaste {
     /** Preference scores by source (-100 to +100) */
     bySource: Record<BrewSource, number>;
@@ -26,6 +32,10 @@ export interface UserTaste {
 
     /** Preferred digest delivery time */
     digestTime: string | null;
+
+    /** Scheduling Configuration (Phase 4) */
+    scheduleWindows: ScheduleWindow[];
+    batchMode: 'realtime' | 'scheduled';
 
     /** Last updated timestamp */
     updatedAt: number;
@@ -70,7 +80,14 @@ export const getDefaultTaste = (): UserTaste => ({
     byDomain: {},
     byActor: {},
     quietHours: null,
+    quietHours: null,
     digestTime: '09:00',
+    scheduleWindows: [
+        { name: 'morning', startHour: 8, enabled: true },
+        { name: 'afternoon', startHour: 13, enabled: true },
+        { name: 'evening', startHour: 18, enabled: true },
+    ],
+    batchMode: 'realtime',
     updatedAt: Date.now(),
 });
 
