@@ -9,13 +9,17 @@ import {
     Coffee, Award, Users, Sparkles,
     ChevronRight, Trophy, Medal, Gift, Heart, Zap, Target,
     TrendingUp, Building2, Star, Plus, Search, X, Check, Send,
-    MessageCircle, Share2, Bookmark, MoreHorizontal,
+    MessageCircle, Share2, Bookmark, MoreHorizontal, Bell, BarChart3, User, Link2,
 } from 'lucide-react';
 import { useToastXStore } from '../../store';
-import { COMPANY_VALUES, AWARDS, BADGES, ANTI_GAMING_LIMITS } from '../../constants';
+import { COMPANY_VALUES, AWARDS, BADGES, ANTI_GAMING_LIMITS, ADMIN_MODE } from '../../constants';
 import type { Recognition, CompanyValue, ReactionType } from '../../types';
 import { StandingOvationWizard } from '../organisms/StandingOvationWizard';
 import { TeamToastModal } from '../organisms/TeamToastModal';
+import { ToastXProfile } from '../organisms/ToastXProfile';
+import { AnalyticsDashboard } from '../organisms/AnalyticsDashboard';
+import { NotificationCenter } from '../organisms/NotificationCenter';
+import { GratitudeChainModal } from '../organisms/GratitudeChainModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // REACTION DATA
@@ -671,9 +675,34 @@ export const ToastXHomePage: React.FC = memo(() => {
     const [showQuickToast, setShowQuickToast] = useState(false);
     const [showStandingOvation, setShowStandingOvation] = useState(false);
     const [showTeamToast, setShowTeamToast] = useState(false);
+    const [showProfile, setShowProfile] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showGratitudeChain, setShowGratitudeChain] = useState(false);
 
     return (
         <div className="max-w-7xl mx-auto py-8 lg:py-10 space-y-8 animate-fade-in">
+            {/* Admin Mode Banner */}
+            {ADMIN_MODE && (
+                <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-xl px-4 py-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-emerald-400">🔓 Admin Mode: Unlimited toasts enabled for testing</span>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setShowProfile(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                            <User className="w-3 h-3" /> Profile
+                        </button>
+                        <button onClick={() => setShowAnalytics(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                            <BarChart3 className="w-3 h-3" /> Analytics
+                        </button>
+                        <button onClick={() => setShowNotifications(true)} className="relative px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                            <Bell className="w-3 h-3" /> Notifications
+                            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 text-[8px] font-bold text-white flex items-center justify-center">3</span>
+                        </button>
+                        <button onClick={() => setShowGratitudeChain(true)} className="px-3 py-1 text-xs font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1">
+                            <Link2 className="w-3 h-3" /> Gratitude Chain
+                        </button>
+                    </div>
+                </div>
+            )}
             <div className="space-y-8">
                 {/* Hero Section */}
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-rose-500/20 border border-amber-500/20 p-8">
@@ -930,6 +959,20 @@ export const ToastXHomePage: React.FC = memo(() => {
             <QuickToastModal isOpen={showQuickToast} onClose={() => setShowQuickToast(false)} />
             <StandingOvationWizard isOpen={showStandingOvation} onClose={() => setShowStandingOvation(false)} />
             <TeamToastModal isOpen={showTeamToast} onClose={() => setShowTeamToast(false)} />
+            <ToastXProfile isOpen={showProfile} onClose={() => setShowProfile(false)} />
+            {showAnalytics && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAnalytics(false)} />
+                    <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-white/10 p-6">
+                        <button onClick={() => setShowAnalytics(false)} className="absolute top-4 right-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors z-10">
+                            <X className="w-5 h-5 text-white" />
+                        </button>
+                        <AnalyticsDashboard />
+                    </div>
+                </div>
+            )}
+            <NotificationCenter isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+            <GratitudeChainModal isOpen={showGratitudeChain} onClose={() => setShowGratitudeChain(false)} />
         </div>
     );
 });

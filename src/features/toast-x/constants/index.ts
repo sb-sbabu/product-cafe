@@ -30,6 +30,7 @@ export {
 
 // Anti-Gaming & Credits
 export {
+    ADMIN_MODE,
     CREDIT_VALUES,
     ANTI_GAMING_LIMITS,
     ANTI_GAMING_MESSAGES,

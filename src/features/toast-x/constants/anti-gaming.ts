@@ -32,31 +32,42 @@ export const CREDIT_VALUES = Object.freeze({
 } as const);
 
 // ═══════════════════════════════════════════════════════════════════════════
+// ADMIN MODE (For Testing)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Enable admin mode for unlimited toasts during testing
+ * Set to true to bypass all anti-gaming limits
+ */
+export const ADMIN_MODE = true; // Set to false for production
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ANTI-GAMING LIMITS
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
  * Limits to prevent gaming the recognition system
  * These ensure recognition remains meaningful and not exploitative
+ * NOTE: When ADMIN_MODE is true, these limits are bypassed
  */
 export const ANTI_GAMING_LIMITS = Object.freeze({
-    /** Maximum Quick Toasts per day */
-    DAILY_QUICK_TOASTS: 3,
+    /** Maximum Quick Toasts per day (unlimited in admin mode) */
+    DAILY_QUICK_TOASTS: ADMIN_MODE ? 999 : 3,
 
-    /** Maximum Standing Ovations per day */
-    DAILY_STANDING_OVATIONS: 1,
+    /** Maximum Standing Ovations per day (unlimited in admin mode) */
+    DAILY_STANDING_OVATIONS: ADMIN_MODE ? 999 : 1,
 
     /** Hours to wait before recognizing the same person again */
-    SAME_PERSON_COOLDOWN_HOURS: 24,
+    SAME_PERSON_COOLDOWN_HOURS: ADMIN_MODE ? 0 : 24,
 
     /** Maximum credits a recipient can receive from a single person per month */
-    MONTHLY_CAP_FROM_SINGLE_PERSON: 500,
+    MONTHLY_CAP_FROM_SINGLE_PERSON: ADMIN_MODE ? 99999 : 500,
 
     /** Percentage reduction for mutual recognition within 48 hours */
-    RECIPROCAL_REDUCTION_PERCENT: 50,
+    RECIPROCAL_REDUCTION_PERCENT: ADMIN_MODE ? 0 : 50,
 
     /** Hours window for detecting reciprocal recognition */
-    RECIPROCAL_DETECTION_HOURS: 48,
+    RECIPROCAL_DETECTION_HOURS: ADMIN_MODE ? 0 : 48,
 } as const);
 
 // ═══════════════════════════════════════════════════════════════════════════
