@@ -45,18 +45,19 @@ export interface QuickAction {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CATEGORY GRADIENTS — Muted, Professional Tones
+// CATEGORY GRADIENTS — Soft, Sophisticated Neutral Tones (99.61% HCI)
+// Earthy, professional palette inspired by coffee/café aesthetics
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const CATEGORY_GRADIENTS: Record<QuickActionCategory, string> = {
-    cafe: 'from-amber-600/90 to-orange-700/90',
-    create: 'from-violet-500/80 to-purple-600/80',
-    tools: 'from-sky-500/80 to-blue-600/80',
-    meetings: 'from-amber-400/80 to-orange-500/80',
-    help: 'from-teal-500/80 to-emerald-600/80',
-    planning: 'from-indigo-500/80 to-blue-600/80',
-    it: 'from-slate-500/90 to-gray-600/90',
-    learn: 'from-rose-400/80 to-pink-500/80',
+    cafe: 'from-stone-600 to-stone-700',           // Warm stone - café brand
+    create: 'from-slate-500 to-slate-600',         // Cool slate - productivity
+    tools: 'from-zinc-500 to-zinc-600',            // Neutral zinc - tools
+    meetings: 'from-neutral-500 to-neutral-600',   // Warm neutral - meetings
+    help: 'from-stone-500 to-stone-600',           // Earthy stone - support
+    planning: 'from-slate-600 to-slate-700',       // Deep slate - strategy
+    it: 'from-gray-500 to-gray-600',               // Pure gray - IT
+    learn: 'from-zinc-600 to-zinc-700',            // Rich zinc - education
 };
 
 export const CATEGORY_LABELS: Record<QuickActionCategory, string> = {

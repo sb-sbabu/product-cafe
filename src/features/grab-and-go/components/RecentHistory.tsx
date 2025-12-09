@@ -14,11 +14,13 @@ import { getActionById } from '../actions/quickActions';
 interface RecentHistoryProps {
     className?: string;
     maxItems?: number;
+    onNavigate?: (route: string) => void;
 }
 
 export const RecentHistory: React.FC<RecentHistoryProps> = ({
     className,
     maxItems = 5,
+    onNavigate,
 }) => {
     const { recentItems, clearHistory, recordAccess } = useGrabAndGoStore();
 
@@ -29,9 +31,15 @@ export const RecentHistory: React.FC<RecentHistoryProps> = ({
         if (!action) return;
 
         recordAccess(actionId);
-        if (action.url) {
+        // Internal route navigation
+        if (action.internalRoute && onNavigate) {
+            onNavigate(action.internalRoute);
+        }
+        // External URL
+        else if (action.url) {
             window.open(action.url, '_blank', 'noopener,noreferrer');
         }
+        // Custom action callback
         if (action.action) {
             action.action();
         }

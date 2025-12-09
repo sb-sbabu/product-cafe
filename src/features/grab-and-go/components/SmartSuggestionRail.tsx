@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Sparkles, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { QuickActionCard } from './QuickActionCard';
 import {
@@ -19,11 +19,13 @@ import { useGrabAndGoStore } from '../store/grabAndGoStore';
 interface SmartSuggestionRailProps {
     className?: string;
     maxItems?: number;
+    onNavigate?: (route: string) => void;
 }
 
 export const SmartSuggestionRail: React.FC<SmartSuggestionRailProps> = ({
     className,
     maxItems = 6,
+    onNavigate,
 }) => {
     const { userRole, getRecentActionIds } = useGrabAndGoStore();
     const railRef = React.useRef<HTMLDivElement>(null);
@@ -129,6 +131,7 @@ export const SmartSuggestionRail: React.FC<SmartSuggestionRailProps> = ({
                         <SuggestionCard
                             key={`${suggestion.action.id}-${idx}`}
                             suggestion={suggestion}
+                            onNavigate={onNavigate}
                         />
                     ))}
                 </div>
@@ -151,9 +154,10 @@ export const SmartSuggestionRail: React.FC<SmartSuggestionRailProps> = ({
 
 interface SuggestionCardProps {
     suggestion: SmartSuggestion;
+    onNavigate?: (route: string) => void;
 }
 
-const SuggestionCard: React.FC<SuggestionCardProps> = ({ suggestion }) => {
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ suggestion, onNavigate }) => {
     const { action, contextType } = suggestion;
 
     const contextBadges: Record<SmartSuggestion['contextType'], { label: string; color: string }> = {
@@ -168,7 +172,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ suggestion }) => {
 
     return (
         <div className="flex-shrink-0 flex flex-col items-center gap-2">
-            <QuickActionCard action={action} size="md" showPin />
+            <QuickActionCard action={action} size="md" showPin onNavigate={onNavigate} />
             <span className={cn(
                 'text-[10px] px-2 py-0.5 rounded-full font-medium',
                 badge.color

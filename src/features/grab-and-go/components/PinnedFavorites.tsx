@@ -15,11 +15,13 @@ import { getActionById } from '../actions/quickActions';
 interface PinnedFavoritesProps {
     className?: string;
     onAddPin?: () => void;
+    onNavigate?: (route: string) => void;
 }
 
 export const PinnedFavorites: React.FC<PinnedFavoritesProps> = ({
     className,
     onAddPin,
+    onNavigate,
 }) => {
     const { pinnedActionIds, unpinAction } = useGrabAndGoStore();
 
@@ -55,6 +57,7 @@ export const PinnedFavorites: React.FC<PinnedFavoritesProps> = ({
                             action={action}
                             showRemove
                             onRemove={() => unpinAction(action.id)}
+                            onNavigate={onNavigate}
                         />
                     ))}
                 </div>

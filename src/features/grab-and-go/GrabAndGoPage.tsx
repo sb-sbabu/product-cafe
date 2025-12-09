@@ -92,6 +92,7 @@ export const GrabAndGoPage: React.FC<GrabAndGoPageProps> = ({ onNavigate }) => {
                                 action={action}
                                 size="lg"
                                 showPin
+                                onNavigate={onNavigate}
                             />
                         ))}
                     </div>
@@ -102,15 +103,15 @@ export const GrabAndGoPage: React.FC<GrabAndGoPageProps> = ({ onNavigate }) => {
             {/* SMART SUGGESTIONS — AI-Powered Rail */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <section>
-                <SmartSuggestionRail maxItems={6} />
+                <SmartSuggestionRail maxItems={6} onNavigate={onNavigate} />
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* TWO-COLUMN: Pinned + Recent */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <section className="grid md:grid-cols-2 gap-6">
-                <PinnedFavorites onAddPin={() => setShowAllActions(true)} />
-                <RecentHistory maxItems={5} />
+                <PinnedFavorites onAddPin={() => setShowAllActions(true)} onNavigate={onNavigate} />
+                <RecentHistory maxItems={5} onNavigate={onNavigate} />
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
@@ -196,6 +197,7 @@ export const GrabAndGoPage: React.FC<GrabAndGoPageProps> = ({ onNavigate }) => {
                                     action={action}
                                     size="md"
                                     showPin
+                                    onNavigate={onNavigate}
                                 />
                             ))}
                         </div>

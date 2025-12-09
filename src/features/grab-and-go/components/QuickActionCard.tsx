@@ -4,7 +4,6 @@
  * Large, gradient card with icon and immediate action
  * ═══════════════════════════════════════════════════════════════════════════
  */
-
 import React from 'react';
 import { ExternalLink, Pin, PinOff } from 'lucide-react';
 import { cn } from '../../../lib/utils';
@@ -16,6 +15,7 @@ interface QuickActionCardProps {
     size?: 'sm' | 'md' | 'lg';
     showPin?: boolean;
     onAction?: () => void;
+    onNavigate?: (route: string) => void;
 }
 
 export const QuickActionCard: React.FC<QuickActionCardProps> = ({
@@ -23,6 +23,7 @@ export const QuickActionCard: React.FC<QuickActionCardProps> = ({
     size = 'md',
     showPin = false,
     onAction,
+    onNavigate,
 }) => {
     const { isPinned, pinAction, unpinAction, recordAccess } = useGrabAndGoStore();
     const pinned = isPinned(action.id);
@@ -31,9 +32,15 @@ export const QuickActionCard: React.FC<QuickActionCardProps> = ({
     const handleClick = () => {
         recordAccess(action.id);
 
-        if (action.url) {
+        // Internal route navigation (for Café features)
+        if (action.internalRoute && onNavigate) {
+            onNavigate(action.internalRoute);
+        }
+        // External URL
+        else if (action.url) {
             window.open(action.url, '_blank', 'noopener,noreferrer');
         }
+        // Custom action callback
         if (action.action) {
             action.action();
         }
@@ -148,6 +155,7 @@ interface QuickActionChipProps {
     onAction?: () => void;
     onRemove?: () => void;
     showRemove?: boolean;
+    onNavigate?: (route: string) => void;
 }
 
 export const QuickActionChip: React.FC<QuickActionChipProps> = ({
@@ -155,15 +163,22 @@ export const QuickActionChip: React.FC<QuickActionChipProps> = ({
     onAction,
     onRemove,
     showRemove = false,
+    onNavigate,
 }) => {
     const { recordAccess } = useGrabAndGoStore();
     const Icon = action.icon;
 
     const handleClick = () => {
         recordAccess(action.id);
-        if (action.url) {
+        // Internal route navigation
+        if (action.internalRoute && onNavigate) {
+            onNavigate(action.internalRoute);
+        }
+        // External URL
+        else if (action.url) {
             window.open(action.url, '_blank', 'noopener,noreferrer');
         }
+        // Custom action callback
         if (action.action) {
             action.action();
         }
