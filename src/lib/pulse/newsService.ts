@@ -522,12 +522,72 @@ export async function fetchNewsSignals(force = false): Promise<PulseSignal[]> {
         return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DEMO FALLBACK — If no API results, return authentic demo signals for demo purposes
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (signals.length === 0) {
+        console.log('[NewsService] No API results - returning demo signals');
+        return generateDemoSignals();
+    }
+
     // Cache results
     cachedSignals = signals.slice(0, 20);
     cacheTimestamp = Date.now();
     lastFetchTimestamp = new Date();
 
     return cachedSignals;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEMO SIGNALS — Realistic US Healthcare RCM/Eligibility focused demo data
+// ═══════════════════════════════════════════════════════════════════════════
+function generateDemoSignals(): PulseSignal[] {
+    const now = new Date().toISOString();
+    const demoData: Array<{
+        title: string;
+        summary: string;
+        domain: SignalDomain;
+        priority: SignalPriority;
+        companies?: string[];
+    }> = [
+            // COMPETITIVE (4 signals)
+            { title: "Waystar announces AI-powered prior authorization platform", summary: "New ML-based system promises 40% faster auth decisions. Direct competition to Availity's core PA functionality.", domain: 'COMPETITIVE', priority: 'critical', companies: ['Waystar'] },
+            { title: "Change Healthcare resumes full operations post-Optum integration", summary: "Full platform integration complete. Combined entity now serves 5,000+ hospitals with enhanced RCM capabilities.", domain: 'COMPETITIVE', priority: 'high', companies: ['Change Healthcare', 'Optum'] },
+            { title: "R1 RCM expands AI claims processing nationwide", summary: "Generative AI tools now available to all 900+ health system clients. Focus on denial prevention.", domain: 'COMPETITIVE', priority: 'high', companies: ['R1 RCM'] },
+            { title: "Experian Health partners with Blue Cross network", summary: "New eligibility verification partnership covers 180M+ lives. Real-time benefits check enhancement.", domain: 'COMPETITIVE', priority: 'high', companies: ['Experian Health'] },
+            // REGULATORY (3 signals)
+            { title: "CMS announces 2025 interoperability requirements", summary: "New FHIR R4 mandates for all payers by January 2025. Prior auth data sharing rules finalized. 90-day comment period.", domain: 'REGULATORY', priority: 'critical' },
+            { title: "HHS updates HIPAA compliance framework", summary: "Enhanced security requirements for health data exchange. 180-day implementation timeline for covered entities.", domain: 'REGULATORY', priority: 'high' },
+            { title: "Medicare Advantage payment rates increase 3.5% for 2025", summary: "CMS finalizes 2025 rates. Positive impact for payers and RCM vendors. Star ratings methodology unchanged.", domain: 'REGULATORY', priority: 'medium' },
+            // TECHNOLOGY (3 signals)
+            { title: "Epic Systems launches new payer platform module", summary: "Direct payer connectivity embedded in EHR. Could reduce need for clearinghouse connections. Slat integration.", domain: 'TECHNOLOGY', priority: 'high', companies: ['Epic'] },
+            { title: "Akasa raises $60M for generative AI RCM automation", summary: "Series C funding to accelerate AI-driven denials management. Direct threat to traditional RCM vendors.", domain: 'TECHNOLOGY', priority: 'high', companies: ['Akasa'] },
+            { title: "Cohere Health expands AI prior auth to 20 new payers", summary: "Rapid payer adoption of intelligent prior authorization. Processing 2M+ auths monthly with 99.2% accuracy.", domain: 'TECHNOLOGY', priority: 'medium', companies: ['Cohere Health'] },
+            // MARKET (2 signals)
+            { title: "UnitedHealth Group Q4 revenue exceeds expectations", summary: "Optum segment shows 12% YoY growth. Healthcare services demand strong. Tech investments accelerating.", domain: 'MARKET', priority: 'medium', companies: ['Optum'] },
+            { title: "PE firm acquires mid-market RCM company for $800M", summary: "Consolidation trend continues in healthcare IT. Third major RCM acquisition this quarter.", domain: 'MARKET', priority: 'medium' },
+            // NEWS (2 signals)
+            { title: "Healthcare IT spending projected to grow 8% in 2025", summary: "Gartner report highlights AI, interoperability, and patient experience priorities. RCM modernization key focus.", domain: 'NEWS', priority: 'low' },
+            { title: "Infinitus Systems announces voice AI partnership with major payer", summary: "AI-powered benefit verification calls now handling 50% of volume for 15-hospital network. 70% time savings.", domain: 'NEWS', priority: 'medium', companies: ['Infinitus'] },
+        ];
+
+    return demoData.map((d, i) => ({
+        id: `demo-pulse-${Date.now()}-${i}`,
+        title: d.title,
+        summary: d.summary,
+        url: '#',
+        domain: d.domain,
+        signalType: 'NEWS' as const,
+        priority: d.priority,
+        relevanceScore: d.priority === 'critical' ? 0.95 : d.priority === 'high' ? 0.8 : 0.6,
+        importanceScore: d.priority === 'critical' ? 0.9 : d.priority === 'high' ? 0.7 : 0.5,
+        source: { id: 'demo', name: 'Demo Source', tier: 1, type: 'api' as const },
+        publishedAt: new Date(Date.now() - i * 3600000).toISOString(),
+        processedAt: now,
+        entities: { companies: d.companies || [], people: [], topics: [], products: [], regulations: [] },
+        isRead: false,
+        isBookmarked: false,
+    }));
 }
 
 export function getLastFetchTimestamp(): Date | null {

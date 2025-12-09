@@ -60,6 +60,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
                 "shadow-[4px_0_24px_-8px_rgba(0,0,0,0.1)]",
                 // Smooth transitions
                 "transition-all duration-300 ease-out",
+                // Prevent horizontal overflow
+                "overflow-hidden",
                 // Width based on state
                 isExpanded ? "w-60" : "w-[72px]"
             )}

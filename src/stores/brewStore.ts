@@ -24,12 +24,85 @@ interface BrewStoreState {
     generateMockBrew: () => void;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// INITIAL DEMO BREW ITEMS — Pre-populated for demo purposes
+// ═══════════════════════════════════════════════════════════════════════════
+const INITIAL_BREW_ITEMS: BrewItem[] = [
+    {
+        id: 'demo-brew-1',
+        title: 'Sarah Chen recognized you',
+        message: 'Great work on the Q4 dashboard launch! Your attention to detail was amazing.',
+        source: 'toast',
+        roast: 'dark',
+        caffeineScore: 85,
+        flavorNotes: ['recognition', 'DO_IT_DIFFERENTLY', 'dashboard'],
+        timestamp: Date.now() - 1000 * 60 * 30, // 30 min ago
+        servedAt: Date.now() - 1000 * 60 * 30,
+        isRead: false,
+        link: '/toast',
+        actors: [{ name: 'Sarah Chen' }],
+    },
+    {
+        id: 'demo-brew-2',
+        title: 'New LOP Session Available',
+        message: 'Product Strategy 101 with Alex Rivera - Learn the fundamentals of product-led growth.',
+        source: 'lop',
+        roast: 'medium',
+        caffeineScore: 60,
+        flavorNotes: ['learning', 'session', 'product-strategy'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 2,
+        isRead: false,
+        link: '/lop',
+        actors: [{ name: 'Alex Rivera' }],
+    },
+    {
+        id: 'demo-brew-3',
+        title: 'Waystar announces AI prior auth platform',
+        message: 'Critical competitive signal: New ML-based system promises 40% faster authorization decisions.',
+        source: 'pulse',
+        roast: 'dark',
+        caffeineScore: 80,
+        flavorNotes: ['market', 'competitive', 'ai'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 4, // 4 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 4,
+        isRead: false,
+        link: '/pulse',
+    },
+    {
+        id: 'demo-brew-4',
+        title: 'Team standup reminder',
+        message: 'Daily standup in 15 minutes - Conference Room B or Zoom link',
+        source: 'system',
+        roast: 'light',
+        caffeineScore: 35,
+        flavorNotes: ['meeting', 'reminder'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 6, // 6 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 6,
+        isRead: true,
+    },
+    {
+        id: 'demo-brew-5',
+        title: 'Mike Johnson replied to your discussion',
+        message: 'Good point about the API versioning strategy. I think we should also consider...',
+        source: 'chat',
+        roast: 'medium',
+        caffeineScore: 50,
+        flavorNotes: ['discussion', 'reply'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 8, // 8 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 8,
+        isRead: false,
+        link: '/community',
+        actors: [{ name: 'Mike Johnson' }],
+    },
+];
+
 export const useBrewStore = create<BrewStoreState>((set, get) => ({
-    menu: [],
+    menu: INITIAL_BREW_ITEMS,
     isPressOpen: false,
     activeFilter: 'all',
     stats: {
-        steamPressure: 0,
+        steamPressure: INITIAL_BREW_ITEMS.filter(i => !i.isRead).length,
         dailyIntake: 0,
         favoriteRoast: 'medium',
     },

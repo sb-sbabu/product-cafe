@@ -258,7 +258,7 @@ export const PulseDashboard: React.FC = () => {
 
                 {/* Filters & Domain Tabs */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 flex-wrap max-w-full overflow-hidden">
                         {DOMAINS.map(domain => {
                             const config = domain === 'ALL' ? null : DOMAIN_CONFIG[domain];
                             const count = domain === 'ALL' ? stats.total : stats.byDomain[domain];

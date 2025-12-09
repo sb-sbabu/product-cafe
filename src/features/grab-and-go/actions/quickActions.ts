@@ -45,19 +45,19 @@ export interface QuickAction {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CATEGORY GRADIENTS — Soft, Sophisticated Neutral Tones (99.61% HCI)
-// Earthy, professional palette inspired by coffee/café aesthetics
+// CATEGORY GRADIENTS — Vibrant Toast-Style Colors (Colorful but not scary)
+// Inspired by Toast X value colors: purples, corals, ambers, teals, greens
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const CATEGORY_GRADIENTS: Record<QuickActionCategory, string> = {
-    cafe: 'from-stone-600 to-stone-700',           // Warm stone - café brand
-    create: 'from-slate-500 to-slate-600',         // Cool slate - productivity
-    tools: 'from-zinc-500 to-zinc-600',            // Neutral zinc - tools
-    meetings: 'from-neutral-500 to-neutral-600',   // Warm neutral - meetings
-    help: 'from-stone-500 to-stone-600',           // Earthy stone - support
-    planning: 'from-slate-600 to-slate-700',       // Deep slate - strategy
-    it: 'from-gray-500 to-gray-600',               // Pure gray - IT
-    learn: 'from-zinc-600 to-zinc-700',            // Rich zinc - education
+    cafe: 'from-purple-500 to-pink-500',         // Purple-Pink (Do It Differently)
+    create: 'from-violet-500 to-purple-600',     // Violet-Purple (Creative)
+    tools: 'from-sky-500 to-blue-600',           // Sky-Blue (Tools)
+    meetings: 'from-amber-400 to-orange-500',    // Amber-Orange (Be All In)
+    help: 'from-emerald-400 to-teal-500',        // Emerald-Teal (Explore Fearlessly)
+    planning: 'from-indigo-500 to-violet-600',   // Indigo-Violet (Strategy)
+    it: 'from-cyan-500 to-blue-500',             // Cyan-Blue (Technology)
+    learn: 'from-rose-400 to-pink-500',          // Rose-Pink (Healthcare Personal)
 };
 
 export const CATEGORY_LABELS: Record<QuickActionCategory, string> = {
