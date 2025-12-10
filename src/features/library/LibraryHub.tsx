@@ -11,7 +11,7 @@ import {
     FileText
 } from 'lucide-react';
 import { useLibraryStore } from './libraryStore';
-import { BookCard, CollectionCard, PathCard, ReadingStatsWidget, ResourceCard } from './components';
+import { BookCard, CollectionCard, PathCard, ReadingStatsWidget, ResourceCard, PathDetailPage, BookDetailPage, CreditsWidget } from './components';
 import { INTERNAL_PILLARS, convertToInternalResource } from './data/internalResources';
 import type { InternalResource } from './data/internalResources';
 import { getResourcesByCategory } from '../../data/mockData';
@@ -35,9 +35,15 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
         collections,
         paths,
         userLibrary,
+        currentView,
+        selectedBookId,
+        selectedPathId,
         setSearchQuery: setStoreSearch,
         getFilteredBooks,
-        getFeaturedCollections
+        getFeaturedCollections,
+        navigateToBook,
+        navigateToPath,
+        navigateToHub
     } = useLibraryStore();
 
     const featuredCollections = getFeaturedCollections();
@@ -81,8 +87,41 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
         );
     }
 
+    // If viewing a book detail page
+    if (currentView === 'book' && selectedBookId) {
+        return (
+            <BookDetailPage
+                bookId={selectedBookId}
+                onBack={navigateToHub}
+                onNavigate={(section) => {
+                    if (section.startsWith('library/path/')) {
+                        navigateToPath(section.split('/').pop()!);
+                    }
+                }}
+            />
+        );
+    }
+
+    // If viewing a path detail page
+    if (currentView === 'path' && selectedPathId) {
+        return (
+            <PathDetailPage
+                pathId={selectedPathId}
+                onBack={navigateToHub}
+                onNavigate={(section) => {
+                    if (section.startsWith('library/book/')) {
+                        navigateToBook(section.split('/').pop()!);
+                    }
+                }}
+            />
+        );
+    }
+
     return (
         <div className="space-y-8 animate-fade-in">
+            {/* Credits Widget - Top Banner */}
+            <CreditsWidget variant="compact" />
+
             {/* Hero Header */}
             <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cafe-600 via-cafe-500 to-amber-500 p-8 text-white">
                 <div className="absolute inset-0 bg-[url('/patterns/library-pattern.svg')] opacity-10" />
@@ -210,7 +249,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                     key={book.id}
                                     book={book}
                                     variant="featured"
-                                    onClick={() => onNavigate?.(`library/book/${book.id}`)}
+                                    onClick={() => navigateToBook(book.id)}
                                 />
                             ))}
                         </div>
@@ -227,7 +266,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                 <BookCard
                                     key={book.id}
                                     book={book}
-                                    onClick={() => onNavigate?.(`library/book/${book.id}`)}
+                                    onClick={() => navigateToBook(book.id)}
                                 />
                             ))}
                         </div>
@@ -344,7 +383,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                 <PathCard
                                     key={path.id}
                                     path={path}
-                                    onClick={() => onNavigate?.(`library/path/${path.id}`)}
+                                    onClick={() => navigateToPath(path.id)}
                                 />
                             ))}
                         </div>
@@ -366,7 +405,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                 <PathCard
                                     key={path.id}
                                     path={path}
-                                    onClick={() => onNavigate?.(`library/path/${path.id}`)}
+                                    onClick={() => navigateToPath(path.id)}
                                 />
                             ))}
                         </div>
@@ -405,7 +444,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                                     key={book.id}
                                                     book={book}
                                                     variant="compact"
-                                                    onClick={() => onNavigate?.(`library/book/${book.id}`)}
+                                                    onClick={() => navigateToBook(book.id)}
                                                 />
                                             );
                                         })}
@@ -438,7 +477,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                                 key={book.id}
                                                 book={book}
                                                 variant="compact"
-                                                onClick={() => onNavigate?.(`library/book/${book.id}`)}
+                                                onClick={() => navigateToBook(book.id)}
                                             />
                                         );
                                     })}

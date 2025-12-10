@@ -8,3 +8,4 @@ export { EmptyState } from './EmptyState';
 export { LibrarySkeletonCard, LibrarySkeletonGrid } from './LibrarySkeletons';
 export { PathDetailPage } from './PathDetailPage';
 export { BookDetailPage } from './BookDetailPage';
+export { CreditsWidget } from './CreditsWidget';

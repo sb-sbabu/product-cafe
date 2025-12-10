@@ -12,6 +12,8 @@ import type {
     PathEnrollment,
     LibraryFilters
 } from './types';
+import type { UserCredits, CreditActivity } from './gamification';
+import { initialUserCredits, CREDIT_VALUES, BADGE_DEFINITIONS, getLevelInfo } from './gamification';
 import {
     BOOKS,
     getBookById,
@@ -37,12 +39,14 @@ interface LibraryState {
 
     // UI state
     filters: LibraryFilters;
+    searchQuery: string;
+    currentView: 'hub' | 'book' | 'path';
     selectedBookId: string | null;
     selectedPathId: string | null;
-    searchQuery: string;
 
     // User data
     userLibrary: UserLibrary;
+    userCredits: UserCredits;
 
     // Actions - Data accessors
     getBook: (id: string) => Book | undefined;
@@ -97,6 +101,15 @@ interface LibraryState {
         goalProgress: number;
         highlightsCount: number;
     };
+
+    // Actions - Credits
+    earnCredits: (type: CreditActivity['type'], description: string, metadata?: Record<string, unknown>) => void;
+    checkAndAwardBadges: () => void;
+
+    // Actions - View
+    navigateToBook: (bookId: string) => void;
+    navigateToPath: (pathId: string) => void;
+    navigateToHub: () => void;
 }
 
 const initialUserLibrary: UserLibrary = {
@@ -127,9 +140,11 @@ export const useLibraryStore = create<LibraryState>()(
             selectedBookId: null,
             selectedPathId: null,
             searchQuery: '',
+            currentView: 'hub' as const,
 
             // User data
             userLibrary: initialUserLibrary,
+            userCredits: initialUserCredits,
 
             // Data accessors
             getBook: (id) => getBookById(id),
@@ -406,12 +421,79 @@ export const useLibraryStore = create<LibraryState>()(
                         : 0,
                     highlightsCount: userLibrary.highlights.length
                 };
-            }
+            },
+
+            // Credits actions
+            earnCredits: (type, description, metadata) => set(state => {
+                const credits = CREDIT_VALUES[type] || 5;
+                const now = new Date().toISOString();
+                const today = now.split('T')[0];
+                const lastActivity = state.userCredits.lastActivityDate.split('T')[0];
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+                let newStreak = state.userCredits.currentStreak;
+                if (lastActivity === yesterday) {
+                    newStreak = state.userCredits.currentStreak + 1;
+                } else if (lastActivity !== today) {
+                    newStreak = 1;
+                }
+
+                const newActivity: CreditActivity = {
+                    id: `act-${Date.now()}`,
+                    type,
+                    description,
+                    credits,
+                    timestamp: now,
+                    metadata
+                };
+
+                return {
+                    userCredits: {
+                        ...state.userCredits,
+                        totalCredits: state.userCredits.totalCredits + credits,
+                        currentStreak: newStreak,
+                        longestStreak: Math.max(state.userCredits.longestStreak, newStreak),
+                        level: getLevelInfo(state.userCredits.totalCredits + credits).level,
+                        activities: [newActivity, ...state.userCredits.activities].slice(0, 50),
+                        lastActivityDate: now
+                    }
+                };
+            }),
+
+            checkAndAwardBadges: () => {
+                // Badge checking logic - can be expanded
+                const state = get();
+                const completedBooks = state.userLibrary.completedBookIds.length;
+                const newBadges = [...state.userCredits.badges];
+
+                // Check first book badge
+                if (completedBooks >= 1 && !newBadges.find(b => b.id === 'first_book')) {
+                    const badgeDef = BADGE_DEFINITIONS.find(b => b.id === 'first_book');
+                    if (badgeDef) {
+                        newBadges.push({
+                            id: badgeDef.id,
+                            name: badgeDef.name,
+                            description: badgeDef.description,
+                            icon: badgeDef.icon,
+                            tier: badgeDef.tier,
+                            earnedAt: new Date().toISOString()
+                        });
+                    }
+                }
+
+                set({ userCredits: { ...state.userCredits, badges: newBadges } });
+            },
+
+            // Navigation actions
+            navigateToBook: (bookId) => set({ currentView: 'book', selectedBookId: bookId }),
+            navigateToPath: (pathId) => set({ currentView: 'path', selectedPathId: pathId }),
+            navigateToHub: () => set({ currentView: 'hub', selectedBookId: null, selectedPathId: null })
         }),
         {
             name: 'cafe-library-store',
             partialize: (state) => ({
                 userLibrary: state.userLibrary,
+                userCredits: state.userCredits,
                 filters: state.filters
             })
         }
