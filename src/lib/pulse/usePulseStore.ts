@@ -137,7 +137,7 @@ export const usePulseStore = create<PulseStore>()(
                 set({ isLoading: true, error: null });
 
                 try {
-                    const signals = await fetchNewsSignals(force);
+                    const apiSignals = await fetchNewsSignals(force);
                     const lastFetchedAt = getLastFetchTimestamp();
 
                     // Preserve read state from existing signals
@@ -145,10 +145,28 @@ export const usePulseStore = create<PulseStore>()(
                     const readSignalIds = new Set(existingSignals.filter(s => s.isRead).map(s => s.id));
                     const bookmarkedIds = new Set(existingSignals.filter(s => s.isBookmarked).map(s => s.id));
 
-                    const mergedSignals = signals.map((s: PulseSignal) => ({
+                    // ═══════════════════════════════════════════════════════════
+                    // DEMO SIGNAL PRESERVATION
+                    // Always keep demo signals to ensure rich demo experience
+                    // Merge API signals with existing demo signals
+                    // ═══════════════════════════════════════════════════════════
+
+                    // Get existing demo signals (those starting with 'demo-pulse-')
+                    const existingDemoSignals = existingSignals.filter(s => s.id.startsWith('demo-pulse-'));
+
+                    // Merge: API signals first, then demo signals that aren't duplicates
+                    const apiSignalTitles = new Set(apiSignals.map(s => s.title.toLowerCase()));
+                    const uniqueDemoSignals = existingDemoSignals.filter(
+                        demo => !apiSignalTitles.has(demo.title.toLowerCase())
+                    );
+
+                    // Combine: real API signals + demo signals for full experience
+                    const allSignals = [...apiSignals, ...uniqueDemoSignals];
+
+                    const mergedSignals = allSignals.map((s: PulseSignal) => ({
                         ...s,
-                        isRead: readSignalIds.has(s.id),
-                        isBookmarked: bookmarkedIds.has(s.id),
+                        isRead: readSignalIds.has(s.id) ? true : s.isRead,
+                        isBookmarked: bookmarkedIds.has(s.id) ? true : s.isBookmarked,
                     }));
 
                     // ═══════════════════════════════════════════════════════════
