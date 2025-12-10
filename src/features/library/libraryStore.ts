@@ -85,6 +85,8 @@ interface LibraryState {
     getPathEnrollment: (pathId: string) => PathEnrollment | undefined;
     isEnrolledInPath: (pathId: string) => boolean;
     getPathProgress: (pathId: string) => number;
+    getModuleProgress: (pathId: string, moduleId: string) => number;
+    completeModule: (pathId: string, moduleId: string) => void;
 
     // Actions - Goals
     setReadingGoal: (booksPerYear: number) => void;
@@ -359,6 +361,28 @@ export const useLibraryStore = create<LibraryState>()(
                 if (!enrollment || !path) return 0;
                 return (enrollment.completedModuleIds.length / path.modules.length) * 100;
             },
+
+            getModuleProgress: (pathId, moduleId) => {
+                const enrollment = get().userLibrary.activePaths.find(p => p.pathId === pathId);
+                if (!enrollment) return 0;
+                return enrollment.completedModuleIds.includes(moduleId) ? 100 : 0;
+            },
+
+            completeModule: (pathId, moduleId) => set(state => ({
+                userLibrary: {
+                    ...state.userLibrary,
+                    activePaths: state.userLibrary.activePaths.map(enrollment =>
+                        enrollment.pathId === pathId
+                            ? {
+                                ...enrollment,
+                                completedModuleIds: enrollment.completedModuleIds.includes(moduleId)
+                                    ? enrollment.completedModuleIds
+                                    : [...enrollment.completedModuleIds, moduleId]
+                            }
+                            : enrollment
+                    )
+                }
+            })),
 
             // Goals actions
             setReadingGoal: (booksPerYear) => set(state => ({
