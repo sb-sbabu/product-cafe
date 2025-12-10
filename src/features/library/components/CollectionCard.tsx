@@ -13,10 +13,14 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({ collection, book
     return (
         <div
             onClick={onClick}
+            onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+            role="article"
+            tabIndex={0}
+            aria-label={`${collection.title} collection: ${collection.description}, ${bookCount} books`}
             className={cn(
-                'group relative overflow-hidden rounded-2xl p-6 cursor-pointer',
-                'bg-white border border-gray-100 hover:border-cafe-200',
-                'hover:shadow-lg transition-all duration-300'
+                'group relative p-5 rounded-xl bg-white border border-gray-100',
+                'hover:border-cafe-200 hover:shadow-lg transition-all cursor-pointer',
+                'focus:outline-none focus:ring-2 focus:ring-cafe-300 focus:ring-offset-2'
             )}
         >
             {/* Background Decoration */}

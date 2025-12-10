@@ -26,9 +26,14 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ resource, variant = 
         return (
             <div
                 onClick={handleClick}
+                onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+                role="button"
+                tabIndex={0}
+                aria-label={`${resource.title} on ${sourceBadge.label}${resource.estimatedTime ? `, ${resource.estimatedTime} minute read` : ''}`}
                 className={cn(
                     'flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100',
-                    'hover:border-cafe-200 hover:shadow-md transition-all cursor-pointer group'
+                    'hover:border-cafe-200 hover:shadow-md transition-all cursor-pointer group',
+                    'focus:outline-none focus:ring-2 focus:ring-cafe-300 focus:ring-offset-2'
                 )}
             >
                 <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-lg shrink-0">
@@ -59,9 +64,14 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ resource, variant = 
     return (
         <div
             onClick={handleClick}
+            onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+            role="article"
+            tabIndex={0}
+            aria-label={`${resource.title}: ${resource.description.slice(0, 100)}...`}
             className={cn(
                 'group relative bg-white rounded-xl border border-gray-100 overflow-hidden',
-                'hover:border-cafe-200 hover:shadow-lg transition-all cursor-pointer'
+                'hover:border-cafe-200 hover:shadow-lg transition-all cursor-pointer',
+                'focus:outline-none focus:ring-2 focus:ring-cafe-300 focus:ring-offset-2'
             )}
         >
             {/* Header */}

@@ -35,10 +35,15 @@ export const PathCard: React.FC<PathCardProps> = ({ path, onClick }) => {
     return (
         <div
             onClick={onClick}
+            onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+            role="article"
+            tabIndex={0}
+            aria-label={`${path.type === 'career' ? 'Career' : 'Skill'} path: ${path.title}, ${path.durationWeeks} weeks, ${totalBooks} books${isEnrolled ? `, ${Math.round(progress)}% complete` : ''}`}
             className={cn(
                 'group relative overflow-hidden rounded-2xl cursor-pointer',
                 'bg-white border border-gray-100 hover:border-cafe-200',
-                'hover:shadow-xl transition-all duration-300'
+                'hover:shadow-xl transition-all duration-300',
+                'focus:outline-none focus:ring-2 focus:ring-cafe-400 focus:ring-offset-2'
             )}
         >
             {/* Header with gradient */}
@@ -138,10 +143,12 @@ export const PathCard: React.FC<PathCardProps> = ({ path, onClick }) => {
                 ) : (
                     <button
                         onClick={handleEnroll}
+                        aria-label={`Start learning path: ${path.title}`}
                         className={cn(
                             'w-full py-2.5 rounded-xl text-sm font-semibold',
                             'bg-cafe-500 text-white hover:bg-cafe-600',
-                            'flex items-center justify-center gap-2 transition-colors'
+                            'flex items-center justify-center gap-2 transition-colors',
+                            'focus:outline-none focus:ring-2 focus:ring-cafe-400 focus:ring-offset-2'
                         )}
                     >
                         <Play className="w-4 h-4" />

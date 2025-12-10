@@ -46,9 +46,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'default', o
         return (
             <div
                 onClick={onClick}
+                onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+                role="button"
+                tabIndex={0}
+                aria-label={`${book.title} by ${authorNames}${isCompleted ? ', completed' : ''}`}
                 className={cn(
                     'flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100',
-                    'hover:border-cafe-200 hover:shadow-md transition-all cursor-pointer group'
+                    'hover:border-cafe-200 hover:shadow-md transition-all cursor-pointer group',
+                    'focus:outline-none focus:ring-2 focus:ring-cafe-300 focus:ring-offset-2'
                 )}
             >
                 <div className="w-12 h-16 bg-gradient-to-br from-cafe-100 to-cafe-200 rounded-lg flex items-center justify-center shrink-0">
@@ -76,10 +81,15 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'default', o
         return (
             <div
                 onClick={onClick}
+                onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+                role="article"
+                tabIndex={0}
+                aria-label={`Featured book: ${book.title} by ${authorNames}`}
                 className={cn(
                     'relative overflow-hidden rounded-2xl bg-gradient-to-br from-cafe-50 to-white',
                     'border border-cafe-200 hover:border-cafe-300 hover:shadow-xl',
-                    'transition-all cursor-pointer group p-6'
+                    'transition-all cursor-pointer group p-6',
+                    'focus:outline-none focus:ring-2 focus:ring-cafe-400 focus:ring-offset-2'
                 )}
             >
                 <div className="flex gap-6">
@@ -169,9 +179,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'default', o
     return (
         <div
             onClick={onClick}
+            onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+            role="article"
+            tabIndex={0}
+            aria-label={`${book.title} by ${authorNames}, ${book.rating} stars, ${book.readingTimeHours} hour read`}
             className={cn(
                 'group relative bg-white rounded-xl border border-gray-100 overflow-hidden',
-                'hover:border-cafe-200 hover:shadow-lg transition-all cursor-pointer'
+                'hover:border-cafe-200 hover:shadow-lg transition-all cursor-pointer',
+                'focus:outline-none focus:ring-2 focus:ring-cafe-300 focus:ring-offset-2'
             )}
         >
             {/* Book Cover */}
