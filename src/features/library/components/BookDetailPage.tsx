@@ -10,10 +10,13 @@ import {
     ExternalLink,
     TrendingUp,
     User,
-    Calendar
+    Calendar,
+    Zap,
+    Award
 } from 'lucide-react';
 import { useLibraryStore } from '../libraryStore';
 import { getAuthorsByIds } from '../data/authors';
+import { calculateBookCredits, getCreditTier, getAuthorBadges } from '../creditUtils';
 import { Card } from '../../../components/ui/Card';
 import { cn } from '../../../lib/utils';
 
@@ -42,6 +45,8 @@ export const BookDetailPage: React.FC<BookDetailPageProps> = ({ bookId, onBack, 
     const isCompleted = userLibrary.completedBookIds.includes(bookId);
     const authors = book ? getAuthorsByIds(book.authorIds) : [];
     const authorNames = authors.map(a => a.name).join(', ') || 'Various Authors';
+    const bookCredits = book ? calculateBookCredits(book) : 0;
+    const creditTier = getCreditTier(bookCredits);
 
     // Find paths that include this book
     const relatedPaths = paths.filter(path =>
@@ -150,6 +155,10 @@ export const BookDetailPage: React.FC<BookDetailPageProps> = ({ bookId, onBack, 
                         )}>
                             {book.difficulty.charAt(0).toUpperCase() + book.difficulty.slice(1)}
                         </span>
+                        <div className={cn('flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold', creditTier.color)}>
+                            <Zap className="w-4 h-4" />
+                            +{bookCredits} credits
+                        </div>
                     </div>
 
                     {/* Action Buttons */}
@@ -244,6 +253,61 @@ export const BookDetailPage: React.FC<BookDetailPageProps> = ({ bookId, onBack, 
                             ))}
                         </ul>
                     </Card>
+                </section>
+            )}
+
+            {/* Expert Authors */}
+            {authors.length > 0 && (
+                <section>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Award className="w-5 h-5 text-cafe-500" />
+                        About the Author{authors.length > 1 ? 's' : ''}
+                    </h2>
+                    <div className="space-y-4">
+                        {authors.map(author => {
+                            const authorBadges = getAuthorBadges(author.id);
+                            return (
+                                <Card key={author.id} className="p-5">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-cafe-200 to-cafe-400 rounded-full flex items-center justify-center text-white text-lg font-bold shrink-0">
+                                            {author.name.split(' ').map(n => n[0]).join('')}
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-bold text-gray-900">{author.name}</h3>
+                                            <p className="text-gray-600 text-sm mt-1">{author.bio}</p>
+
+                                            {/* Expert Badges */}
+                                            {authorBadges.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-3">
+                                                    {authorBadges.map(badge => (
+                                                        <span
+                                                            key={badge.id}
+                                                            className={cn('flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border', badge.color)}
+                                                            title={badge.description}
+                                                        >
+                                                            <span>{badge.icon}</span>
+                                                            {badge.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Expertise */}
+                                            {author.expertise.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-3">
+                                                    {author.expertise.slice(0, 4).map(exp => (
+                                                        <span key={exp} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                                                            {exp}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Card>
+                            );
+                        })}
+                    </div>
                 </section>
             )}
 

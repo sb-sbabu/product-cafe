@@ -1,8 +1,9 @@
 import React from 'react';
-import { Book, Clock, Star, BookOpen, Check, Plus, Bookmark } from 'lucide-react';
+import { Book, Clock, Star, BookOpen, Check, Plus, Bookmark, Zap } from 'lucide-react';
 import type { Book as BookType } from '../types';
 import { useLibraryStore } from '../libraryStore';
 import { getAuthorsByIds } from '../data/authors';
+import { calculateBookCredits, getCreditTier } from '../creditUtils';
 import { cn } from '../../../lib/utils';
 
 interface BookCardProps {
@@ -19,6 +20,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'default', o
     const inReadingList = isInReadingList(book.id);
     const progress = getBookProgress(book.id);
     const isCompleted = userLibrary.completedBookIds.includes(book.id);
+    const bookCredits = calculateBookCredits(book);
+    const creditTier = getCreditTier(bookCredits);
 
     const handleToggleReadingList = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -136,6 +139,10 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'default', o
                                 <span className="text-sm">{book.readingTimeHours}h read</span>
                             </div>
                             {getDifficultyBadge()}
+                            <div className={cn('flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold', creditTier.color)}>
+                                <Zap className="w-3 h-3" />
+                                +{bookCredits} credits
+                            </div>
                         </div>
 
                         {/* Key Takeaways Preview */}
@@ -235,6 +242,10 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'default', o
                     <div className="flex items-center gap-1 text-gray-400">
                         <Clock className="w-3.5 h-3.5" />
                         <span className="text-xs">{book.readingTimeHours}h</span>
+                    </div>
+                    <div className={cn('flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold', creditTier.color)}>
+                        <Zap className="w-3 h-3" />
+                        +{bookCredits}
                     </div>
                 </div>
 

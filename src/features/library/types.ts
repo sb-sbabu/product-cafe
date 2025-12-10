@@ -37,6 +37,7 @@ export interface Book {
     amazonUrl?: string;
     description: string;
     whyShouldRead: string[];
+    creditReward?: number; // Credits earned for completing this book
 }
 
 export interface Collection {
