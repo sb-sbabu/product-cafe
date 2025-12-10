@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Search,
     BookOpen,
@@ -7,10 +7,14 @@ import {
     Sparkles,
     ArrowRight,
     TrendingUp,
-    Star
+    Star,
+    FileText
 } from 'lucide-react';
 import { useLibraryStore } from './libraryStore';
-import { BookCard, CollectionCard, PathCard, ReadingStatsWidget } from './components';
+import { BookCard, CollectionCard, PathCard, ReadingStatsWidget, ResourceCard } from './components';
+import { INTERNAL_PILLARS, convertToInternalResource } from './data/internalResources';
+import type { InternalResource } from './data/internalResources';
+import { getResourcesByCategory } from '../../data/mockData';
 import { Card } from '../../components/ui/Card';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -23,7 +27,8 @@ interface LibraryHubProps {
 export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
     const isLoading = usePageLoading(400);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'discover' | 'paths' | 'my-library'>('discover');
+    const [activeTab, setActiveTab] = useState<'discover' | 'resources' | 'paths' | 'my-library'>('discover');
+    const [activePillar, setActivePillar] = useState<string | null>(null);
 
     const {
         books,
@@ -39,6 +44,16 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
     const featuredBooks = books.filter(b => b.collections.includes('featured')).slice(0, 4);
     const careerPaths = paths.filter(p => p.type === 'career');
     const skillPaths = paths.filter(p => p.type === 'skill');
+
+    // Internal resources from mockData
+    const internalResources: InternalResource[] = useMemo(() => {
+        const libraryResources = getResourcesByCategory('library');
+        return libraryResources.map(convertToInternalResource);
+    }, []);
+
+    const filteredResources = activePillar
+        ? internalResources.filter(r => r.pillar === activePillar)
+        : internalResources;
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
@@ -135,6 +150,7 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
             <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit">
                 {[
                     { id: 'discover', label: 'Discover', icon: Sparkles },
+                    { id: 'resources', label: 'Internal Resources', icon: FileText }, // Added new tab
                     { id: 'paths', label: 'Learning Paths', icon: Route },
                     { id: 'my-library', label: 'My Library', icon: BookOpen }
                 ].map(tab => {
@@ -221,6 +237,89 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                                     View All {books.length} Books
                                 </button>
                             </div>
+                        )}
+                    </section>
+                </>
+            )}
+
+            {/* Internal Resources Tab */}
+            {activeTab === 'resources' && (
+                <>
+                    {/* Pillar Filter */}
+                    <section className="flex items-center gap-3 flex-wrap">
+                        <button
+                            onClick={() => setActivePillar(null)}
+                            className={cn(
+                                'px-4 py-2 rounded-xl text-sm font-medium transition-all',
+                                !activePillar
+                                    ? 'bg-cafe-500 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            )}
+                        >
+                            All Resources
+                        </button>
+                        {INTERNAL_PILLARS.map(pillar => (
+                            <button
+                                key={pillar.id}
+                                onClick={() => setActivePillar(pillar.id)}
+                                className={cn(
+                                    'px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2',
+                                    activePillar === pillar.id
+                                        ? 'bg-cafe-500 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                )}
+                            >
+                                <span>{pillar.icon}</span>
+                                {pillar.title}
+                            </button>
+                        ))}
+                    </section>
+
+                    {/* Pillar Description */}
+                    {activePillar && (
+                        <section className="bg-cafe-50 rounded-xl p-4 border border-cafe-100">
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
+                                    INTERNAL_PILLARS.find(p => p.id === activePillar)?.color
+                                )}>
+                                    {INTERNAL_PILLARS.find(p => p.id === activePillar)?.icon}
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-900">
+                                        {INTERNAL_PILLARS.find(p => p.id === activePillar)?.title}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                        {INTERNAL_PILLARS.find(p => p.id === activePillar)?.description}
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Resources Grid */}
+                    <section>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">
+                                {activePillar
+                                    ? INTERNAL_PILLARS.find(p => p.id === activePillar)?.title
+                                    : 'All Internal Resources'}
+                                <span className="text-gray-400 font-normal ml-2">({filteredResources.length})</span>
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredResources.map(resource => (
+                                <ResourceCard key={resource.id} resource={resource} />
+                            ))}
+                        </div>
+                        {filteredResources.length === 0 && (
+                            <Card className="p-12 text-center">
+                                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                <h3 className="font-medium text-gray-900 mb-2">No resources found</h3>
+                                <p className="text-gray-500 text-sm">
+                                    Try selecting a different pillar or check back later.
+                                </p>
+                            </Card>
                         )}
                     </section>
                 </>
