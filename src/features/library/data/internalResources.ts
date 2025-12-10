@@ -68,25 +68,26 @@ export const SOURCE_BADGES: Record<string, { label: string; color: string }> = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function convertToInternalResource(resource: any): InternalResource {
+    // Defensive coding: handle missing properties gracefully
     return {
-        id: resource.id,
-        slug: resource.slug,
-        title: resource.title,
-        description: resource.description,
-        url: resource.url,
-        category: resource.category as InternalResource['category'],
-        pillar: resource.pillar as InternalResource['pillar'],
-        contentType: resource.contentType as InternalResource['contentType'],
-        sourceSystem: resource.sourceSystem as InternalResource['sourceSystem'],
-        tags: resource.tags,
-        audience: resource.audience,
-        difficulty: resource.difficulty as InternalResource['difficulty'],
-        estimatedTime: resource.estimatedTime,
-        isFeatured: resource.isFeatured,
-        isArchived: resource.isArchived,
-        expertIds: resource.expertIds,
-        viewCount: resource.viewCount,
-        helpfulCount: resource.helpfulCount,
-        updatedAt: resource.updatedAt
+        id: resource?.id ?? `resource-${Date.now()}`,
+        slug: resource?.slug ?? '',
+        title: resource?.title ?? 'Untitled Resource',
+        description: resource?.description ?? '',
+        url: resource?.url ?? '#',
+        category: (resource?.category ?? 'library') as InternalResource['category'],
+        pillar: (resource?.pillar ?? 'product-craft') as InternalResource['pillar'],
+        contentType: (resource?.contentType ?? 'doc') as InternalResource['contentType'],
+        sourceSystem: (resource?.sourceSystem ?? 'internal') as InternalResource['sourceSystem'],
+        tags: Array.isArray(resource?.tags) ? resource.tags : [],
+        audience: Array.isArray(resource?.audience) ? resource.audience : [],
+        difficulty: resource?.difficulty as InternalResource['difficulty'],
+        estimatedTime: typeof resource?.estimatedTime === 'number' ? resource.estimatedTime : undefined,
+        isFeatured: Boolean(resource?.isFeatured),
+        isArchived: Boolean(resource?.isArchived),
+        expertIds: Array.isArray(resource?.expertIds) ? resource.expertIds : undefined,
+        viewCount: typeof resource?.viewCount === 'number' ? resource.viewCount : 0,
+        helpfulCount: typeof resource?.helpfulCount === 'number' ? resource.helpfulCount : 0,
+        updatedAt: resource?.updatedAt ?? new Date().toISOString()
     };
 }
