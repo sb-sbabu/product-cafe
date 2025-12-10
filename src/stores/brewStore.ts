@@ -26,74 +26,236 @@ interface BrewStoreState {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INITIAL DEMO BREW ITEMS — Pre-populated for demo purposes
+// 2-5 items per category for rich demo experience
 // ═══════════════════════════════════════════════════════════════════════════
 const INITIAL_BREW_ITEMS: BrewItem[] = [
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RECOGNITION (Toast) — 4 items
+    // ═══════════════════════════════════════════════════════════════════════════
     {
-        id: 'demo-brew-1',
+        id: 'demo-toast-1',
         title: 'Sarah Chen recognized you',
-        message: 'Great work on the Q4 dashboard launch! Your attention to detail was amazing.',
+        message: 'Amazing work on the Q4 dashboard launch! Your attention to detail saved us countless hours.',
         source: 'toast',
         roast: 'dark',
-        caffeineScore: 85,
+        caffeineScore: 90,
         flavorNotes: ['recognition', 'DO_IT_DIFFERENTLY', 'dashboard'],
-        timestamp: Date.now() - 1000 * 60 * 30, // 30 min ago
-        servedAt: Date.now() - 1000 * 60 * 30,
+        timestamp: Date.now() - 1000 * 60 * 15, // 15 min ago
+        servedAt: Date.now() - 1000 * 60 * 15,
         isRead: false,
         link: '/toast',
         actors: [{ name: 'Sarah Chen' }],
     },
     {
-        id: 'demo-brew-2',
-        title: 'New LOP Session Available',
-        message: 'Product Strategy 101 with Alex Rivera - Learn the fundamentals of product-led growth.',
-        source: 'lop',
-        roast: 'medium',
-        caffeineScore: 60,
-        flavorNotes: ['learning', 'session', 'product-strategy'],
+        id: 'demo-toast-2',
+        title: 'Alex Rivera gave you kudos',
+        message: 'Your presentation to the leadership team was outstanding. You made complex data simple!',
+        source: 'toast',
+        roast: 'dark',
+        caffeineScore: 85,
+        flavorNotes: ['recognition', 'OWN_THE_OUTCOME', 'presentation'],
         timestamp: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
         servedAt: Date.now() - 1000 * 60 * 60 * 2,
+        isRead: false,
+        link: '/toast',
+        actors: [{ name: 'Alex Rivera' }],
+    },
+    {
+        id: 'demo-toast-3',
+        title: 'Team Toast from Product Analytics',
+        message: 'Shoutout to everyone who contributed to the eligibility improvements. 15% accuracy increase!',
+        source: 'toast',
+        roast: 'medium',
+        caffeineScore: 75,
+        flavorNotes: ['recognition', 'BE_ALL_IN', 'team'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 5, // 5 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 5,
+        isRead: false,
+        link: '/toast',
+        actors: [{ name: 'Product Analytics Team' }],
+    },
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MARKET/PULSE — 5 items (Competitive Intelligence)
+    // ═══════════════════════════════════════════════════════════════════════════
+    {
+        id: 'demo-pulse-1',
+        title: 'Waystar announces AI prior auth platform',
+        message: 'Critical: New ML-based system promises 40% faster authorization decisions. Direct competitor threat.',
+        source: 'pulse',
+        roast: 'dark',
+        caffeineScore: 95,
+        flavorNotes: ['market', 'competitive', 'ai', 'critical'],
+        timestamp: Date.now() - 1000 * 60 * 45, // 45 min ago
+        servedAt: Date.now() - 1000 * 60 * 45,
+        isRead: false,
+        link: '/pulse',
+    },
+    {
+        id: 'demo-pulse-2',
+        title: 'Change Healthcare completes Optum integration',
+        message: 'Combined entity now serves 5,000+ hospitals. Major market consolidation complete.',
+        source: 'pulse',
+        roast: 'dark',
+        caffeineScore: 88,
+        flavorNotes: ['market', 'competitive', 'merger'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 3, // 3 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 3,
+        isRead: false,
+        link: '/pulse',
+    },
+    {
+        id: 'demo-pulse-3',
+        title: 'CMS 2025 interoperability rules finalized',
+        message: 'FHIR R4 mandates for all payers by Jan 2025. Prior auth data sharing requirements confirmed.',
+        source: 'pulse',
+        roast: 'medium',
+        caffeineScore: 70,
+        flavorNotes: ['market', 'regulatory', 'cms'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 6, // 6 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 6,
+        isRead: false,
+        link: '/pulse',
+    },
+    {
+        id: 'demo-pulse-4',
+        title: 'Akasa raises $60M for AI RCM',
+        message: 'Series C funding to accelerate generative AI for denials management. Growing competitor.',
+        source: 'pulse',
+        roast: 'medium',
+        caffeineScore: 65,
+        flavorNotes: ['market', 'competitive', 'funding'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 8, // 8 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 8,
+        isRead: true,
+        link: '/pulse',
+    },
+    {
+        id: 'demo-pulse-5',
+        title: 'Epic launches payer platform module',
+        message: 'Direct payer connectivity in EHR. Could reduce clearinghouse dependency.',
+        source: 'pulse',
+        roast: 'medium',
+        caffeineScore: 60,
+        flavorNotes: ['market', 'technology', 'ehr'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 12, // 12 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 12,
+        isRead: true,
+        link: '/pulse',
+    },
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LEARNING (LOP) — 3 items
+    // ═══════════════════════════════════════════════════════════════════════════
+    {
+        id: 'demo-lop-1',
+        title: 'New LOP: Product Strategy 101',
+        message: 'Alex Rivera presents fundamentals of product-led growth. Live tomorrow at 2pm ET.',
+        source: 'lop',
+        roast: 'medium',
+        caffeineScore: 65,
+        flavorNotes: ['learning', 'session', 'product-strategy'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 1, // 1 hour ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 1,
         isRead: false,
         link: '/lop',
         actors: [{ name: 'Alex Rivera' }],
     },
     {
-        id: 'demo-brew-3',
-        title: 'Waystar announces AI prior auth platform',
-        message: 'Critical competitive signal: New ML-based system promises 40% faster authorization decisions.',
-        source: 'pulse',
-        roast: 'dark',
-        caffeineScore: 80,
-        flavorNotes: ['market', 'competitive', 'ai'],
+        id: 'demo-lop-2',
+        title: 'Recording available: AI in Healthcare RCM',
+        message: 'Missed the live session? Watch Dr. Patel discuss AI applications in revenue cycle.',
+        source: 'lop',
+        roast: 'light',
+        caffeineScore: 50,
+        flavorNotes: ['learning', 'recording', 'ai'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 24,
+        isRead: false,
+        link: '/lop',
+        actors: [{ name: 'Dr. Sanjay Patel' }],
+    },
+    {
+        id: 'demo-lop-3',
+        title: 'Complete your LOP feedback',
+        message: 'Share your thoughts on "Building for Scale" session. Takes 2 minutes!',
+        source: 'lop',
+        roast: 'light',
+        caffeineScore: 35,
+        flavorNotes: ['learning', 'feedback'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 48, // 2 days ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 48,
+        isRead: true,
+        link: '/lop',
+    },
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SYSTEM REMINDERS — 2 items
+    // ═══════════════════════════════════════════════════════════════════════════
+    {
+        id: 'demo-system-1',
+        title: 'Sprint planning in 30 minutes',
+        message: 'Join the Product team for Q1 sprint planning. Zoom link in calendar.',
+        source: 'system',
+        roast: 'medium',
+        caffeineScore: 55,
+        flavorNotes: ['meeting', 'reminder', 'sprint'],
+        timestamp: Date.now() - 1000 * 60 * 20, // 20 min ago
+        servedAt: Date.now() - 1000 * 60 * 20,
+        isRead: false,
+    },
+    {
+        id: 'demo-system-2',
+        title: 'Weekly metrics report ready',
+        message: 'Your dashboard performance summary is available. View key trends.',
+        source: 'system',
+        roast: 'light',
+        caffeineScore: 40,
+        flavorNotes: ['report', 'metrics'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 10, // 10 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 10,
+        isRead: true,
+    },
+    // ═══════════════════════════════════════════════════════════════════════════
+    // COMMUNITY/CHAT — 3 items
+    // ═══════════════════════════════════════════════════════════════════════════
+    {
+        id: 'demo-chat-1',
+        title: 'Mike Johnson replied to your post',
+        message: 'Great point about API versioning! Have you considered GraphQL federation?',
+        source: 'chat',
+        roast: 'medium',
+        caffeineScore: 55,
+        flavorNotes: ['discussion', 'reply', 'api'],
         timestamp: Date.now() - 1000 * 60 * 60 * 4, // 4 hours ago
         servedAt: Date.now() - 1000 * 60 * 60 * 4,
         isRead: false,
-        link: '/pulse',
-    },
-    {
-        id: 'demo-brew-4',
-        title: 'Team standup reminder',
-        message: 'Daily standup in 15 minutes - Conference Room B or Zoom link',
-        source: 'system',
-        roast: 'light',
-        caffeineScore: 35,
-        flavorNotes: ['meeting', 'reminder'],
-        timestamp: Date.now() - 1000 * 60 * 60 * 6, // 6 hours ago
-        servedAt: Date.now() - 1000 * 60 * 60 * 6,
-        isRead: true,
-    },
-    {
-        id: 'demo-brew-5',
-        title: 'Mike Johnson replied to your discussion',
-        message: 'Good point about the API versioning strategy. I think we should also consider...',
-        source: 'chat',
-        roast: 'medium',
-        caffeineScore: 50,
-        flavorNotes: ['discussion', 'reply'],
-        timestamp: Date.now() - 1000 * 60 * 60 * 8, // 8 hours ago
-        servedAt: Date.now() - 1000 * 60 * 60 * 8,
-        isRead: false,
         link: '/community',
         actors: [{ name: 'Mike Johnson' }],
+    },
+    {
+        id: 'demo-chat-2',
+        title: 'New discussion: Prior Auth Best Practices',
+        message: 'Emily started a discussion on reducing prior auth turnaround times.',
+        source: 'chat',
+        roast: 'light',
+        caffeineScore: 45,
+        flavorNotes: ['discussion', 'prior-auth'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 7, // 7 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 7,
+        isRead: false,
+        link: '/community',
+        actors: [{ name: 'Emily Watson' }],
+    },
+    {
+        id: 'demo-chat-3',
+        title: 'Your answer was marked as helpful',
+        message: '3 people found your response about claim denials helpful!',
+        source: 'chat',
+        roast: 'light',
+        caffeineScore: 40,
+        flavorNotes: ['recognition', 'community'],
+        timestamp: Date.now() - 1000 * 60 * 60 * 18, // 18 hours ago
+        servedAt: Date.now() - 1000 * 60 * 60 * 18,
+        isRead: true,
+        link: '/community',
     },
 ];
 

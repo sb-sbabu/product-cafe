@@ -539,7 +539,9 @@ export async function fetchNewsSignals(force = false): Promise<PulseSignal[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DEMO SIGNALS — Realistic US Healthcare RCM/Eligibility focused demo data
+// DEMO SIGNALS — US Healthcare RCM/Eligibility & AI Competitor Intelligence
+// Focused on: Competitors, AI in healthcare, competitor products, market moves
+// NO stock tips, NO FDA/drug content
 // ═══════════════════════════════════════════════════════════════════════════
 function generateDemoSignals(): PulseSignal[] {
     const now = new Date().toISOString();
@@ -550,25 +552,161 @@ function generateDemoSignals(): PulseSignal[] {
         priority: SignalPriority;
         companies?: string[];
     }> = [
-            // COMPETITIVE (4 signals)
-            { title: "Waystar announces AI-powered prior authorization platform", summary: "New ML-based system promises 40% faster auth decisions. Direct competition to Availity's core PA functionality.", domain: 'COMPETITIVE', priority: 'critical', companies: ['Waystar'] },
-            { title: "Change Healthcare resumes full operations post-Optum integration", summary: "Full platform integration complete. Combined entity now serves 5,000+ hospitals with enhanced RCM capabilities.", domain: 'COMPETITIVE', priority: 'high', companies: ['Change Healthcare', 'Optum'] },
-            { title: "R1 RCM expands AI claims processing nationwide", summary: "Generative AI tools now available to all 900+ health system clients. Focus on denial prevention.", domain: 'COMPETITIVE', priority: 'high', companies: ['R1 RCM'] },
-            { title: "Experian Health partners with Blue Cross network", summary: "New eligibility verification partnership covers 180M+ lives. Real-time benefits check enhancement.", domain: 'COMPETITIVE', priority: 'high', companies: ['Experian Health'] },
-            // REGULATORY (3 signals)
-            { title: "CMS announces 2025 interoperability requirements", summary: "New FHIR R4 mandates for all payers by January 2025. Prior auth data sharing rules finalized. 90-day comment period.", domain: 'REGULATORY', priority: 'critical' },
-            { title: "HHS updates HIPAA compliance framework", summary: "Enhanced security requirements for health data exchange. 180-day implementation timeline for covered entities.", domain: 'REGULATORY', priority: 'high' },
-            { title: "Medicare Advantage payment rates increase 3.5% for 2025", summary: "CMS finalizes 2025 rates. Positive impact for payers and RCM vendors. Star ratings methodology unchanged.", domain: 'REGULATORY', priority: 'medium' },
-            // TECHNOLOGY (3 signals)
-            { title: "Epic Systems launches new payer platform module", summary: "Direct payer connectivity embedded in EHR. Could reduce need for clearinghouse connections. Slat integration.", domain: 'TECHNOLOGY', priority: 'high', companies: ['Epic'] },
-            { title: "Akasa raises $60M for generative AI RCM automation", summary: "Series C funding to accelerate AI-driven denials management. Direct threat to traditional RCM vendors.", domain: 'TECHNOLOGY', priority: 'high', companies: ['Akasa'] },
-            { title: "Cohere Health expands AI prior auth to 20 new payers", summary: "Rapid payer adoption of intelligent prior authorization. Processing 2M+ auths monthly with 99.2% accuracy.", domain: 'TECHNOLOGY', priority: 'medium', companies: ['Cohere Health'] },
-            // MARKET (2 signals)
-            { title: "UnitedHealth Group Q4 revenue exceeds expectations", summary: "Optum segment shows 12% YoY growth. Healthcare services demand strong. Tech investments accelerating.", domain: 'MARKET', priority: 'medium', companies: ['Optum'] },
-            { title: "PE firm acquires mid-market RCM company for $800M", summary: "Consolidation trend continues in healthcare IT. Third major RCM acquisition this quarter.", domain: 'MARKET', priority: 'medium' },
-            // NEWS (2 signals)
-            { title: "Healthcare IT spending projected to grow 8% in 2025", summary: "Gartner report highlights AI, interoperability, and patient experience priorities. RCM modernization key focus.", domain: 'NEWS', priority: 'low' },
-            { title: "Infinitus Systems announces voice AI partnership with major payer", summary: "AI-powered benefit verification calls now handling 50% of volume for 15-hospital network. 70% time savings.", domain: 'NEWS', priority: 'medium', companies: ['Infinitus'] },
+            // ═══════════════════════════════════════════════════════════════════
+            // COMPETITIVE (5 signals) — Direct competitor moves and products
+            // ═══════════════════════════════════════════════════════════════════
+            {
+                title: "Waystar launches 'Hubble AI' for prior authorization automation",
+                summary: "New ML platform promises 45% faster PA decisions with 92% auto-approval rate. Direct challenge to Availity PA solutions. Integrates with all major EHRs.",
+                domain: 'COMPETITIVE',
+                priority: 'critical',
+                companies: ['Waystar']
+            },
+            {
+                title: "Change Healthcare unveils unified RCM platform post-Optum merger",
+                summary: "Combined tech stack now serves 5,500+ hospitals. Real-time eligibility checks processing 2M+ transactions daily. API-first architecture.",
+                domain: 'COMPETITIVE',
+                priority: 'critical',
+                companies: ['Change Healthcare', 'Optum']
+            },
+            {
+                title: "R1 RCM expands 'Entri' AI claims platform to all clients",
+                summary: "Generative AI for denial prediction now available to 900+ health systems. Claims 35% reduction in initial denials.",
+                domain: 'COMPETITIVE',
+                priority: 'high',
+                companies: ['R1 RCM']
+            },
+            {
+                title: "Experian Health announces '270/271 Accelerator' product",
+                summary: "New real-time eligibility API covers 350M+ lives. Sub-second response times. Direct integration with Athena, Epic, Cerner.",
+                domain: 'COMPETITIVE',
+                priority: 'high',
+                companies: ['Experian Health']
+            },
+            {
+                title: "FinThrive acquires AI startup for $200M to enhance RCM suite",
+                summary: "Acquisition adds predictive analytics for patient payment likelihood. Targets self-pay revenue optimization market.",
+                domain: 'COMPETITIVE',
+                priority: 'high',
+                companies: ['FinThrive']
+            },
+            // ═══════════════════════════════════════════════════════════════════
+            // TECHNOLOGY (5 signals) — AI in US Healthcare RCM specifically
+            // ═══════════════════════════════════════════════════════════════════
+            {
+                title: "Akasa raises $60M Series C for generative AI RCM automation",
+                summary: "Funding to expand 'RCM AI Copilot' product. Already processing $30B+ in claims. Partnership with 40 health systems.",
+                domain: 'TECHNOLOGY',
+                priority: 'high',
+                companies: ['Akasa']
+            },
+            {
+                title: "Cohere Health AI prior auth now processing 3M requests monthly",
+                summary: "Payer adoption accelerates with 25 new contracts. 99.4% accuracy rate. Medicare Advantage focus expanding.",
+                domain: 'TECHNOLOGY',
+                priority: 'high',
+                companies: ['Cohere Health']
+            },
+            {
+                title: "Olive AI assets acquired by multiple buyers post-shutdown",
+                summary: "Waystar acquires PA automation tech. Humana takes patient access tools. Signals consolidation in AI RCM space.",
+                domain: 'TECHNOLOGY',
+                priority: 'high',
+                companies: ['Waystar', 'Humana']
+            },
+            {
+                title: "Infinitus voice AI handles 1M benefit verification calls monthly",
+                summary: "AI-powered phone calls reducing FTE needs by 60% for early adopters. New product launch for appointment scheduling.",
+                domain: 'TECHNOLOGY',
+                priority: 'medium',
+                companies: ['Infinitus']
+            },
+            {
+                title: "Epic announces 'Payer Platform' with embedded eligibility",
+                summary: "Direct payer connectivity in EHR workflow. Could reduce clearinghouse transaction volume by 20%. Q2 2025 GA.",
+                domain: 'TECHNOLOGY',
+                priority: 'medium',
+                companies: ['Epic']
+            },
+            // ═══════════════════════════════════════════════════════════════════
+            // REGULATORY (4 signals) — Interoperability & RCM-relevant rules
+            // ═══════════════════════════════════════════════════════════════════
+            {
+                title: "CMS finalizes 2025 Prior Auth interoperability requirements",
+                summary: "FHIR R4 mandates effective Jan 2025. All MA plans must support electronic PA. 7-day decision requirements.",
+                domain: 'REGULATORY',
+                priority: 'critical'
+            },
+            {
+                title: "HHS proposes AI transparency rules for healthcare automation",
+                summary: "New requirements for AI-driven PA denials. Must provide human review option. Comment period through March 2025.",
+                domain: 'REGULATORY',
+                priority: 'high'
+            },
+            {
+                title: "ONC updates TEFCA standards for nationwide health data exchange",
+                summary: "QHINs must support eligibility queries by Q3 2025. Impacts all clearinghouse and payer connectivity strategies.",
+                domain: 'REGULATORY',
+                priority: 'medium'
+            },
+            {
+                title: "Medicare Advantage prior auth reforms take effect",
+                summary: "72-hour urgent decision requirement now enforced. Payers face penalties for non-compliance. Industry adjusting workflows.",
+                domain: 'REGULATORY',
+                priority: 'medium'
+            },
+            // ═══════════════════════════════════════════════════════════════════
+            // MARKET (4 signals) — RCM industry consolidation and investment
+            // ═══════════════════════════════════════════════════════════════════
+            {
+                title: "Optum Health revenue reaches $75B driven by tech services",
+                summary: "RCM and eligibility services growing 15% YoY. AI investments accelerating. 70% of UHC claims now processed internally.",
+                domain: 'MARKET',
+                priority: 'medium',
+                companies: ['Optum']
+            },
+            {
+                title: "Private equity consolidation in RCM space accelerates",
+                summary: "Three major acquisitions in Q4: Omega Healthcare, Med Data, AccessOne. Combined deal value exceeds $2B.",
+                domain: 'MARKET',
+                priority: 'medium'
+            },
+            {
+                title: "Healthcare AI market projected to reach $45B by 2027",
+                summary: "RCM automation represents 28% of spend. Prior auth and denial management fastest growing segments.",
+                domain: 'MARKET',
+                priority: 'low'
+            },
+            {
+                title: "Trizetto (Cognizant) wins major payer platform contract",
+                summary: "5-year deal with regional Blue plan worth $150M. Focus on claims adjudication modernization.",
+                domain: 'MARKET',
+                priority: 'medium',
+                companies: ['Trizetto']
+            },
+            // ═══════════════════════════════════════════════════════════════════
+            // NEWS (3 signals) — Industry trends and competitor announcements
+            // ═══════════════════════════════════════════════════════════════════
+            {
+                title: "KLAS report: Top 10 RCM vendors ranked for 2025",
+                summary: "R1 RCM, Waystar, Optum lead enterprise rankings. Akasa highest rated AI newcomer. Customer satisfaction trending up.",
+                domain: 'NEWS',
+                priority: 'medium',
+                companies: ['R1 RCM', 'Waystar', 'Optum', 'Akasa']
+            },
+            {
+                title: "HFMA survey: 78% of CFOs prioritizing AI for RCM in 2025",
+                summary: "Prior authorization automation top investment priority. 45% plan vendor consolidation. Interoperability concerns persist.",
+                domain: 'NEWS',
+                priority: 'low'
+            },
+            {
+                title: "Tennr raises $25M for AI-powered intake automation",
+                summary: "Focused on prior auth document processing. Claims 80% reduction in manual data entry. Partnership with 15 specialty practices.",
+                domain: 'NEWS',
+                priority: 'medium',
+                companies: ['Tennr']
+            },
         ];
 
     return demoData.map((d, i) => ({
@@ -581,8 +719,8 @@ function generateDemoSignals(): PulseSignal[] {
         priority: d.priority,
         relevanceScore: d.priority === 'critical' ? 0.95 : d.priority === 'high' ? 0.8 : 0.6,
         importanceScore: d.priority === 'critical' ? 0.9 : d.priority === 'high' ? 0.7 : 0.5,
-        source: { id: 'demo', name: 'Demo Source', tier: 1, type: 'api' as const },
-        publishedAt: new Date(Date.now() - i * 3600000).toISOString(),
+        source: { id: 'demo', name: 'Healthcare Pulse Intel', tier: 1, type: 'api' as const },
+        publishedAt: new Date(Date.now() - i * 2400000).toISOString(), // Spread over time
         processedAt: now,
         entities: { companies: d.companies || [], people: [], topics: [], products: [], regulations: [] },
         isRead: false,

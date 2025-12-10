@@ -45,19 +45,19 @@ export interface QuickAction {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CATEGORY GRADIENTS — Vibrant Toast-Style Colors (Colorful but not scary)
-// Inspired by Toast X value colors: purples, corals, ambers, teals, greens
+// CATEGORY GRADIENTS — Soft Pastel Colors (Colorful but Calm)
+// Muted, professional tones inspired by Toast X but toned down for comfort
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const CATEGORY_GRADIENTS: Record<QuickActionCategory, string> = {
-    cafe: 'from-purple-500 to-pink-500',         // Purple-Pink (Do It Differently)
-    create: 'from-violet-500 to-purple-600',     // Violet-Purple (Creative)
-    tools: 'from-sky-500 to-blue-600',           // Sky-Blue (Tools)
-    meetings: 'from-amber-400 to-orange-500',    // Amber-Orange (Be All In)
-    help: 'from-emerald-400 to-teal-500',        // Emerald-Teal (Explore Fearlessly)
-    planning: 'from-indigo-500 to-violet-600',   // Indigo-Violet (Strategy)
-    it: 'from-cyan-500 to-blue-500',             // Cyan-Blue (Technology)
-    learn: 'from-rose-400 to-pink-500',          // Rose-Pink (Healthcare Personal)
+    cafe: 'from-purple-400/80 to-pink-400/80',      // Soft purple-pink
+    create: 'from-violet-400/80 to-purple-400/80',  // Soft violet-purple
+    tools: 'from-sky-400/80 to-blue-400/80',        // Soft sky-blue
+    meetings: 'from-amber-300/80 to-orange-300/80', // Soft amber-orange
+    help: 'from-emerald-300/80 to-teal-400/80',     // Soft emerald-teal
+    planning: 'from-indigo-400/80 to-violet-400/80',// Soft indigo-violet
+    it: 'from-cyan-400/80 to-blue-400/80',          // Soft cyan-blue
+    learn: 'from-rose-300/80 to-pink-400/80',       // Soft rose-pink
 };
 
 export const CATEGORY_LABELS: Record<QuickActionCategory, string> = {

@@ -549,8 +549,8 @@ export const DailyBrewDock: React.FC = () => {
                             items={menu}
                             onSipAll={handleMarkAllRead}
                             onDiveIn={() => {
-                                const stream = document.getElementById('brew-stream');
-                                if (stream) stream.scrollTo({ top: 400, behavior: 'smooth' });
+                                // Expand the froth section to show all items
+                                setFrothCollapsed(false);
                             }}
                         />
                         {/* THE SHOT */}
