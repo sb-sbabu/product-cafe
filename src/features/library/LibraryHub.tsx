@@ -8,7 +8,11 @@ import {
     ArrowRight,
     TrendingUp,
     Star,
-    FileText
+    FileText,
+    Users,
+    Brain,
+    Calendar,
+    Timer,
 } from 'lucide-react';
 import { useLibraryStore } from './libraryStore';
 import { BookCard, CollectionCard, PathCard, ReadingStatsWidget, ResourceCard, PathDetailPage, BookDetailPage, CreditsWidget } from './components';
@@ -20,6 +24,11 @@ import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { usePageLoading } from '../../hooks';
 
+// Phase 3 Components
+import { SharedHighlights, ReadingBuddies, BookClubs } from './social';
+import { BookChat, SmartSummary, ReadingInsights, TakeawayBot } from './ai';
+import { ReadingTimer, ReadingCalendar, BookNotes } from './experience';
+
 interface LibraryHubProps {
     onNavigate?: (section: string) => void;
 }
@@ -27,7 +36,9 @@ interface LibraryHubProps {
 export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
     const isLoading = usePageLoading(400);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'discover' | 'resources' | 'paths' | 'my-library'>('discover');
+    const [activeTab, setActiveTab] = useState<'discover' | 'resources' | 'paths' | 'my-library' | 'community' | 'insights' | 'activity'>('discover');
+    const [showReadingTimer, setShowReadingTimer] = useState(false);
+    const [timerBookId, setTimerBookId] = useState<string | null>(null);
     const [activePillar, setActivePillar] = useState<string | null>(null);
 
     const {
@@ -186,12 +197,15 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
             )}
 
             {/* Tab Navigation */}
-            <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+            <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit flex-wrap">
                 {[
                     { id: 'discover', label: 'Discover', icon: Sparkles },
-                    { id: 'resources', label: 'Internal Resources', icon: FileText }, // Added new tab
                     { id: 'paths', label: 'Learning Paths', icon: Route },
-                    { id: 'my-library', label: 'My Library', icon: BookOpen }
+                    { id: 'my-library', label: 'My Library', icon: BookOpen },
+                    { id: 'community', label: 'Community', icon: Users },
+                    { id: 'insights', label: 'AI Insights', icon: Brain },
+                    { id: 'activity', label: 'Activity', icon: Calendar },
+                    { id: 'resources', label: 'Resources', icon: FileText },
                 ].map(tab => {
                     const Icon = tab.icon;
                     return (
@@ -491,6 +505,114 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                             )}
                         </Card>
                     </div>
+                </div>
+            )}
+
+            {/* Community Tab */}
+            {activeTab === 'community' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Feed */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <SharedHighlights />
+                        <BookClubs />
+                    </div>
+
+                    {/* Sidebar */}
+                    <div className="space-y-6">
+                        <ReadingBuddies
+                            currentBookId={userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100)?.bookId}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* AI Insights Tab */}
+            {activeTab === 'insights' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Reading Insights */}
+                    <ReadingInsights />
+
+                    {/* Takeaway Bot */}
+                    <TakeawayBot />
+
+                    {/* Book Chat - for first in-progress book */}
+                    {userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100) && (
+                        <div className="lg:col-span-2">
+                            <BookChat
+                                bookId={userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100)!.bookId}
+                                bookTitle={books.find(b => b.id === userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100)?.bookId)?.title || 'Book'}
+                            />
+                        </div>
+                    )}
+
+                    {/* Smart Summary for featured book */}
+                    {featuredBooks[0] && (
+                        <SmartSummary bookId={featuredBooks[0].id} />
+                    )}
+                </div>
+            )}
+
+            {/* Activity Tab */}
+            {activeTab === 'activity' && (
+                <div className="space-y-6">
+                    {/* Reading Calendar - Full Width */}
+                    <ReadingCalendar showStats={true} />
+
+                    {/* Two Column Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Reading Timer Widget */}
+                        <Card className="p-5">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                    <Timer className="w-5 h-5 text-purple-500" />
+                                    Reading Timer
+                                </h3>
+                            </div>
+                            {userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100) ? (
+                                <button
+                                    onClick={() => {
+                                        const inProgressBook = userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100);
+                                        if (inProgressBook) {
+                                            setTimerBookId(inProgressBook.bookId);
+                                            setShowReadingTimer(true);
+                                        }
+                                    }}
+                                    className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/20"
+                                >
+                                    Start Reading Session
+                                </button>
+                            ) : (
+                                <div className="text-center py-8 text-gray-400">
+                                    <Timer className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                    <p className="text-sm">No books in progress</p>
+                                    <p className="text-xs mt-1">Start reading to use the timer!</p>
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Book Notes for current book */}
+                        {userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100) && (
+                            <BookNotes
+                                bookId={userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100)!.bookId}
+                                bookTitle={books.find(b => b.id === userLibrary.bookProgress.find(p => p.progress > 0 && p.progress < 100)?.bookId)?.title || 'Book'}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Reading Timer Modal */}
+            {showReadingTimer && timerBookId && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <ReadingTimer
+                        bookId={timerBookId}
+                        bookTitle={books.find(b => b.id === timerBookId)?.title || 'Book'}
+                        onClose={() => {
+                            setShowReadingTimer(false);
+                            setTimerBookId(null);
+                        }}
+                        variant="fullscreen"
+                    />
                 </div>
             )}
         </div>
