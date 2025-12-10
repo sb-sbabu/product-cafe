@@ -149,7 +149,7 @@ export const StandingOvationWizard: React.FC<StandingOvationWizardProps> = memo(
     }, []);
 
     // Submit
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         if (remaining <= 0) {
             setError('You have reached your daily limit for Standing Ovations.');
             return;
@@ -158,28 +158,29 @@ export const StandingOvationWizard: React.FC<StandingOvationWizardProps> = memo(
         setIsSubmitting(true);
         setError(null);
 
-        try {
-            // Find selected expert areas based on IDs
-            const expertAreasToAdd = EXPERT_AREAS
-                .filter(area => selectedExpertAreas.includes(area.id))
-                .map(area => ({ id: area.id, name: area.name, score: 10 }));
+        // Find selected expert areas based on IDs
+        const expertAreaIds = selectedExpertAreas;
 
-            await createRecognition({
-                type: 'STANDING_OVATION',
-                to: selectedRecipients,
-                value: selectedValue!,
-                message,
-                impact: impact || undefined,
-                expertAreas: expertAreasToAdd,
-                award: selectedAward || undefined
-            });
+        const result = createRecognition({
+            type: 'STANDING_OVATION',
+            recipientIds: selectedRecipients.map(r => r.id),
+            value: selectedValue!,
+            message,
+            impact: impact || undefined,
+            expertAreas: expertAreaIds,
+            imageId: selectedImageId,
+            award: selectedAward || undefined,
+            notifyManagers,
+            nominatedForMonthly: nominateForMonthly
+        });
 
+        setIsSubmitting(false);
+
+        if (result.success) {
             onClose();
             resetForm();
-        } catch (err) {
-            setError('Failed to create standing ovation. Please try again.');
-        } finally {
-            setIsSubmitting(false);
+        } else {
+            setError(result.error || 'Failed to create standing ovation. Please try again.');
         }
     };
 

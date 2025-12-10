@@ -112,16 +112,55 @@ interface LibraryState {
     navigateToHub: () => void;
 }
 
+// Demo data - 4 months of reading activity
+const fourMonthsAgo = new Date();
+fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4);
+
+const threeMonthsAgo = new Date();
+threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+const twoMonthsAgo = new Date();
+twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+const oneMonthAgo = new Date();
+oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+const twoWeeksAgo = new Date();
+twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
 const initialUserLibrary: UserLibrary = {
     userId: 'demo-user',
-    readingList: [],
-    bookProgress: [],
-    completedBookIds: [],
-    highlights: [],
-    activePaths: [],
+    readingList: [
+        { bookId: 'playing-to-win', addedAt: oneMonthAgo.toISOString(), priority: 1 },
+        { bookId: 'designing-ml-systems', addedAt: twoWeeksAgo.toISOString(), priority: 2 },
+        { bookId: 'radical-candor', addedAt: new Date().toISOString(), priority: 3 },
+    ],
+    bookProgress: [
+        // Completed books
+        { bookId: 'inspired', progress: 100, startedAt: fourMonthsAgo.toISOString(), lastReadAt: threeMonthsAgo.toISOString(), completedAt: threeMonthsAgo.toISOString(), pagesRead: 368 },
+        { bookId: 'mom-test', progress: 100, startedAt: fourMonthsAgo.toISOString(), lastReadAt: fourMonthsAgo.toISOString(), completedAt: fourMonthsAgo.toISOString(), pagesRead: 130 },
+        { bookId: 'continuous-discovery', progress: 100, startedAt: threeMonthsAgo.toISOString(), lastReadAt: twoMonthsAgo.toISOString(), completedAt: twoMonthsAgo.toISOString(), pagesRead: 240 },
+        { bookId: 'sprint', progress: 100, startedAt: twoMonthsAgo.toISOString(), lastReadAt: oneMonthAgo.toISOString(), completedAt: oneMonthAgo.toISOString(), pagesRead: 274 },
+        { bookId: 'deep-work', progress: 100, startedAt: twoMonthsAgo.toISOString(), lastReadAt: oneMonthAgo.toISOString(), completedAt: oneMonthAgo.toISOString(), pagesRead: 296 },
+        { bookId: 'essentialism', progress: 100, startedAt: oneMonthAgo.toISOString(), lastReadAt: twoWeeksAgo.toISOString(), completedAt: twoWeeksAgo.toISOString(), pagesRead: 272 },
+        { bookId: 'good-strategy-bad-strategy', progress: 100, startedAt: oneMonthAgo.toISOString(), lastReadAt: twoWeeksAgo.toISOString(), completedAt: twoWeeksAgo.toISOString(), pagesRead: 336 },
+        // In progress
+        { bookId: 'empowered', progress: 65, startedAt: twoWeeksAgo.toISOString(), lastReadAt: new Date().toISOString(), pagesRead: 280 },
+        { bookId: 'playing-to-win', progress: 30, startedAt: oneMonthAgo.toISOString(), lastReadAt: new Date().toISOString(), pagesRead: 82 },
+    ],
+    completedBookIds: ['inspired', 'mom-test', 'continuous-discovery', 'sprint', 'deep-work', 'essentialism', 'good-strategy-bad-strategy'],
+    highlights: [
+        { id: 'h1', bookId: 'inspired', text: 'Empowered product teams vs feature teams is the key distinction.', pageNumber: 45, tags: ['teams', 'empowerment'], createdAt: threeMonthsAgo.toISOString() },
+        { id: 'h2', bookId: 'continuous-discovery', text: 'The Opportunity Solution Tree helps connect discovery to delivery.', pageNumber: 87, tags: ['discovery', 'framework'], createdAt: twoMonthsAgo.toISOString() },
+        { id: 'h3', bookId: 'deep-work', text: 'Deep work is the superpower of the 21st century.', pageNumber: 12, tags: ['focus', 'productivity'], createdAt: oneMonthAgo.toISOString() },
+    ],
+    activePaths: [
+        { pathId: 'ic-to-senior', enrolledAt: threeMonthsAgo.toISOString(), currentModuleIndex: 2, completedModuleIds: ['m1', 'm2'], completedBookIds: ['inspired', 'continuous-discovery'] },
+        { pathId: 'product-strategy', enrolledAt: oneMonthAgo.toISOString(), currentModuleIndex: 0, completedModuleIds: [], completedBookIds: [] },
+    ],
     readingGoal: {
         booksPerYear: 12,
-        booksCompleted: 0,
+        booksCompleted: 7,
         yearStarted: new Date().getFullYear()
     }
 };

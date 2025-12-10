@@ -36,7 +36,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
     { id: 'home', label: 'Home', icon: Coffee, color: 'text-cafe-600', gradient: 'from-cafe-500 to-cafe-600' },
     { id: 'grab-and-go', label: 'Grab & Go', icon: Zap, color: 'text-amber-500', gradient: 'from-amber-400 to-orange-500' },
-    { id: 'library', label: 'Library', icon: BookOpen, color: 'text-purple-500', gradient: 'from-purple-500 to-violet-600' },
+    { id: 'library', label: 'The Bookshelf', icon: BookOpen, color: 'text-purple-500', gradient: 'from-purple-500 to-violet-600' },
     { id: 'community', label: 'Community', icon: Users, color: 'text-cyan-500', gradient: 'from-cyan-400 to-blue-500' },
     { id: 'lop', label: 'LOP', icon: Mic, color: 'text-rose-500', gradient: 'from-rose-400 to-pink-500' },
     { id: 'toast', label: 'TOAST', icon: Award, color: 'text-rose-500', gradient: 'from-rose-400 to-pink-500' },

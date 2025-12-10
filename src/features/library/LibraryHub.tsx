@@ -131,8 +131,8 @@ export const LibraryHub: React.FC<LibraryHubProps> = ({ onNavigate }) => {
                             <BookOpen className="w-7 h-7 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold">Library</h1>
-                            <p className="text-white/80">Your Product Manager's Knowledge Hub</p>
+                            <h1 className="text-3xl font-bold">☕ The Bookshelf</h1>
+                            <p className="text-white/80">Where PMs brew their knowledge</p>
                         </div>
                     </div>
 
