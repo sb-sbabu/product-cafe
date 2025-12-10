@@ -37,7 +37,6 @@ const LEVEL_COLORS = {
 const LEVEL_THRESHOLDS = [0, 15, 30, 60, 120]; // minutes
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const ReadingCalendar: React.FC<ReadingCalendarProps> = ({
     className,
@@ -227,37 +226,45 @@ export const ReadingCalendar: React.FC<ReadingCalendarProps> = ({
             )}
 
             {/* Calendar Grid */}
-            <div className="p-6">
-                {/* Month Labels */}
-                <div className="flex mb-2 text-xs text-gray-400" style={{ paddingLeft: '28px' }}>
-                    {monthLabels.map(({ month, position }, idx) => (
-                        <span
-                            key={idx}
-                            style={{ position: 'absolute', left: `${28 + position * 14}px` }}
-                            className="relative"
-                        >
-                            {month}
-                        </span>
-                    ))}
+            <div className="p-6 overflow-x-auto">
+                {/* Month Labels Row */}
+                <div className="flex mb-2 text-xs text-gray-400 min-w-max" style={{ marginLeft: '36px' }}>
+                    {monthLabels.map(({ month, position }, idx) => {
+                        // Calculate the gap from the previous label
+                        const prevPosition = idx > 0 ? monthLabels[idx - 1].position : 0;
+                        const gap = idx === 0 ? position : position - prevPosition;
+                        return (
+                            <span
+                                key={idx}
+                                style={{ marginLeft: idx === 0 ? `${position * 14}px` : `${(gap - 1) * 14}px` }}
+                            >
+                                {month}
+                            </span>
+                        );
+                    })}
                 </div>
 
-                <div className="flex gap-1 mt-6">
+                <div className="flex gap-[3px] min-w-max">
                     {/* Day Labels */}
-                    <div className="flex flex-col gap-1 text-xs text-gray-400 pr-2">
-                        {DAYS.filter((_, i) => i % 2 === 1).map(day => (
-                            <span key={day} className="h-[12px] leading-[12px]">{day.slice(0, 3)}</span>
-                        ))}
+                    <div className="flex flex-col gap-[3px] text-xs text-gray-400 pr-1" style={{ minWidth: '28px' }}>
+                        <span className="h-3 leading-3" />
+                        <span className="h-3 leading-3">Mon</span>
+                        <span className="h-3 leading-3" />
+                        <span className="h-3 leading-3">Wed</span>
+                        <span className="h-3 leading-3" />
+                        <span className="h-3 leading-3">Fri</span>
+                        <span className="h-3 leading-3" />
                     </div>
 
                     {/* Weeks Grid */}
-                    <div className="flex gap-1">
+                    <div className="flex gap-[3px]">
                         {weeks.map((week, weekIdx) => (
-                            <div key={weekIdx} className="flex flex-col gap-1">
+                            <div key={weekIdx} className="flex flex-col gap-[3px]">
                                 {week.map((day, dayIdx) => (
                                     <div
                                         key={`${weekIdx}-${dayIdx}`}
                                         className={cn(
-                                            "w-3 h-3 rounded-sm transition-all cursor-pointer hover:scale-125",
+                                            "w-3 h-3 rounded-sm transition-all cursor-pointer hover:scale-125 hover:ring-2 hover:ring-purple-400",
                                             day.date ? LEVEL_COLORS[day.level] : 'bg-transparent'
                                         )}
                                         title={day.date ? `${day.date}: ${day.minutesRead}m read${day.booksCompleted > 0 ? `, ${day.booksCompleted} book(s) completed` : ''}` : ''}
